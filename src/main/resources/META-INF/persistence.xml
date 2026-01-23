@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--<persistence version="2.2" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence           http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">-->
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+  <persistence-unit name="procesosPU" transaction-type="JTA">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <jta-data-source>java:/jboss/datasources/iepi3</jta-data-source>
+    <class>senadi.com.ditramites.model.postgres.PpdiPersona</class>
+    <class>senadi.com.ditramites.model.postgres.PpdiPersonaSolicitudSignoDistintivo</class>
+    <class>senadi.com.ditramites.model.postgres.PpdiSolicitudPatente</class>
+    <class>senadi.com.ditramites.model.postgres.PpdiSolicitudSignoDistintivo</class>
+    <class>senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo</class>
+    <class>senadi.com.ditramites.model.postgres.PpdiOrdenNiza</class>
+    <class>senadi.com.ditramites.model.postgres.PpdiSolicitudOrdenNiza</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+      <property name="wildfly.jpa.default-unit" value="true"/>
+    </properties>
+  </persistence-unit>
+  <persistence-unit name="modificacionPU" transaction-type="JTA">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <jta-data-source>java:/jboss/datasources/transferencia_prod</jta-data-source>
+    <class>senadi.com.ditramites.model.mod.Transferencia</class>
+    <class>senadi.com.ditramites.model.mod.CambioNombre</class>
+    <class>senadi.com.ditramites.model.mod.CambioDomicilio</class>
+    <class>senadi.com.ditramites.model.mod.LicenciaUso</class>
+    <class>senadi.com.ditramites.model.mod.PrendaComercial</class>
+    <class>senadi.com.ditramites.model.mod.SubLicenciaUso</class>
+    <class>senadi.com.ditramites.model.mod.CambioCasillero</class>
+    <class>senadi.com.ditramites.model.mod.ConfiguracionCC</class>
+    <class>senadi.com.ditramites.model.mod.Usuario</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+        </properties>
+  </persistence-unit>
+  <persistence-unit name="renovacionPU" transaction-type="JTA">
+    <jta-data-source>java:/jboss/datasources/modificacion_prod</jta-data-source>
+    <class>senadi.com.ditramites.model.modren.Renovacion</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+    </properties>
+  </persistence-unit>
+</persistence>
