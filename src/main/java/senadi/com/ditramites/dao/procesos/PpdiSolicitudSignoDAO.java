@@ -13,7 +13,7 @@ import senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo;
  *
  * @author micharesp
  */
-public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistintivo>{
+public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistintivo> {
 
     public PpdiSolicitudSignoDAO(PpdiSolicitudSignoDistintivo t) {
         super(t);
@@ -21,28 +21,46 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
 
     @Override
     public List<PpdiSolicitudSignoDistintivo> buscarTodos() {
-        Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p");
-        return query.getResultList();
-    }
-    
-    public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByTramite(String tramite){
-        Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where p.numeroTramite = '"+tramite+"'");
-        List<PpdiSolicitudSignoDistintivo> signos = query.getResultList();
-        if(signos.isEmpty()){
-            return new PpdiSolicitudSignoDistintivo();
-        }else{
-            return signos.get(0);
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
         }
-    }
-    
-    public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(int codigoSolicitudSigno){
-        Query query = this.getEntityManager().createQuery("Select p from PpdiTituloSignoDistintivo p where p.codigoSolicitudSigno = "+codigoSolicitudSigno);
-        List<PpdiTituloSignoDistintivo> tits = query.getResultList();
-        if(tits.isEmpty()){
-            return new PpdiTituloSignoDistintivo();
-        }else{
-            return tits.get(0);
-        }
+
     }
 
+    public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByTramite(String tramite) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where p.numeroTramite = :tramite");
+            query.setParameter("tramite", tramite);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<PpdiSolicitudSignoDistintivo> signos = query.getResultList();
+            if (signos.isEmpty()) {
+                return new PpdiSolicitudSignoDistintivo();
+            } else {
+                return signos.get(0);
+            }
+        } finally {
+            this.getEntityManager().close();
+        }
+
+    }
+
+    public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(int codigoSolicitudSigno) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiTituloSignoDistintivo p where p.codigoSolicitudSigno = :codigo");
+            query.setParameter("codigo", codigoSolicitudSigno);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<PpdiTituloSignoDistintivo> tits = query.getResultList();
+            if (tits.isEmpty()) {
+                return new PpdiTituloSignoDistintivo();
+            } else {
+                return tits.get(0);
+            }
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
 }

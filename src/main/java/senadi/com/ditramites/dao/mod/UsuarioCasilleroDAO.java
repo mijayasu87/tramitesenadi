@@ -12,7 +12,7 @@ import senadi.com.ditramites.model.mod.Usuario;
  *
  * @author michael
  */
-public class UsuarioCasilleroDAO extends DAOAbstractMod<Usuario>{
+public class UsuarioCasilleroDAO extends DAOAbstractMod<Usuario> {
 
     public UsuarioCasilleroDAO(Usuario t) {
         super(t);
@@ -20,27 +20,38 @@ public class UsuarioCasilleroDAO extends DAOAbstractMod<Usuario>{
 
     @Override
     public List<Usuario> buscarTodos() {
-        Query query = this.getEntityManager().createQuery("Select u from Usuario u order by u.fechaCreacion");
-        return query.getResultList();
+        try {
+            Query query = this.getEntityManager().createQuery("Select u from Usuario u order by u.fechaCreacion");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
     }
-    
-    public boolean existsUsuarioActivo(String usuario, boolean activo){
-        Query query = this.getEntityManager().createQuery("Select u from Usuario u where u.usuario = '"+usuario+"' and u.activo = "+activo);
-        List<Usuario> usuarios = query.getResultList();
-        if(usuarios.isEmpty()){
-            return false;
-        }else{
-            return true;
-        }        
+
+    public boolean existsUsuarioActivo(String usuario, boolean activo) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select u from Usuario u where u.usuario = '" + usuario + "' and u.activo = " + activo);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<Usuario> usuarios = query.getResultList();
+            return !usuarios.isEmpty();
+        } finally {
+            this.getEntityManager().close();
+        }
     }
-    
-    public Usuario getUsuarioActivo(String usuario, boolean activo){
-        Query query = this.getEntityManager().createQuery("Select u from Usuario u where u.usuario = '"+usuario+"' and u.activo = "+activo);
-        List<Usuario> usuarios = query.getResultList();
-        if(usuarios.isEmpty()){
-            return new Usuario();
-        }else{
-            return usuarios.get(0);
+
+    public Usuario getUsuarioActivo(String usuario, boolean activo) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select u from Usuario u where u.usuario = '" + usuario + "' and u.activo = " + activo);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<Usuario> usuarios = query.getResultList();
+            if (usuarios.isEmpty()) {
+                return new Usuario();
+            } else {
+                return usuarios.get(0);
+            }
+        } finally {
+            this.getEntityManager().close();
         }
     }
 }

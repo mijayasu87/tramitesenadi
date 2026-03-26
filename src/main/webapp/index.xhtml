@@ -76,7 +76,7 @@ and open the template in the editor.
             <br/>
             <div style="text-align: center !important; margin: 0 auto !important;">
 
-                <p:outputLabel value="NÚMERO DE TRÁMITE: "  style="font-size: 14px; color: black;" for="tramite"/>
+                <p:outputLabel value="NÚMERO DE TRÁMITE: "  style="font-size: 14px; color: black; margin-right: 5px !important;" for="tramite"/>
                 <p:inputText id="tramite" value="#{tramiteBean.tramiteText}" style="font-size: 14px; width: 210px;" placeholder="Ejemplo: SENADI-2024-99999" />
                 <p:tooltip value="Ingrese todo el número de trámite, es decir incluyendo la palabra SENADI o IEPI" for="tramite" style="font-size: 14px" position="bottom"/>
                 <p:commandButton value="BUSCAR" class="btn_peque" actionListener="#{tramiteBean.buscarTramite}" 
@@ -93,53 +93,53 @@ and open the template in the editor.
                     <p:outputLabel value="#{tramiteBean.tituloTramiteText}" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
                                    rendered="#{tramiteBean.resultadopanel}"/>
                     <p:panelGrid columns="2" id="resultdata" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conmarca}"
-                                 columnClasses="fivety-sevent-percent,forty-two-percent">
+                                 columnClasses="fivety-seven-percent,forty-two-percent">
 
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-sevent-percent">
-                            <p:outputLabel value="Trámite:" for="tram"/>
+                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                            <p:outputLabel value="Trámite:" for="tram" class="bordesuperior"/>
                             <p:inputText id="tram" value="#{tramiteBean.hallmarkForm.applicationNumber}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Casillero:" for="casil"/>
+                            <p:outputLabel value="Casillero:" for="casil" class="bordesuperior"/>
                             <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                <p:inputText id="casil" value="#{tramiteBean.hallmarkForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                <p:inputText id="casil" value="#{tramiteBean.hallmarkForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior"/>
                                 <p:commandButton value="ver" actionListener="#{tramiteBean.prepararCasilleroHallmark}"
                                                  oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                  class="btn_peque maxsize"  update="mensajes dlgCasillero frmCasillero"/>
                             </p:panelGrid>
 
-                            <p:outputLabel value="Tipo Signo:" for="tmar"/>
+                            <p:outputLabel value="Tipo Signo:" for="tmar" class="bordesuperior"/>
                             <p:inputText id="tmar" value="#{tramiteBean.hallmarkForm.tipoSigno}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Naturaleza Signo:" for="nats"/>
+                            <p:outputLabel value="Naturaleza Signo:" for="nats" class="bordesuperior"/>
                             <p:inputText id="nats" value="#{tramiteBean.hallmarkForm.naturalezaSigno}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Denominación:" for="dnomi"/>
+                            <p:outputLabel value="Denominación:" for="dnomi" class="bordesuperior"/>
                             <p:inputTextarea id="dnomi" value="#{tramiteBean.hallmarkForm.denomination}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Fecha Presentación: " for="fprem"/>
+                            <p:outputLabel value="Fecha Presentación: " for="fprem" class="bordesuperior"/>
                             <p:inputText id="fprem" value="#{tramiteBean.hallmarkForm.applicationDate}" readonly="true" class="maxsize">
                                 <f:convertDateTime pattern="yyyy-MM-dd"/>
                             </p:inputText>
 
-                            <p:outputLabel value="Clase Niza:" for="clani"/>
+                            <p:outputLabel value="Clase Niza:" for="clani" class="bordesuperior"/>
                             <p:inputText id="clani" value="#{tramiteBean.hallmarkForm.nizaClassId}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Gaceta:" for="gacet"/>
+                            <p:outputLabel value="Gaceta:" for="gacet" class="bordesuperior"/>
                             <p:inputText id="gacet" value="#{tramiteBean.hallmarkForm.gaceta}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Título:" for="titm"/>
+                            <p:outputLabel value="Título:" for="titm" class="bordesuperior"/>
                             <p:inputText id="titm" value="#{tramiteBean.hallmarkForm.titulo}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Fecha Título:" for="titf"/>
+                            <p:outputLabel value="Fecha Título:" for="titf" class="bordesuperior"/>
                             <p:inputText id="titf" value="#{tramiteBean.hallmarkForm.fechaTitulo}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Fecha Vencimiento:" for="titvf"/>
+                            <p:outputLabel value="Fecha Vencimiento:" for="titvf" class="bordesuperior"/>
                             <p:inputText id="titvf" value="#{tramiteBean.hallmarkForm.fechaVencimiento}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Estado:" for="estm"/>
+                            <p:outputLabel value="Estado:" for="estm" class="bordesuperior"/>
                             <p:inputText id="estm" value="#{tramiteBean.hallmarkForm.estado}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Expediente:" for="expm"/>
+                            <p:outputLabel value="Expediente:" for="expm" class="bordesuperior"/>
                             <p:inputText id="expm" value="#{tramiteBean.hallmarkForm.expedient}" readonly="true" class="maxsize"/>
                             
                             <p:outputLabel value=""/>
@@ -161,13 +161,13 @@ and open the template in the editor.
                     </p:panelGrid>
 
                     <p:panelGrid columns="2" id="patentepanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conpatente}" 
-                                 columnClasses="fivety-sevent-percent,forty-two-percent">
+                                 columnClasses="fivety-seven-percent,forty-two-percent">
 
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-sevent-percent">
-                            <p:outputLabel value="Trámite:" />
-                            <p:inputText value="#{tramiteBean.patentForm.applicationNumber}" readonly="true" class="maxsize"/>
+                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                            <p:outputLabel value="Trámite:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.patentForm.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
 
-                            <p:outputLabel value="Casillero:" />
+                            <p:outputLabel value="Casillero:" class="bordesuperior"/>
                             <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
                                 <p:inputText id="casilp" value="#{tramiteBean.patentForm.casillero}" readonly="true" class="maxsize light-blue"/>
                                 <p:commandButton value="ver" actionListener="#{tramiteBean.prepararCasilleroPantent}"
@@ -175,25 +175,25 @@ and open the template in the editor.
                                                  class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                             </p:panelGrid>
 
-                            <p:outputLabel value="Fecha Presentación" />
+                            <p:outputLabel value="Fecha Presentación" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.patentForm.applicationDate}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Tipo Patente:" />
-                            <p:inputText value="#{tramiteBean.patentForm.tipo}" readonly="true" class="maxsize"/>
+                            <p:outputLabel value="Tipo Patente:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.patentForm.tipo}" readonly="true" class="maxsize estiloLigth"/>
 
-                            <p:outputLabel value="Título:" />
+                            <p:outputLabel value="Título:" class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.patentForm.title}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Clasificación Internacional:" />
+                            <p:outputLabel value="Clasificación Internacional:" class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.patentForm.internationalClassification}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Resumen: " />
+                            <p:outputLabel value="Resumen: " class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.patentForm.summary}" readonly="true" class="maxsize" />
 
-                            <p:outputLabel value="Estado:"/>
+                            <p:outputLabel value="Estado:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.patentForm.status}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Expediente:" />
+                            <p:outputLabel value="Expediente:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.patentForm.expedient}" readonly="true" class="maxsize"/>
 
                         </p:panelGrid>
@@ -209,25 +209,25 @@ and open the template in the editor.
                     </p:panelGrid>
                     
                     <p:panelGrid columns="2" id="breederpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conbreeder}" 
-                                 columnClasses="fivety-sevent-percent,forty-two-percent">
+                                 columnClasses="fivety-seven-percent,forty-two-percent">
 
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-sevent-percent">
-                            <p:outputLabel value="Trámite:" />
+                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                            <p:outputLabel value="Trámite:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.applicationNumber}" readonly="true" class="maxsize"/>                            
 
-                            <p:outputLabel value="Fecha Presentación" />
+                            <p:outputLabel value="Fecha Presentación" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.applicationDate}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Taxón Botánico:" />
+                            <p:outputLabel value="Taxón Botánico:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.proposedName}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Nombre Común:" />
+                            <p:outputLabel value="Nombre Común:" class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.breederForm.commercialName}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Grupo:" />
+                            <p:outputLabel value="Grupo:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.group}" readonly="true" class="maxsize"/>
                             
-                            <p:outputLabel value="Estado:"/>
+                            <p:outputLabel value="Estado:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.estado}" readonly="true" class="maxsize"/>
                            
 
@@ -253,18 +253,18 @@ and open the template in the editor.
                                          style="display: inline-block; vertical-align: top; margin-left: 5px; border: 1px solid #e3e3e3; width: 32%;">
 
                                 <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conmodificacion}" style="width: 100%"
-                                             columnClasses="forty-two-percent,fivety-sevent-percent">
-                                    <p:outputLabel value="Tipo: "/>
-                                    <p:inputText value="#{modificacion.tipo}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                                    <p:outputLabel value="Trámite Modificación: "/>
-                                    <p:inputText value="#{modificacion.solicitud}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Fecha Presentación: "/>
+                                             columnClasses="forty-two-percent,fivety-seven-percent">
+                                    <p:outputLabel value="Tipo: " class="bordesuperior"/>
+                                    <p:inputText value="#{modificacion.tipo}" readonly="true" class="maxsize estiloLigth" />
+                                    <p:outputLabel value="Trámite Modificación: " class="bordesuperior"/>
+                                    <p:inputText value="#{modificacion.solicitud}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                                    <p:outputLabel value="Fecha Presentación: " class="bordesuperior"/>
                                     <p:inputText value="#{modificacion.fechaPresentacion}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Certificado:"/>
+                                    <p:outputLabel value="Certificado:" class="bordesuperior"/>
                                     <p:inputText value="#{modificacion.certificado}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Fecha Certificado:"/>
+                                    <p:outputLabel value="Fecha Certificado:" class="bordesuperior"/>
                                     <p:inputText value="#{modificacion.fechaCertificado}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Casillero:" />
+                                    <p:outputLabel value="Casillero:" class="bordesuperior"/>
                                     <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
                                         <p:inputText id="casilm" value="#{modificacion.casillero}" readonly="true" class="maxsize light-blue"/>
                                         <p:commandButton value="ver" actionListener="#{tramiteBean.prepararModificacion(modificacion)}"
@@ -272,13 +272,13 @@ and open the template in the editor.
                                                          class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                                     </p:panelGrid>
 
-                                    <p:outputLabel value="Título:"/>
+                                    <p:outputLabel value="Título:" class="bordesuperior"/>
                                     <p:inputTextarea value="#{modificacion.titulo}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Fecha Título"/>
+                                    <p:outputLabel value="Fecha Título" class="bordesuperior"/>
                                     <p:inputText value="#{modificacion.fechaTitulo}" readonly="true" class="maxsize"/>
 
 
-                                    <p:outputLabel value="Estado:" rendered="#{!(modificacion.estado eq null)}"/>
+                                    <p:outputLabel value="Estado:" rendered="#{!(modificacion.estado eq null)}" class="bordesuperior"/>
                                     <p:inputText value="#{modificacion.estado}" readonly="true" class="maxsize" rendered="#{!(modificacion.estado eq null)}"/>
                                 </p:panelGrid>                                
 
@@ -294,29 +294,29 @@ and open the template in the editor.
 
                     <p:panelGrid id="tutelagepanel" rendered="#{tramiteBean.contutela}" columns="1" 
                                  style="width: 70%; text-align: center; margin: 0 auto; border: 1px solid #e3e3e3;" >
-                        <p:outputLabel value="TUTELAS" rendered="#{!tramiteBean.hijas}" 
+                        <p:outputLabel value="TUTELAS" rendered="#{tramiteBean.hijas}" 
                                        style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" />
                         <br/>
                         <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.contutela}" style="width: 100%" 
-                                     columnClasses="forty-two-percent,fivety-sevent-percent">
-                            <p:outputLabel value="Trámite Tutela: " class="maxsize"/>
-                            <p:inputText value="#{tramiteBean.tutelageForm.applicationNumber}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Casillero:" />
+                                     columnClasses="forty-two-percent,fivety-seven-percent">
+                            <p:outputLabel value="Trámite Tutela: " class="maxsize bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.tutelageForm.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                            <p:outputLabel value="Casillero:" class="bordesuperior"/>
                             <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
                                 <p:inputText id="casiltut" value="#{tramiteBean.tutelageForm.casillero}" readonly="true" class="maxsize light-blue"/>
                                 <p:commandButton value="ver" actionListener="#{tramiteBean.prepararTutela}"
                                                  oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                  class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                             </p:panelGrid>
-                            <p:outputLabel value="Fecha Presentación: " class="maxsize"/>
+                            <p:outputLabel value="Fecha Presentación: " class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.tutelageForm.applicationDate}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Tema:"/>
+                            <p:outputLabel value="Tema:" class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.tutelageForm.subject}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Descripción:"/>
+                            <p:outputLabel value="Descripción:" class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.tutelageForm.respondentDescription}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Estado:"/>
+                            <p:outputLabel value="Estado:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.tutelaAux.tutelageForm.status}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Expediente:"/>
+                            <p:outputLabel value="Expediente:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.tutelageForm.expedient}" readonly="true" class="maxsize"/>
                         </p:panelGrid>                                
 
@@ -332,25 +332,25 @@ and open the template in the editor.
                                  style="width: 70%; text-align: center; margin: 0 auto; border: 1px solid #e3e3e3;" >
 
                         <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conderechos}" style="width: 100%"
-                                     columnClasses="forty-two-percent,fivety-sevent-percent">
-                            <p:outputLabel value="Trámite Derecho de autor: " class="maxsize"/>
+                                     columnClasses="forty-two-percent,fivety-seven-percent">
+                            <p:outputLabel value="Trámite Derecho de autor: " class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.playForm.applicationNumber}" readonly="true" class="maxsize" />
-                            <p:outputLabel value="Casillero:" />
+                            <p:outputLabel value="Casillero:" class="bordesuperior"/>
                             <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
                                 <p:inputText id="casild" value="#{tramiteBean.playForm.casillero}" readonly="true" class="maxsize light-blue"/>
                                 <p:commandButton value="ver" actionListener="#{tramiteBean.prepararDerechos}"
                                                  oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                  class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                             </p:panelGrid>
-                            <p:outputLabel value="Tipo de trámite: " class="maxsize"/>
+                            <p:outputLabel value="Tipo de trámite: " class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.playForm.tipo}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                            <p:outputLabel value="Fecha Presentación: " class="maxsize"/>
+                            <p:outputLabel value="Fecha Presentación: " class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.playForm.applicationDate}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Título: "/>
+                            <p:outputLabel value="Título: " class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.playForm.title}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Descripción:"/>
+                            <p:outputLabel value="Descripción:" class="bordesuperior"/>
                             <p:inputTextarea value="#{tramiteBean.playForm.description}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Estado:"/>
+                            <p:outputLabel value="Estado:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.playForm.status}" readonly="true" class="maxsize"/>
                         </p:panelGrid>                                
 
@@ -370,23 +370,24 @@ and open the template in the editor.
 
                             <p:panelGrid columns="1" style="display: inline-block; vertical-align: top; width: 32%; margin-left: 5px;border: 1px solid #e3e3e3;">
                                 <p:outputLabel value="#{alcance.numAlcance}" style="font-size: 14px"/>
-                                <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conalcance}" style="width: 100%;" columnClasses="forty-two-percent,fivety-sevent-percent">
-                                    <p:outputLabel value="Trámite Alcance: "/>
+                                <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conalcance}"  
+                                             columnClasses="forty-two-percent,fivety-seven-percent">
+                                    <p:outputLabel value="Trámite Alcances: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{alcance.scopeForm.applicationNumber}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Casillero:" />
+                                    <p:outputLabel value="Casillero:" class="bordesuperior float-right"/>
                                     <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                        <p:inputText id="casilal" value="#{alcance.scopeForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                        <p:inputText id="casilal" value="#{alcance.scopeForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior float-right"/>
                                         <p:commandButton value="ver" actionListener="#{tramiteBean.prepararAlcance(alcance)}"
                                                          oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                          class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                                     </p:panelGrid>
-                                    <p:outputLabel value="Trámite Afectado: "/>
+                                    <p:outputLabel value="Trámite Afectado: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{alcance.scopeForm.affectedApplicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                                    <p:outputLabel value="Fecha Creación: "/>
+                                    <p:outputLabel value="Fecha Creación: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{alcance.scopeForm.applicationDate}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Descripción: "/>
+                                    <p:outputLabel value="Descripción: " class="bordesuperior float-right"/>
                                     <p:inputTextarea value="#{alcance.scopeForm.description}" readonly="true" class="maxsize"/>  
-                                    <p:outputLabel value="Estado: "/>
+                                    <p:outputLabel value="Estado: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{alcance.scopeForm.status}" readonly="true" 
                                                  styleClass="#{alcance.scopeForm.status eq 'ALCANCE NO ENVIADO'?'estiloPink':'maxsize'}"/>
                                 </p:panelGrid>                                
@@ -408,25 +409,25 @@ and open the template in the editor.
                         <c:forEach items="#{tramiteBean.notificaciones}" var="notificacion" id="eachdata" varStatus="i" >
 
                             <p:panelGrid columns="1" style="display: inline-block; vertical-align: top; width: 32%; padding: 10px; border: 1px solid #e3e3e3; margin-right: 2px;">
-                                <p:outputLabel value="#{notificacion.numNotification}" style="font-size: 14px"/>
-                                <p:panelGrid columns="2" rendered="#{tramiteBean.connotificacion}" style="width: 100%;" columnClasses="forty-two-percent,fivety-sevent-percent">
-                                    <p:outputLabel value="Trámite: "/>
+                                <p:outputLabel value="#{notificacion.numNotification}" style="font-size: 14px" />
+                                <p:panelGrid columns="2" rendered="#{tramiteBean.connotificacion}" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                                    <p:outputLabel value="Trámite: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{notificacion.notification.matter}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Tipo: "/>
+                                    <p:outputLabel value="Tipo: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{notificacion.notification.type}" readonly="true" class="maxsize estiloLigth"/>
-                                    <p:outputLabel value="Fecha de creación: "/>
-                                    <p:inputText value="#{notificacion.notification.createDate}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>                                    
-                                    <p:outputLabel value="Casillero: "/>
+                                    <p:outputLabel value="Fecha de creación: " class="bordesuperior float-right"/>
+                                    <p:inputText value="#{notificacion.notification.createDate}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                                    <p:outputLabel value="Casillero: " class="bordesuperior float-right"/>
                                     <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                        <p:inputText id="casilno" value="#{notificacion.notification.locker}" readonly="true" class="maxsize light-blue"/>
+                                        <p:inputText id="casilno" value="#{notificacion.notification.locker}" readonly="true" class="maxsize light-blue bordesuperior float-right"/>
                                         <p:commandButton value="ver" actionListener="#{tramiteBean.prepararNotificacion(notificacion)}"
                                                          oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                          class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                                     </p:panelGrid>
-                                    <p:outputLabel value="ESTADO: "/>
-                                    <p:inputTextarea value="#{notificacion.notification.status}" readonly="true" class="maxsize"
-                                                     styleClass="#{notificacion.notification.status eq 'EL DOCUMENTO NO ES VISIBLE PARA EL USUARIO'?'estiloOrange':'maxsize'}"/>
-                                    <p:outputLabel value="Fecha de apertura: "/>
+                                    <p:outputLabel value="ESTADO: " class="bordesuperior float-right"/>
+                                    <p:inputTextarea value="#{notificacion.notification.statusText}" readonly="true" class="maxsize"
+                                                     styleClass="#{(notificacion.notification.status eq 'DRAFT' or notificacion.notification.status eq 'RETIRED')?'estiloOrange':'maxsize'}"/>
+                                    <p:outputLabel value="Fecha de apertura: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{notificacion.notification.openDate}" readonly="true" class="maxsize"/>
                                 </p:panelGrid>                                
 
@@ -449,23 +450,23 @@ and open the template in the editor.
                             <p:panelGrid columns="1" style="display: inline-block; width: 32%; vertical-align: top; margin-left: 5px; border: 1px solid #e3e3e3; ">
                                 <p:outputLabel value="#{oposicion.numOposicion}" style="font-size: 14px"/>
                                 <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conoposicion}" 
-                                             columnClasses="forty-two-percent,fivety-sevent-percent">
-                                    <p:outputLabel value="Trámite Oposición: "/>
+                                             columnClasses="forty-two-percent,fivety-seven-percent">
+                                    <p:outputLabel value="Trámite Oposición: " class="bordesuperior"/>
                                     <p:inputText value="#{oposicion.oppositionForm.applicationNumber}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Casillero:" />
+                                    <p:outputLabel value="Casillero:" class="bordesuperior"/>
                                     <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                        <p:inputText id="casilop" value="#{oposicion.oppositionForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                        <p:inputText id="casilop" value="#{oposicion.oppositionForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior"/>
                                         <p:commandButton value="ver" actionListener="#{tramiteBean.prepararOposicion(oposicion)}"
                                                          oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                          class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
                                     </p:panelGrid>
-                                    <p:outputLabel value="Fecha Oposición: "/>
+                                    <p:outputLabel value="Fecha Oposición: " class="bordesuperior"/>
                                     <p:inputText value="#{oposicion.oppositionForm.applicationDate}" readonly="true" class="maxsize"/>                                    
-                                    <p:outputLabel value="Trámite Afectado: "/>
+                                    <p:outputLabel value="Trámite Afectado: " class="bordesuperior"/>
                                     <p:inputText value="#{oposicion.oppositionForm.searchedApplicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                                    <p:outputLabel value="Expediente: "/>
+                                    <p:outputLabel value="Expediente: " class="bordesuperior"/>
                                     <p:inputText value="#{oposicion.oppositionForm.expedient}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Estado: "/>
+                                    <p:outputLabel value="Estado: " class="bordesuperior"/>
                                     <p:inputText value="#{oposicion.oppositionForm.status}" readonly="true" class="maxsize"/>
                                 </p:panelGrid>                                
 
@@ -487,24 +488,24 @@ and open the template in the editor.
                             <p:panelGrid columns="1" style="display: inline-block; width: 32%; vertical-align: top; margin-left: 5px; border: 1px solid #e3e3e3;">
                                 <p:outputLabel value="#{nolinea.numNoLinea}" style="font-size: 14px" />
                                 <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.connolinea}"
-                                             columnClasses="forty-two-percent,fivety-sevent-percent">
-                                    <p:outputLabel value="Trámite no en línea: "/>
+                                             columnClasses="forty-two-percent,fivety-seven-percent">
+                                    <p:outputLabel value="Trámite no en línea: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{nolinea.voucherForm.applicationNumber}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Casillero:" />
+                                    <p:outputLabel value="Casillero:" class="bordesuperior float-right"/>
                                     <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                        <p:inputText id="casiltnl" value="#{nolinea.voucherForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                        <p:inputText id="casiltnl" value="#{nolinea.voucherForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior float-right"/>
                                         <p:commandButton value="ver" actionListener="#{tramiteBean.prepararTramNoLinea(nolinea)}"
                                                          oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
                                                          class="btn_peque maxsize"  update="mensajes dlgCasillero"
                                                          disabled="#{nolinea.voucherForm.casillero eq 'GENERACIÓN INTERNA'?true:false}"/>
                                     </p:panelGrid>
-                                    <p:outputLabel value="Fecha Presentación: "/>
+                                    <p:outputLabel value="Fecha Presentación: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{nolinea.voucherForm.applicationDate}" readonly="true" class="maxsize"/>                                    
-                                    <p:outputLabel value="Trámite Afectado: "/>
+                                    <p:outputLabel value="Trámite Afectado: " class="bordesuperior float-right"/>
                                     <p:inputText value="#{nolinea.voucherForm.documentNumber}" readonly="true" class="maxsize"/>                                    
-                                    <p:outputLabel value="Estado: "/>
+                                    <p:outputLabel value="Estado: " class="bordesuperior float-right"/>
                                     <p:inputTextarea value="#{nolinea.voucherForm.status}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Observación: "/>
+                                    <p:outputLabel value="Observación: " class="bordesuperior float-right"/>
                                     <p:inputTextarea value="#{nolinea.voucherForm.observacion}" readonly="true" class="maxsize"/>                                                                   
                                 </p:panelGrid>                                
 
@@ -560,19 +561,19 @@ and open the template in the editor.
                 <p:ajax event="close" update="dlgCasillero" resetValues="true" />                
                 <h:form id="frmCasillero" >
                     <p:panelGrid columns="4" columnClasses="twelve-percent,thirty-five-percent,twelve-percent,thirty-five-percent">
-                        <p:outputLabel value="Nombre:" style="float:right;"/>
+                        <p:outputLabel value="Nombre:" style="float:right;" class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.name}" class="maxsize" readonly="true"/>
-                        <p:outputLabel value="Tipo: " style="float:right; "/>
+                        <p:outputLabel value="Tipo: " style="float:right; " class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.documentType}" class="maxsize" readonly="true"/>
-                        <p:outputLabel value="Documento:" style="float:right; "/>
+                        <p:outputLabel value="Documento:" style="float:right; " class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.document}" class="maxsize" readonly="true"/>
-                        <p:outputLabel value="Email:" style="float:right; "/>
+                        <p:outputLabel value="Email:" style="float:right; " class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.email}" class="maxsize" readonly="true"/>
-                        <p:outputLabel value="Celular:" style="float:right; "/>
+                        <p:outputLabel value="Celular:" style="float:right; " class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.mobile}" class="maxsize" readonly="true"/>
-                        <p:outputLabel value="Teléfono:" style="float:right; "/>
+                        <p:outputLabel value="Teléfono:" style="float:right; " class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.phone}" class="maxsize" readonly="true"/>
-                        <p:outputLabel value="Nombre Firma:" rendered="#{tramiteBean.owner.lawFirm eq null?false:true}" style="float:right; margin-right: 3px;"/>
+                        <p:outputLabel value="Nombre Firma:" rendered="#{tramiteBean.owner.lawFirm eq null?false:true}" style="float:right; margin-right: 3px;" class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.owner.lawFirm}" class="maxsize" readonly="true" rendered="#{tramiteBean.owner.lawFirm eq null?false:true}"/>
                     </p:panelGrid>
                     <br/>
@@ -587,23 +588,23 @@ and open the template in the editor.
                         <p:outputLabel value="TRÁMITE ACTUAL"/>
                         <p:panelGrid columns="4" style="text-align: center; margin: 0 auto !important; width: 100%; border-style: solid; padding-bottom: 2px !important;" 
                                      id="tramen" rendered="#{tramiteBean.cambioCasillero}" columnClasses="twenty-percent,thirty-percent,twenty-percent,thirty-percent">
-                            <p:outputLabel value="Trámite:" style="margin-top: 10px !important" class="maxsize"/>
+                            <p:outputLabel value="Trámite:" style="margin-top: 10px !important" class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.tramite.solicitud}" readonly="true" class="maxsize" style="margin-top: 10px !important; font-weight: bold;"/>
-                            <p:outputLabel value="Tipo: " style="margin-top: 10px !important" class="maxsize"/>
+                            <p:outputLabel value="Tipo: " style="margin-top: 10px !important" class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.tramite.tipo}" readonly="true" class="maxsize" style="margin-top: 10px !important"/>                            
-                            <p:outputLabel value="Denominación: " for="denomcas" class="maxsize"/>
+                            <p:outputLabel value="Denominación: " for="denomcas" class="maxsize bordesuperior"/>
                             <p:inputTextarea id="denomcas" value="#{tramiteBean.tramite.denominacion}" class="maxsize" required="true" readonly="true"/>
-                            <p:outputLabel value="Casillero Actual: " class="maxsize"/>
+                            <p:outputLabel value="Casillero Actual: " class="maxsize bordesuperior"/>
                             <p:inputText value="#{tramiteBean.tramite.casillero}" readonly="true" style="background: #ffc107 !important; font-size: 16px !important; font-weight: bold" class="maxsize"/>
                         </p:panelGrid>
                         <br/>
                         <p:outputLabel value="NUEVO CASILLERO"/>
                         <p:panelGrid columns="4" style="text-align: center; margin: 0 auto !important; width: 100%; border-style: solid" id="asignpan"
                                      columnClasses="twenty-percent,thirty-percent,twenty-percent,thirty-percent">
-                            <p:outputLabel value="Asignar al Casillero: " for="casSenadiAcForm" class="maxsize" style="margin-top: 10px !important;"/>
+                            <p:outputLabel value="Asignar al Casillero: " for="casSenadiAcForm" class="maxsize bordesuperior" style="margin-top: 10px !important;"/>
 
                             <p:panelGrid columns="2" columnClasses="eigthy-percent,twenty-percent" style="margin-top: 10px !important">
-                                <p:inputText id="casSenadiAcForm" value="#{tramiteBean.cambiarCasillero.nuevoCasillero}" class="maxsize" 
+                                <p:inputText id="casSenadiAcForm" value="#{tramiteBean.cambiarCasillero.nuevoCasillero}" class="maxsize bordesuperior" 
                                              title="Nuevo Casillero para el trámite #{configuracionBean.cambioCasillero.tramite}" readonly="true"
                                              style="font-size: 16px !important; font-weight: bold; text-align: center !important; background: #aed581 !important" >
                                     <p:keyFilter mask="num" />
@@ -614,32 +615,33 @@ and open the template in the editor.
                                                  update="mensajes allform:dlgCambioCasillero tramen"/>
                             </p:panelGrid>                                                       
                             
-                            <p:outputLabel value="Titular Casillero: " for="titCasNuevoForm" style="margin-top: 10px !important;"/>
+                            <p:outputLabel value="Titular Casillero: " for="titCasNuevoForm" style="margin-top: 10px !important;" class="bordesuperior"/>
                             <p:inputText id="titCasNuevoForm" value="#{tramiteBean.cambiarCasillero.titularCasilleroNuevo}" readonly="true" 
                                          class="maxsize" style="margin-top: 10px !important; background: #C8E6C9 !important;"/>
 
-                            <p:outputLabel value="Identificación " for="idenNuevoForm"/>
+                            <p:outputLabel value="Identificación " for="idenNuevoForm" class="bordesuperior"/>
                             <p:inputText id="idenNuevoForm" value="#{tramiteBean.owneraux.document}" 
                                          readonly="true" class="maxsize" style="background: #C8E6C9 !important"/>
 
-                            <p:outputLabel value="Correo: " for="correoNuevoForm"/>
+                            <p:outputLabel value="Correo: " for="correoNuevoForm" class="bordesuperior"/>
                             <p:inputText id="correoNuevoForm" value="#{tramiteBean.cambiarCasillero.correoTitularNuevo}" 
                                          readonly="true" class="maxsize" style="background: #C8E6C9 !important"/>
 
-                            <p:outputLabel value="Celular " for="celuNuevoForm"/>
+                            <p:outputLabel value="Celular " for="celuNuevoForm" class="bordesuperior"/>
                             <p:inputText id="celuNuevoForm" value="#{tramiteBean.owneraux.mobile}" 
                                          readonly="true" class="maxsize" style="background: #C8E6C9 !important"/>
 
-                            <p:outputLabel value="Teléfono " for="telfNuevoForm"/>
+                            <p:outputLabel value="Teléfono " for="telfNuevoForm" class="bordesuperior"/>
                             <p:inputText id="telfNuevoForm" value="#{tramiteBean.owneraux.phone}" 
                                          readonly="true" class="maxsize" style="background: #C8E6C9 !important"/>
                             
-                            <p:outputLabel value="Fecha Escrito: " for="fechaPForm" rendered="#{tramiteBean.cambiarCasillero.fechaProvidencia eq null?false:true}"/>
+                            <p:outputLabel value="Fecha Escrito: " for="fechaPForm" rendered="#{tramiteBean.cambiarCasillero.fechaProvidencia eq null?false:true}"
+                                           class="bordesuperior"/>
                             <p:calendar id="fechaPForm" value="#{tramiteBean.cambiarCasillero.fechaProvidencia}" required="true"
                                         rendered="#{tramiteBean.cambiarCasillero.fechaProvidencia eq null?false:true}"
                                     mask="true" pattern="yyyy-MM-dd" title="Fecha de Providencia" inputStyleClass="maxsize greencc"/>
 
-                            <p:outputLabel value="Visualizar Providencia: " />
+                            <p:outputLabel value="Visualizar Providencia: " class="bordesuperior"/>
                             <p:commandLink class="linkcas" title="Providencia"
                                            actionListener="#{tramiteBean.viewProvidenciaCambioCasillero}"
                                            process="@form" disabled="#{tramiteBean.cambiarCasillero.nuevoCasillero eq null?true:false}"

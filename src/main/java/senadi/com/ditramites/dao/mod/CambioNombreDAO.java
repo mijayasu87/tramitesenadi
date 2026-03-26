@@ -12,7 +12,7 @@ import senadi.com.ditramites.model.mod.CambioNombre;
  *
  * @author micharesp
  */
-public class CambioNombreDAO extends DAOAbstractMod<CambioNombre>{
+public class CambioNombreDAO extends DAOAbstractMod<CambioNombre> {
 
     public CambioNombreDAO(CambioNombre t) {
         super(t);
@@ -20,13 +20,25 @@ public class CambioNombreDAO extends DAOAbstractMod<CambioNombre>{
 
     @Override
     public List<CambioNombre> buscarTodos() {
-        Query query = this.getEntityManager().createQuery("Select c from CambioNombre c");
-        return query.getResultList();
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from CambioNombre c");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
     }
-    
-    public List<CambioNombre> getCambioNombresByTitulo(String titulo){
-        Query query = this.getEntityManager().createQuery("Select c from CambioNombre c where c.registro = '"+titulo+"'");
-        return query.getResultList();
+
+    public List<CambioNombre> getCambioNombresByTitulo(String titulo) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from CambioNombre c where c.registro = :titulo");
+            query.setParameter("titulo", titulo);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+
     }
-    
+
 }

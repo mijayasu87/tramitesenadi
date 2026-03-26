@@ -20,53 +20,70 @@ public class ConfiguracionCCDAO extends DAOAbstractMod<ConfiguracionCC> {
 
     @Override
     public List<ConfiguracionCC> buscarTodos() {
-        Query query = this.getEntityManager().createQuery("Select c from ConfiguracionCC c");
-        query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-        return query.getResultList();
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from ConfiguracionCC c");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
     }
 
     public List<ConfiguracionCC> getConfiguracionByTipo(String tipo) {
-        Query query = this.getEntityManager().createQuery("Select c from ConfiguracionCC c where c.tipo = '" + tipo + "' order by c.id");
-        query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-        return query.getResultList();
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from ConfiguracionCC c where c.tipo = :tipo order by c.id");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            query.setParameter("tipo", tipo);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
     }
 
     public String getConfiguracionesActivas() {
-        Query query = this.getEntityManager().createQuery("SELECT c FROM ConfiguracionCC c WHERE c.activo = TRUE");
-        query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-        List<ConfiguracionCC> confs = query.getResultList();
+        try {
+            Query query = this.getEntityManager().createQuery("SELECT c FROM ConfiguracionCC c WHERE c.activo = TRUE");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<ConfiguracionCC> confs = query.getResultList();
 
-        if (confs.isEmpty()) {
-            return "AÚN NO HA REALIZADO LA CONFIGURACIÓN";
-        } else if (confs.size() == 4) {
-            return "";
-        } else {
-            String s = "";
-            for (int i = 0; i < confs.size(); i++) {
-                s += confs.get(i).getTipo();
-            }
+            if (confs.isEmpty()) {
+                return "AÚN NO HA REALIZADO LA CONFIGURACIÓN";
+            } else if (confs.size() == 4) {
+                return "";
+            } else {
+                String s = "";
+                for (int i = 0; i < confs.size(); i++) {
+                    s += confs.get(i).getTipo();
+                }
 
-            String texto = "";
-            if (!s.contains("ACCIÓN DE PERSONAL")) {
-                texto = "FALTA ACTIVAR LA ACCIÓN DE PERSONAL EN CONFIGURACIÓN\n";
-            }
-            if (!s.contains("RESOLUCIÓN")) {
-                texto += "FALTA ACTIVAR LA RESOLUCIÓN EN CONFIGURACIÓN\n";
-            }
+                String texto = "";
+                if (!s.contains("ACCIÓN DE PERSONAL")) {
+                    texto = "FALTA ACTIVAR LA ACCIÓN DE PERSONAL EN CONFIGURACIÓN\n";
+                }
+                if (!s.contains("RESOLUCIÓN")) {
+                    texto += "FALTA ACTIVAR LA RESOLUCIÓN EN CONFIGURACIÓN\n";
+                }
 
-            if (!s.contains("SUBROGANTE")) {
-                texto += "FALTA ACTIVAR EL SUBROGANTE EN CONFIGURACIÓN\n";
+                if (!s.contains("SUBROGANTE")) {
+                    texto += "FALTA ACTIVAR EL SUBROGANTE EN CONFIGURACIÓN\n";
+                }
+                if (!s.contains("DELEGACIÓN SUBROGANTE")) {
+                    texto += "FALTA ACTIVAR LA DELEGACIÓN SUBROGANTE EN CONFIGURACIÓN\n";
+                }
+                return texto;
             }
-            if (!s.contains("DELEGACIÓN SUBROGANTE")) {
-                texto += "FALTA ACTIVAR LA DELEGACIÓN SUBROGANTE EN CONFIGURACIÓN\n";
-            }
-            return texto;
+        } finally {
+            this.getEntityManager().close();
         }
     }
 
     public List<ConfiguracionCC> getConfiguracionesCCActivas() {
-        Query query = this.getEntityManager().createQuery("Select c from ConfiguracionCC c where c.activo = TRUE");
-        return query.getResultList();
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from ConfiguracionCC c where c.activo = TRUE");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
     }
-
 }

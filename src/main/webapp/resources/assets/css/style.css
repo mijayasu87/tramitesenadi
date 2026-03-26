@@ -95,6 +95,10 @@
     width: 100% !important;
 }
 
+.bordesuperior{
+    padding-top: 10px !important;
+}
+
 .greencc{
     background: #C8E6C9 !important;
 }
@@ -622,13 +626,27 @@ body .ui-widget {
 .forty-two-percent {
     width: 42%;
     background: transparent !important;
+    float: right !important;
+}
+
+.float-left {
+    float: left !important;
+}
+
+.float-right {
+    float: right !important;
+    margin-right: 3px !important;
+}
+
+.float-none {
+    float: none !important;
 }
 
 .thirty-percent{
     width: 30%;
 }
 
-.fivety-sevent-percent {
+.fivety-seven-percent {
     width: 57%;
     text-align: right !important;
     background: transparent !important;

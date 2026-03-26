@@ -12,7 +12,7 @@ import senadi.com.ditramites.model.modren.Renovacion;
  *
  * @author micharesp
  */
-public class RenovacionDAO extends DAOAbstractRen<Renovacion>{
+public class RenovacionDAO extends DAOAbstractRen<Renovacion> {
 
     public RenovacionDAO(Renovacion t) {
         super(t);
@@ -20,19 +20,29 @@ public class RenovacionDAO extends DAOAbstractRen<Renovacion>{
 
     @Override
     public List<Renovacion> buscarTodos() {
-        Query query = this.getEntityManager().createQuery("Select r from Renovacion r");
-        return query.getResultList();
-    }
-    
-    public List<Renovacion> getRenovacionesByTitOrTramite(String tituloOrTramite, boolean avisa){
-        String sql;
-        if(avisa){
-            sql = "Select c from Renovacion c where c.solicitudSenadi = '"+tituloOrTramite+"'";
-        }else{
-            sql = "Select c from Renovacion c where c.registroNo = '"+tituloOrTramite+"'";
+        try {
+            Query query = this.getEntityManager().createQuery("Select r from Renovacion r");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
         }
-        Query query = this.getEntityManager().createQuery(sql);
-        return query.getResultList();
+
     }
-    
+
+    public List<Renovacion> getRenovacionesByTitOrTramite(String tituloOrTramite, boolean avisa) {
+        try {
+            String sql;
+            if (avisa) {
+                sql = "Select c from Renovacion c where c.solicitudSenadi = '" + tituloOrTramite + "'";
+            } else {
+                sql = "Select c from Renovacion c where c.registroNo = '" + tituloOrTramite + "'";
+            }
+            Query query = this.getEntityManager().createQuery(sql);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
 }

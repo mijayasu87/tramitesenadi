@@ -53,6 +53,7 @@ import senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo;
 import senadi.com.ditramites.util.Controlador;
 import senadi.com.ditramites.util.FTPFiles;
 import senadi.com.ditramites.util.Operaciones;
+import senadi.com.ditramites.util.TramiteUtil;
 
 /**
  *
@@ -156,7 +157,8 @@ public class TramiteBean implements Serializable {
             String tipoTram = c.getApplicationType(tramiteText);
             boolean flag = true;
             if (!tipoTram.trim().isEmpty()) {
-
+                System.out.println("**** TIPO TRÁMITE: " + tipoTram + " ****");
+                System.out.println("Inicio lectura de trámite: " + Operaciones.getCurrentTimeStamp());
                 switch (tipoTram) {
                     case "BreederForm":
                         if (cargarBreederAVisualizarByTramite(tramiteText)) {
@@ -196,14 +198,15 @@ public class TramiteBean implements Serializable {
                         break;
                     case "Patentform":
                         if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
+                            System.out.println("------> Patente cargada <------");
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            System.out.println("PATENTE");
                             cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
                             cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true);
                             cargarOposicionesAVisualizarByTramite(tramiteText, true);
                             cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
                             resultadopanel = true;
+                            System.out.println("Fin Trámite Patente: " + Operaciones.getCurrentTimeStamp());
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
                         }
                         break;
@@ -247,7 +250,7 @@ public class TramiteBean implements Serializable {
                     case "Tutelageform":
                         if (cargarTutelasAVisualizarByTramite(tramiteText)) {
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            hijas = true;
+//                            hijas = true;
                             System.out.println("TUTELAS");
                             cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
@@ -274,97 +277,97 @@ public class TramiteBean implements Serializable {
                 flag = false;
             }
             if (!flag) {
-                System.out.println("entro aquí");
-                loadApplication(msg);
+//                System.out.println("entro aquí <----------------------------");
+//                loadApplication(msg);
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL TRÁMITE " + tipoTram);
             }
-
+            System.out.println("Fin lectura trámite: " + Operaciones.getCurrentTimeStamp());
             System.out.println("");
         }
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
 
-    public void loadApplication(FacesMessage msg) {
-        if (cargarMarcasAVisualizarByTramite(tramiteText)) {
-            System.out.println("SIGNO DISTINTIVO");
-            Controlador c = new Controlador();
-            ppdiSolicitudSignoDistintivo = c.getPpdiSolicitudSignoDistintivoByTramite(tramiteText);
-            cargarAlcancesAVisualizarByAfforAplicationNumber(hallmarkForm.getApplicationNumber(), false);
-            System.out.println(hallmarkForm.getTitulo());
-            cargarModificacionesAVisualizarByTituloOrTramite(hallmarkForm.getTitulo(), false);
-            cargarOposicionesAVisualizarByTramite(hallmarkForm.getApplicationNumber(), true);
-            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL SIGNO DISTINTIVO");
-            resultadopanel = true;
-        } else if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            System.out.println("PATENTE");
-            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-            cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true);
-            cargarOposicionesAVisualizarByTramite(tramiteText, true);
-            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
-        } else if (cargarTutelasAVisualizarByTramite(tramiteText)) {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            hijas = true;
-            System.out.println("TUTELAS");
-            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA TUTELA ADMINISTRATIVA");
-        } else if (cargarOposicionesAVisualizarByTramite(tramiteText, false)) {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            hijas = true;
-            System.out.println("OPOSICIÓN");
-            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            tituloTramiteText = "OPOSICIÓN";
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OPOSICIÓN");
-        } else if (cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, true)) {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            hijas = true;
-            System.out.println("ALCANCE");
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            tituloTramiteText = "ALCANCE";
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL ALCANCE");
-        } else if (cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true)) {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            hijas = true;
-            System.out.println("MODIFICACIÓN AL REGISTRO");
-            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            tituloTramiteText = "MODIFICACIÓN AL REGISTRO";
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA MODIFICACIÓN");
-        } else if (cargarPlayFormAVisualizarByTramite(tramiteText)) {
-            System.out.println("*********** ENTRO EN DERECHOS DE AUTOR ****************");
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            hijas = true;
-            System.out.println("DERECHO DE AUTOR");
-            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            tituloTramiteText = "DERECHOS DE AUTOR";
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL DERECHO DE AUTOR");
-        } else if (cargarNolineaAVisualizarByAppOrDoc(tramiteText, true)) {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            hijas = true;
-            System.out.println("TRÁMITE NO EN LÍNEA");
-            cargarNotificacionesAVisualizarByTramite(tramiteText);
-            tituloTramiteText = "TRÁMITE NO EN LÍNEA";
-            resultadopanel = true;
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE NO EN LÍNEA");
-        } else {
-            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-            resultadopanel = false;
-            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "NO SE ENCONTRARON RESULTADOS");
-        }
-    }
-
+//    public void loadApplication(FacesMessage msg) {
+//        if (cargarMarcasAVisualizarByTramite(tramiteText)) {
+//            System.out.println("SIGNO DISTINTIVO");
+//            Controlador c = new Controlador();
+//            ppdiSolicitudSignoDistintivo = c.getPpdiSolicitudSignoDistintivoByTramite(tramiteText);
+//            cargarAlcancesAVisualizarByAfforAplicationNumber(hallmarkForm.getApplicationNumber(), false);
+//            System.out.println(hallmarkForm.getTitulo());
+//            cargarModificacionesAVisualizarByTituloOrTramite(hallmarkForm.getTitulo(), false);
+//            cargarOposicionesAVisualizarByTramite(hallmarkForm.getApplicationNumber(), true);
+//            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL SIGNO DISTINTIVO");
+//            resultadopanel = true;
+//        } else if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            System.out.println("PATENTE");
+//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
+//            cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true);
+//            cargarOposicionesAVisualizarByTramite(tramiteText, true);
+//            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
+//        } else if (cargarTutelasAVisualizarByTramite(tramiteText)) {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            hijas = true;
+//            System.out.println("TUTELAS");
+//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA TUTELA ADMINISTRATIVA");
+//        } else if (cargarOposicionesAVisualizarByTramite(tramiteText, false)) {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            hijas = true;
+//            System.out.println("OPOSICIÓN");
+//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            tituloTramiteText = "OPOSICIÓN";
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OPOSICIÓN");
+//        } else if (cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, true)) {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            hijas = true;
+//            System.out.println("ALCANCE");
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            tituloTramiteText = "ALCANCE";
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL ALCANCE");
+//        } else if (cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true)) {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            hijas = true;
+//            System.out.println("MODIFICACIÓN AL REGISTRO");
+//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            tituloTramiteText = "MODIFICACIÓN AL REGISTRO";
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA MODIFICACIÓN");
+//        } else if (cargarPlayFormAVisualizarByTramite(tramiteText)) {
+//            System.out.println("*********** ENTRO EN DERECHOS DE AUTOR ****************");
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            hijas = true;
+//            System.out.println("DERECHO DE AUTOR");
+//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            tituloTramiteText = "DERECHOS DE AUTOR";
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL DERECHO DE AUTOR");
+//        } else if (cargarNolineaAVisualizarByAppOrDoc(tramiteText, true)) {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            hijas = true;
+//            System.out.println("TRÁMITE NO EN LÍNEA");
+//            cargarNotificacionesAVisualizarByTramite(tramiteText);
+//            tituloTramiteText = "TRÁMITE NO EN LÍNEA";
+//            resultadopanel = true;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE NO EN LÍNEA");
+//        } else {
+//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//            resultadopanel = false;
+//            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "NO SE ENCONTRARON RESULTADOS");
+//        }
+//    }
     public boolean cargarPatentFormAVisualizarByTramite(String applicationNumber) {
         Controlador c = new Controlador();
         patentForm = c.getPatentFormByApplicationNumber(applicationNumber);
@@ -385,7 +388,8 @@ public class TramiteBean implements Serializable {
                 patentForm.setStatus("SIN PAGO");
             }
             FTPFiles files = new FTPFiles();
-            documentosExpediente = files.listarDirectorio(patentForm.getFtp() + patentForm.getId());
+            String rutaExpediente = patentForm.getFtp() + patentForm.getId();
+            documentosExpediente = files.listarDirectorio(rutaExpediente);
             documentos = new ArrayList<>();
             for (int i = 0; i < documentosExpediente.size(); i++) {
                 Documento doc = new Documento();
@@ -552,6 +556,8 @@ public class TramiteBean implements Serializable {
                         doc.setTipo("Documento Descuento");
                     } else if (doc.getArchivo().contains("pdf_hallmarkfrm_")) {
                         doc.setTipo("Formulario");
+                    } else if (doc.getArchivo().contains("logo_")) {
+                        doc.setTipo("Logo");
                     } else if (doc.getArchivo().contains("pdf_voucher_hallmarkfrm_")) {
                         doc.setTipo("Comprobante");
                     } else {
@@ -1360,13 +1366,13 @@ public class TramiteBean implements Serializable {
                 notificationaux.setNumNotification("NOTIFICACIÓN N° " + (i + 1) + "");
 
                 if (notificationaux.getNotification().getStatus().equals("OPENED")) {
-                    notificationaux.getNotification().setStatus("EL DOCUMENTO HA SIDO ABIERTO");
+                    notificationaux.getNotification().setStatusText("EL DOCUMENTO HA SIDO ABIERTO");
                 } else if (notificationaux.getNotification().getStatus().equals("SENT")) {
-                    notificationaux.getNotification().setStatus("EL DOCUMENTO NO HA SIDO ABIERTO AÚN");
+                    notificationaux.getNotification().setStatusText("EL DOCUMENTO NO HA SIDO ABIERTO AÚN");
                 } else if (notificationaux.getNotification().getStatus().equals("DRAFT")) {
-                    notificationaux.getNotification().setStatus("EL DOCUMENTO NO ES VISIBLE PARA EL USUARIO");
+                    notificationaux.getNotification().setStatusText("EL DOCUMENTO NO ES VISIBLE PARA EL USUARIO");
                 } else {
-                    notificationaux.getNotification().setStatus("EL DOCUMENTO HA SIDO RETIRADO DE LAS NOTIFICACIONES DEL USUARIO");
+                    notificationaux.getNotification().setStatusText("EL DOCUMENTO HA SIDO RETIRADO DE LAS NOTIFICACIONES DEL USUARIO");
                 }
 //                System.out.println(notificationaux.getNotification().getDocument());
                 notificaciones.add(notificationaux);

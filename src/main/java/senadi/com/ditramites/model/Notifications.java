@@ -20,6 +20,7 @@ public class Notifications {
     private Integer locker;
     private String openDate;
     private String status;
+    private String statusText;
     private String type;
     private Integer createdId;
     
@@ -205,5 +206,19 @@ public class Notifications {
      */
     public void setLoId(Integer loId) {
         this.loId = loId;
+    }
+
+    /**
+     * @return the statusText
+     */
+    public String getStatusText() {
+        return statusText;
+    }
+
+    /**
+     * @param statusText the statusText to set
+     */
+    public void setStatusText(String statusText) {
+        this.statusText = statusText;
     }
 }

@@ -10,7 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import senadi.com.ditramites.model.LockerNotifications;
 import senadi.com.ditramites.model.Notifications;
