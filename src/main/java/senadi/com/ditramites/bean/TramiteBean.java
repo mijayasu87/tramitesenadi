@@ -16,8 +16,10 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.AjaxBehaviorEvent;
 import org.primefaces.PrimeFaces;
 import org.primefaces.component.api.UIData;
+import org.primefaces.event.FileUploadEvent;
 import org.primefaces.event.RowEditEvent;
 import senadi.com.ditramites.model.BreederForms;
+import senadi.com.ditramites.model.DenominationForms;
 import senadi.com.ditramites.model.Documento;
 import senadi.com.ditramites.model.HallmarkForm;
 import senadi.com.ditramites.model.HallmarkFormDepurada;
@@ -53,7 +55,11 @@ import senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo;
 import senadi.com.ditramites.util.Controlador;
 import senadi.com.ditramites.util.FTPFiles;
 import senadi.com.ditramites.util.Operaciones;
-import senadi.com.ditramites.util.TramiteUtil;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import senadi.com.ditramites.model.FileAnnexesApplication;
+import senadi.com.ditramites.model.mod.FileAnnex;
 
 /**
  *
@@ -80,6 +86,7 @@ public class TramiteBean implements Serializable {
     private PlayFormsAux playFormAux;
     private PatentForms patentForm;
     private BreederForms breederForm;
+    private DenominationForms denominationForms;
 
     private List<ScopeFormsAux> alcances;
 
@@ -101,6 +108,7 @@ public class TramiteBean implements Serializable {
     private boolean conpatente;
     private boolean connotificacion;
     private boolean conbreeder;
+    private boolean condenomination;
 
     private boolean resultadopanel;
     private boolean hijas;
@@ -169,17 +177,21 @@ public class TramiteBean implements Serializable {
                         break;
                     // No existe este trámite aún
                     case "Denominationform":
+                        if (cargarDenominationAVisualizarByTramite(tramiteText)) {
+                            System.out.println("DENOMINATION FORMS");
+                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA DENOMINATION FORMS");
+                            resultadopanel = true;
+                        }
                         break;
                     case "Hallmarkform":
                         if (cargarMarcasAVisualizarByTramite(tramiteText)) {
                             System.out.println("SIGNO DISTINTIVO");
                             ppdiSolicitudSignoDistintivo = c.getPpdiSolicitudSignoDistintivoByTramite(tramiteText);
-                            cargarAlcancesAVisualizarByAfforAplicationNumber(hallmarkForm.getApplicationNumber(), false);
-                            System.out.println(hallmarkForm.getTitulo());
-                            cargarModificacionesAVisualizarByTituloOrTramite(hallmarkForm.getTitulo(), false);
-                            cargarOposicionesAVisualizarByTramite(hallmarkForm.getApplicationNumber(), true);
-                            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
+
+                            // Cargas en paralelo para mejor rendimiento
+                            cargarAlcancesOposicionesModificacionesEnParalelo(hallmarkForm.getApplicationNumber(), hallmarkForm.getTitulo(), tramiteText, true);
+
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL SIGNO DISTINTIVO");
                             resultadopanel = true;
                         }
@@ -189,8 +201,13 @@ public class TramiteBean implements Serializable {
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
                             hijas = true;
                             System.out.println("OPOSICIÓN");
-                            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
+
+                            // Carga en paralelo
+                            ExecutorService executor = Executors.newSingleThreadExecutor();
+                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                            executor.shutdown();
+
                             tituloTramiteText = "OPOSICIÓN";
                             resultadopanel = true;
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OPOSICIÓN");
@@ -200,11 +217,11 @@ public class TramiteBean implements Serializable {
                         if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
                             System.out.println("------> Patente cargada <------");
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-                            cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true);
-                            cargarOposicionesAVisualizarByTramite(tramiteText, true);
-                            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
+
+                            // Cargas en paralelo
+                            cargarAlcancesOposicionesModificacionesEnParalelo(tramiteText, tramiteText, tramiteText, false);
+
                             resultadopanel = true;
                             System.out.println("Fin Trámite Patente: " + Operaciones.getCurrentTimeStamp());
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
@@ -216,8 +233,13 @@ public class TramiteBean implements Serializable {
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
                             hijas = true;
                             System.out.println("DERECHO DE AUTOR");
-                            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
+
+                            // Carga en paralelo
+                            ExecutorService executor = Executors.newSingleThreadExecutor();
+                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                            executor.shutdown();
+
                             tituloTramiteText = "DERECHOS DE AUTOR";
                             resultadopanel = true;
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL DERECHO DE AUTOR");
@@ -229,8 +251,13 @@ public class TramiteBean implements Serializable {
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
                             hijas = true;
                             System.out.println("MODIFICACIÓN AL REGISTRO");
-                            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
+
+                            // Carga en paralelo
+                            ExecutorService executor = Executors.newSingleThreadExecutor();
+                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                            executor.shutdown();
+
                             tituloTramiteText = "MODIFICACIÓN AL REGISTRO";
                             resultadopanel = true;
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA MODIFICACIÓN");
@@ -252,8 +279,13 @@ public class TramiteBean implements Serializable {
                             ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
 //                            hijas = true;
                             System.out.println("TUTELAS");
-                            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
                             cargarNotificacionesAVisualizarByTramite(tramiteText);
+
+                            // Carga en paralelo
+                            ExecutorService executor = Executors.newSingleThreadExecutor();
+                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                            executor.shutdown();
+
                             resultadopanel = true;
                             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA TUTELA ADMINISTRATIVA");
                         }
@@ -287,87 +319,71 @@ public class TramiteBean implements Serializable {
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
 
-//    public void loadApplication(FacesMessage msg) {
-//        if (cargarMarcasAVisualizarByTramite(tramiteText)) {
-//            System.out.println("SIGNO DISTINTIVO");
-//            Controlador c = new Controlador();
-//            ppdiSolicitudSignoDistintivo = c.getPpdiSolicitudSignoDistintivoByTramite(tramiteText);
-//            cargarAlcancesAVisualizarByAfforAplicationNumber(hallmarkForm.getApplicationNumber(), false);
-//            System.out.println(hallmarkForm.getTitulo());
-//            cargarModificacionesAVisualizarByTituloOrTramite(hallmarkForm.getTitulo(), false);
-//            cargarOposicionesAVisualizarByTramite(hallmarkForm.getApplicationNumber(), true);
-//            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL SIGNO DISTINTIVO");
-//            resultadopanel = true;
-//        } else if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            System.out.println("PATENTE");
-//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-//            cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true);
-//            cargarOposicionesAVisualizarByTramite(tramiteText, true);
-//            cargarNolineaAVisualizarByAppOrDoc(tramiteText, false);
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
-//        } else if (cargarTutelasAVisualizarByTramite(tramiteText)) {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            hijas = true;
-//            System.out.println("TUTELAS");
-//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA TUTELA ADMINISTRATIVA");
-//        } else if (cargarOposicionesAVisualizarByTramite(tramiteText, false)) {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            hijas = true;
-//            System.out.println("OPOSICIÓN");
-//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            tituloTramiteText = "OPOSICIÓN";
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OPOSICIÓN");
-//        } else if (cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, true)) {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            hijas = true;
-//            System.out.println("ALCANCE");
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            tituloTramiteText = "ALCANCE";
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL ALCANCE");
-//        } else if (cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true)) {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            hijas = true;
-//            System.out.println("MODIFICACIÓN AL REGISTRO");
-//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            tituloTramiteText = "MODIFICACIÓN AL REGISTRO";
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA MODIFICACIÓN");
-//        } else if (cargarPlayFormAVisualizarByTramite(tramiteText)) {
-//            System.out.println("*********** ENTRO EN DERECHOS DE AUTOR ****************");
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            hijas = true;
-//            System.out.println("DERECHO DE AUTOR");
-//            cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false);
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            tituloTramiteText = "DERECHOS DE AUTOR";
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL DERECHO DE AUTOR");
-//        } else if (cargarNolineaAVisualizarByAppOrDoc(tramiteText, true)) {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            hijas = true;
-//            System.out.println("TRÁMITE NO EN LÍNEA");
-//            cargarNotificacionesAVisualizarByTramite(tramiteText);
-//            tituloTramiteText = "TRÁMITE NO EN LÍNEA";
-//            resultadopanel = true;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE NO EN LÍNEA");
-//        } else {
-//            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//            resultadopanel = false;
-//            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "NO SE ENCONTRARON RESULTADOS");
-//        }
-//    }
+    /**
+     * Carga en paralelo: alcances, oposiciones, modificaciones y no-línea Se
+     * ejecutan simultáneamente para mejorar rendimiento
+     */
+    private void cargarAlcancesOposicionesModificacionesEnParalelo(String applicationNumber, String titulo, String tramite, boolean isHallmark) {
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        try {
+            // Tarea 1: Alcances
+            executor.submit(() -> {
+                try {
+                    System.out.println("Thread: Iniciando carga de alcances");
+                    cargarAlcancesAVisualizarByAfforAplicationNumber(applicationNumber, false);
+                    System.out.println("Thread: Alcances completados");
+                } catch (Exception e) {
+                    System.err.println("Error cargando alcances: " + e.getMessage());
+                }
+            });
+
+            // Tarea 2: Modificaciones
+            executor.submit(() -> {
+                try {
+                    System.out.println("Thread: Iniciando carga de modificaciones");
+                    cargarModificacionesAVisualizarByTituloOrTramite(titulo, false);
+                    System.out.println("Thread: Modificaciones completadas");
+                } catch (Exception e) {
+                    System.err.println("Error cargando modificaciones: " + e.getMessage());
+                }
+            });
+
+            // Tarea 3: Oposiciones (solo para Hallmark)
+            if (isHallmark) {
+                executor.submit(() -> {
+                    try {
+                        System.out.println("Thread: Iniciando carga de oposiciones");
+                        cargarOposicionesAVisualizarByTramite(applicationNumber, true);
+                        System.out.println("Thread: Oposiciones completadas");
+                    } catch (Exception e) {
+                        System.err.println("Error cargando oposiciones: " + e.getMessage());
+                    }
+                });
+            }
+
+            // Tarea 4: No-línea
+            executor.submit(() -> {
+                try {
+                    System.out.println("Thread: Iniciando carga de no-línea");
+                    cargarNolineaAVisualizarByAppOrDoc(tramite, false);
+                    System.out.println("Thread: No-línea completados");
+                } catch (Exception e) {
+                    System.err.println("Error cargando no-línea: " + e.getMessage());
+                }
+            });
+
+            // Esperar a que se completen todas las tareas (máximo 60 segundos)
+            executor.shutdown();
+            executor.awaitTermination(60, TimeUnit.SECONDS);
+
+        } catch (InterruptedException e) {
+            System.err.println("Interruption during parallel loading: " + e.getMessage());
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
     public boolean cargarPatentFormAVisualizarByTramite(String applicationNumber) {
         Controlador c = new Controlador();
         patentForm = c.getPatentFormByApplicationNumber(applicationNumber);
@@ -488,12 +504,12 @@ public class TramiteBean implements Serializable {
     public boolean cargarMarcasAVisualizarByTramite(String applicationNumber) {
         Controlador c = new Controlador();
         hallmarkForm = c.getHallmarkForm(applicationNumber);
-
+        System.out.println("llegooooo 1 <-------");
         if (hallmarkForm.getId() != null) {
             System.out.println("denominación: " + hallmarkForm.getDenomination());
             tituloTramiteText = "SIGNO DISTINTIVO";
             conmarca = true;
-
+            System.out.println("llegooooo 2");
             if (hallmarkForm.getStatus().equals("DELIVERED")) {
                 PpdiSolicitudSignoDistintivo signo = c.getPpdiSolicitudSignoDistintivoByTramite(hallmarkForm.getApplicationNumber());
                 if (signo.getCodigoSolicitudSigno() != null) {
@@ -532,7 +548,7 @@ public class TramiteBean implements Serializable {
                     hallmarkForm.setExpedient(" -- ");
                 }
             } else {
-//                System.out.println("---------> "+hallmarkForm.getPaymentReceiptId());
+                System.out.println("llegooooo 3");
                 if (hallmarkForm.getPaymentReceiptId() != null && hallmarkForm.getPaymentReceiptId() != 0) {
                     hallmarkForm.setEstado("PAGADO, PERO SIN INICIO DE PROCESO");
                 } else {
@@ -727,6 +743,53 @@ public class TramiteBean implements Serializable {
             connolinea = false;
         }
         return connolinea;
+    }
+
+    public boolean cargarDenominationAVisualizarByTramite(String applicationNumber) {
+        Controlador c = new Controlador();
+        denominationForms = c.getDenominationFormsByApplicationNumber(applicationNumber);
+
+        if (denominationForms.getId() != null) {
+            System.out.println("denomination: " + denominationForms.getDenomination());
+            tituloTramiteText = "DENOMINATION FORMS";
+            condenomination = true;
+
+            FTPFiles files = new FTPFiles();
+            documentosExpediente = files.listarDirectorio(denominationForms.getFtp() + denominationForms.getId());
+            System.out.println(documentosExpediente.size());
+            documentos = new ArrayList<>();
+            for (int i = 0; i < documentosExpediente.size(); i++) {
+                Documento doc = new Documento();
+                doc.setArchivo(documentosExpediente.get(i));
+
+                String nombre = c.getDenominationNombreArchivo(doc.getArchivo());
+                if (!nombre.isEmpty()) {
+                    doc.setTipo(nombre);
+                } else {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(denominationForms.getApplicationNumber().trim(), doc.getArchivo(), "Denominationform");
+                    if (fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else {
+                        if (doc.getArchivo().equals(denominationForms.getDiscountFile())) {
+                            doc.setTipo("Documento Descuento");
+                        } else if (doc.getArchivo().contains("pdf_denominationfrm_")) {
+                            doc.setTipo("Formulario");
+                        } else if (doc.getArchivo().contains("pdf_voucher_denominationfrm_")) {
+                            doc.setTipo("Comprobante");
+                        } else {
+                            doc.setTipo(doc.getArchivo());
+                        }
+                    }
+                }
+
+                documentos.add(doc);
+            }
+        } else {
+            condenomination = false;
+            return condenomination;
+        }
+        return true;
     }
 
     public boolean cargarOposicionesAVisualizarByTramite(String applicationNumber, boolean searched) {
@@ -1821,6 +1884,7 @@ public class TramiteBean implements Serializable {
     }
 
     public void limpiarDatos(boolean enable) {
+        // Limpiar flags de control de visualización
         conmarca = enable;
         conalcance = enable;
         conmodificacion = enable;
@@ -1832,6 +1896,24 @@ public class TramiteBean implements Serializable {
         conpatente = enable;
         connotificacion = enable;
         hijas = enable;
+
+        // Limpiar listas de datos para evitar duplicados en cargas paralelas
+        if (!enable) {
+            documentosExpediente = new ArrayList<>();
+            documentos = new ArrayList<>();
+            alcances = new ArrayList<>();
+            modificaciones = new ArrayList<>();
+            oposiciones = new ArrayList<>();
+            nolineas = new ArrayList<>();
+            notificaciones = new ArrayList<>();
+
+            // Limpiar objetos principales
+            hallmarkForm = null;
+            patentForm = null;
+            playForm = null;
+            breederForm = null;
+            tutelageForm = null;
+        }
     }
 
     public void enableOptions(AjaxBehaviorEvent event) {
@@ -2736,5 +2818,563 @@ public class TramiteBean implements Serializable {
      */
     public void setConbreeder(boolean conbreeder) {
         this.conbreeder = conbreeder;
+    }
+
+    // ===================== MÉTODOS PARA CARGA DE DOCUMENTOS PDF =====================
+    /**
+     * Formatea el nombre del archivo PDF: - Reemplaza espacios por guiones
+     * bajos (_) - Elimina caracteres especiales - Convierte a minúsculas -
+     * Mantiene solo alfanuméricos, guiones bajos y punto final
+     *
+     * @param fileName Nombre original del archivo
+     * @return Nombre formateado
+     */
+    private String formatearNombreArchivo(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return fileName;
+        }
+
+        // Separar nombre y extensión
+        int lastDot = fileName.lastIndexOf('.');
+        String nombre = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
+        String extension = lastDot > 0 ? fileName.substring(lastDot) : "";
+
+        // Formatear nombre: espacios a guiones bajos, remover caracteres especiales
+        nombre = nombre.replaceAll("\\s+", "_");  // Espacios a _
+        nombre = nombre.replaceAll("[^a-zA-Z0-9_-]", "");  // Solo alfanuméricos, _, -
+        nombre = nombre.toLowerCase();  // Minúsculas
+
+        // Retornar nombre formateado con extensión
+        return nombre + extension;
+    }
+
+    /**
+     * Maneja la carga de PDFs para panel SIGNO DISTINTIVO Válida que sea PDF,
+     * crea directorio si es necesario y sube el archivo
+     *
+     * @param event FileUploadEvent de PrimeFaces
+     */
+    public void uploadDocumentoHallmark(FileUploadEvent event) {
+        FacesMessage msg = null;
+
+        try {
+            if (hallmarkForm == null || hallmarkForm.getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UN SIGNO DISTINTIVO CARGADO");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            // Validar que sea PDF
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            // Construir ruta completa
+            String remotePath = hallmarkForm.getFtp() + hallmarkForm.getId() + "/" + fileNameFormato;
+
+            // Subir archivo
+            FTPFiles ftpFiles = new FTPFiles();
+
+            // Crear directorio si no existe
+            ftpFiles.createDirectoryIfNotExists(hallmarkForm.getFtp() + hallmarkForm.getId());
+
+            // Subir el archivo
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileName + "' subido correctamente");
+
+                // Recargar lista de documentos
+                cargarMarcasAVisualizarByTramite(hallmarkForm.getApplicationNumber());
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para panel PATENTE
+     */
+    public void uploadDocumentoPatent(FileUploadEvent event) {
+        FacesMessage msg = null;
+
+        try {
+            if (patentForm == null || patentForm.getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UNA PATENTE CARGADA");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            String remotePath = patentForm.getFtp() + patentForm.getId() + "/" + fileNameFormato;
+
+            FTPFiles ftpFiles = new FTPFiles();
+            ftpFiles.createDirectoryIfNotExists(patentForm.getFtp() + patentForm.getId());
+
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileName + "' subido correctamente");
+                cargarPatentFormAVisualizarByTramite(patentForm.getApplicationNumber());
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para ALCANCES
+     */
+    public void uploadDocumentoAlcance(FileUploadEvent event, ScopeFormsAux scopeAux) {
+        FacesMessage msg = null;
+
+        try {
+            if (scopeAux == null || scopeAux.getScopeForm() == null || scopeAux.getScopeForm().getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UN ALCANCE CARGADO");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            String remotePath = scopeAux.getFtp() + scopeAux.getScopeForm().getId() + "/" + fileNameFormato;
+
+            FTPFiles ftpFiles = new FTPFiles();
+            ftpFiles.createDirectoryIfNotExists(scopeAux.getFtp() + scopeAux.getScopeForm().getId());
+
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileName + "' subido correctamente");
+                cargarAlcancesAVisualizarByAfforAplicationNumber(scopeAux.getScopeForm().getApplicationNumber(), false);
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para MODIFICACIONES
+     */
+    public void uploadDocumentoModificacion(FileUploadEvent event) {//, ModificacionAux mod
+        FacesMessage msg = null;
+        ModificacionAux mod = (ModificacionAux) event.getComponent().getAttributes().get("modificacion");
+        try {
+            if (mod == null || mod.getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "NO HAY UNA MODIFICACIÓN CARGADA");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            String remotePath = mod.getFtp() + mod.getId() + "/" + fileNameFormato;
+
+            FTPFiles ftpFiles = new FTPFiles();
+            ftpFiles.createDirectoryIfNotExists(mod.getFtp() + mod.getId());
+
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileNameFormato + "' subido correctamente");
+                // Recargar modificaciones
+                //if (conmarca && hallmarkForm != null) {
+
+                cargarModificacionesAVisualizarByTituloOrTramite(mod.getSolicitud(), (!conmarca && !conpatente));
+                //}
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para DENOINATION_FORMS
+     */
+    public void uploadDocumentoDenomination(FileUploadEvent event) {//, Denomination denforms
+        FacesMessage msg = null;
+        if (denominationForms != null && denominationForms.getId() != null) {
+            try {
+
+                String fileName = event.getFile().getFileName();
+
+                if (!fileName.toLowerCase().endsWith(".pdf")) {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                    FacesContext.getCurrentInstance().addMessage(null, msg);
+                    return;
+                }
+
+                // Formatear nombre del archivo
+                String fileNameFormato = formatearNombreArchivo(fileName);
+
+                String remotePath = denominationForms.getFtp() + denominationForms.getId() + "/" + fileNameFormato;
+
+                FTPFiles ftpFiles = new FTPFiles();
+                ftpFiles.createDirectoryIfNotExists(denominationForms.getFtp() + denominationForms.getId());
+
+                if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+
+                    FileAnnexesApplication fap = new FileAnnexesApplication();
+                    fap.setFileName(fileNameFormato);
+                    fap.setFileDescription("UPLOAD BY EMPLOYEE");
+                    fap.setUserUpload(login.getNombre());
+                    fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                    fap.setFileStatus("UPLOAD");
+                    fap.setApplicationType("Denominationform");
+                    fap.setApplicationNumber(denominationForms.getApplicationNumber());
+
+                    Controlador c = new Controlador();
+                    if (c.saveFileAnnexeApplication(fap)) {
+                        System.out.println("Se crea con el nombre correspondiente");
+                    }
+
+                    msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                            "Archivo '" + fileNameFormato + "' subido correctamente");
+
+                    cargarDenominationAVisualizarByTramite(denominationForms.getApplicationNumber());
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "Hubo un problema al subir el archivo denomination_forms");
+                }
+
+            } catch (Exception e) {
+                System.err.println("[UPLOAD ERROR] " + e.getMessage());
+                e.printStackTrace();
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Excepción al subir archivo: " + e.getMessage());
+            }
+        } else {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCUENTRA EL TRÁMITE");
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Elimina un documento para DENOMINATION_FORMS, borra FTP y registro de la
+     * DB
+     */
+    public void eliminarDocumentoDenomination(Documento expediente) {
+        FacesMessage msg;
+
+        if (denominationForms == null || denominationForms.getId() == null || expediente == null || expediente.getArchivo() == null) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se puede eliminar: datos incompletos");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        String fileName = expediente.getArchivo();
+        String remotePath = denominationForms.getFtp() + denominationForms.getId() + "/" + fileName;
+
+        FTPFiles ftpFiles = new FTPFiles();
+        boolean ftpDeleted = ftpFiles.deleteFile(remotePath);
+
+        Controlador c = new Controlador();
+        FileAnnexesApplication fap = c.getFileAnnexesApplication(denominationForms.getApplicationNumber().trim(), fileName, "Denominationform");
+
+        boolean dbUpdated = false;
+        if (fap != null && fap.getId() != null && fap.getId() > 0) {
+            dbUpdated = c.softDeleteFileAnnexeApplication(denominationForms.getApplicationNumber().trim(), fileName, "Denominationform", login.getNombre(), Operaciones.getCurrentTimestamp());
+            // reflect in object for possible UI consistency
+            fap.setFileStatus("DELETE");
+            fap.setUserUpdate(login.getNombre());
+            fap.setUpdateDate(Operaciones.getCurrentTimestamp());
+        }
+
+        // No eliminamos el registro histórico de ANNEXES_DATA para mantener el audit trail
+        // (Mensaje original del usuario pide solo marcar delete en FileAnnexesApplication)
+
+        if (ftpDeleted && (dbUpdated || (fap == null || fap.getId() == null))) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Documento "+fileName+" eliminado (Se lleva un historial)");
+        } else if (ftpDeleted) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "ADVERTENCIA", "Se eliminó del FTP pero no se pudo eliminar completamente el registro en BD");
+        } else {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar el archivo en el servidor FTP");
+        }
+
+        cargarDenominationAVisualizarByTramite(denominationForms.getApplicationNumber());
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para OPOSICIONES
+     */
+    public void uploadDocumentoOposicion(FileUploadEvent event) {
+        FacesMessage msg = null;
+        OppositionFormsAux opo = (OppositionFormsAux) event.getComponent().getAttributes().get("oposicion");
+        try {
+            if (opo == null || opo.getOppositionForm().getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "NO HAY UNA OPOSICIÓN CARGADA");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            String remotePath = opo.getFtp() + opo.getOppositionForm().getId() + "/" + fileNameFormato;
+
+            FTPFiles ftpFiles = new FTPFiles();
+            ftpFiles.createDirectoryIfNotExists(opo.getFtp() + opo.getOppositionForm().getId());
+
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileNameFormato + "' subido correctamente");
+                // Recargar modificaciones
+                //if (conmarca && hallmarkForm != null) {                
+                cargarOposicionesAVisualizarByTramite(opo.getOppositionForm().getApplicationNumber(), false);
+                //}
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para DERECHOS DE AUTOR
+     */
+    public void uploadDocumentoPlayForm(FileUploadEvent event) {
+        FacesMessage msg = null;
+
+        try {
+            if (playFormAux == null || playFormAux.getPlayForm() == null || playFormAux.getPlayForm().getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY DERECHOS DE AUTOR CARGADOS");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            // Determinar subdirectorio según el tipo
+            String tipo = playFormAux.getPlayForm().getAlias();
+            String exten = "";
+            switch (tipo) {
+                case "literaria":
+                    exten = "literaryplay_forms/";
+                    break;
+                case "artistica":
+                    exten = (playFormAux.getPlayForm().getId() < 82312) ? "artmusicplay_forms/" : "artplay_forms/";
+                    break;
+                case "audiovisua":
+                    exten = "audiovisualplay_forms/";
+                    break;
+                case "software":
+                    exten = "softwareplay_forms/";
+                    break;
+                case "radio":
+                    exten = (playFormAux.getPlayForm().getId() < 82312) ? "newsradioplay_forms/" : "newsplay_forms/";
+                    break;
+                case "musicales":
+                    exten = "musicplay_forms/";
+                    break;
+                case "Radio":
+                    exten = "radioplay_forms/";
+                    break;
+                default:
+                    exten = "phonogramplay_forms/";
+                    break;
+            }
+
+            String remotePath = playFormAux.getFtp() + exten + playFormAux.getPlayForm().getId() + "/" + fileNameFormato;
+
+            FTPFiles ftpFiles = new FTPFiles();
+            ftpFiles.createDirectoryIfNotExists(playFormAux.getFtp() + exten + playFormAux.getPlayForm().getId());
+
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileNameFormato + "' subido correctamente");
+                cargarPlayFormAVisualizarByTramite(playFormAux.getPlayForm().getApplicationNumber());
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * Maneja la carga de PDFs para TUTELAS
+     */
+    public void uploadDocumentoTutela(FileUploadEvent event) {
+        FacesMessage msg = null;
+
+        try {
+            if (tutelaAux == null || tutelaAux.getTutelageForm().getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UN TUTELA CARGADO");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+
+            // Validar que sea PDF
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // Formatear nombre del archivo
+            String fileNameFormato = formatearNombreArchivo(fileName);
+
+            // Construir ruta completa
+            String remotePath = tutelaAux.getFtp() + tutelaAux.getTutelageForm().getId() + "/" + fileNameFormato;
+
+            // Subir archivo
+            FTPFiles ftpFiles = new FTPFiles();
+
+            // Crear directorio si no existe
+            ftpFiles.createDirectoryIfNotExists(tutelaAux.getFtp() + tutelaAux.getTutelageForm().getId());
+
+            // Subir el archivo
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Archivo '" + fileName + "' subido correctamente");
+
+                // Recargar lista de documentos
+                cargarTutelasAVisualizarByTramite(getTutelaAux().getTutelageForm().getApplicationNumber());
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                        "Hubo un problema al subir el archivo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                    "Excepción al subir archivo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    /**
+     * @return the denominationForms
+     */
+    public DenominationForms getDenominationForms() {
+        return denominationForms;
+    }
+
+    /**
+     * @param denominationForms the denominationForms to set
+     */
+    public void setDenominationForms(DenominationForms denominationForms) {
+        this.denominationForms = denominationForms;
+    }
+
+    /**
+     * @return the condenomination
+     */
+    public boolean isCondenomination() {
+        return condenomination;
+    }
+
+    /**
+     * @param condenomination the condenomination to set
+     */
+    public void setCondenomination(boolean condenomination) {
+        this.condenomination = condenomination;
     }
 }

@@ -7,6 +7,8 @@ package senadi.com.ditramites.util;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -151,5 +153,12 @@ public class Operaciones {
         Date dt = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(dt);
+    }
+    
+        public static Timestamp getCurrentTimestamp(){
+        ZoneId zonaLocal = ZoneId.of("America/Guayaquil");
+        ZonedDateTime ahoraLocal = ZonedDateTime.now(zonaLocal);
+        Timestamp timestampParaDB = Timestamp.from(ahoraLocal.toInstant());
+        return timestampParaDB;
     }
 }

@@ -785,6 +785,16 @@ img.pull-left { margin-right: 10px; }
     color: red;
 }
 
+.link_remove{
+    text-decoration: none;
+    color: #c42933 !important;
+}
+
+.link_remove>i:hover{
+    font-size: 22px !important;
+    color: red !important;
+}
+
 .linkcas>i{
     font-size: 30px !important;
     font-weight: bold !important;

@@ -4,6 +4,7 @@
  */
 package senadi.com.ditramites.util;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import javax.faces.context.FacesContext;
@@ -12,6 +13,7 @@ import senadi.com.ditramites.bean.LoginBean;
 import senadi.com.ditramites.dao.DAOConsultasCasil;
 import senadi.com.ditramites.dao.DAOConsultasDep;
 import senadi.com.ditramites.dao.DAOConsultasForm;
+import senadi.com.ditramites.dao.DAOInsertDocuments;
 import senadi.com.ditramites.dao.mod.CambioCasilleroDAO;
 import senadi.com.ditramites.dao.mod.ConfiguracionCCDAO;
 import senadi.com.ditramites.dao.mod.TransferenciaDAO;
@@ -21,8 +23,11 @@ import senadi.com.ditramites.dao.ren.RenovacionDAO;
 import senadi.com.ditramites.model.BreederForms;
 import senadi.com.ditramites.model.HallmarkForm;
 import senadi.com.ditramites.model.HallmarkFormDepurada;
+import senadi.com.ditramites.model.FileAnnexesApplication;
+import senadi.com.ditramites.model.mod.FileAnnex;
 import senadi.com.ditramites.model.LockerNotifications;
 import senadi.com.ditramites.model.Notifications;
+import senadi.com.ditramites.model.DenominationForms;
 import senadi.com.ditramites.model.OppositionForms;
 import senadi.com.ditramites.model.Owner;
 import senadi.com.ditramites.model.PatentForms;
@@ -241,7 +246,30 @@ public class Controlador {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getTutelageNombreArchivo(archivo);
     }
+    
+    public String getDenominationNombreArchivo(String archivo){
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getDenominationNombreArchivo(archivo);
+    }
+    public DenominationForms getDenominationFormsByApplicationNumber(String applicationNumber) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getDenominationForm(applicationNumber);
+    }
 
+    public FileAnnexesApplication getFileAnnexesApplication(String applicationNumber, String fileName, String applicationType) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getFileAnnexesApplication(applicationNumber, fileName, applicationType);
+    }
+
+    public FileAnnex getDenominationFile(String archivo) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getDenominationFile(archivo);
+    }
+
+    public boolean saveFileAnnexeApplication(FileAnnexesApplication fap) {
+        DAOInsertDocuments did = new DAOInsertDocuments();
+        return did.saveFileAnnexeApplication(fap);
+    }
     public String getTutelageSampleNombreArchivo(String archivo) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getTutelageSampleNombreArchivo(archivo);
@@ -496,5 +524,20 @@ public class Controlador {
             String tramite = tramites.get(i);
             depurarNotificacionesPorTramiteAndCasillero(tramite, casillero, "(" + (i + 1) + "/" + tam + ")");
         }
+    }
+
+    public boolean deleteDenominationDocument(Integer denominationFormId, Integer denominationAnnexId, String file) {
+        DAOInsertDocuments did = new DAOInsertDocuments();
+        return did.deleteDenominationDocument(denominationFormId, denominationAnnexId, file);
+    }
+
+//    public boolean deleteFileAnnexeApplication(String applicationNumber, String fileName, String applicationType) {
+//        DAOInsertDocuments did = new DAOInsertDocuments();
+//        return did.deleteFileAnnexeApplication(applicationNumber, fileName, applicationType);
+//    }
+
+    public boolean softDeleteFileAnnexeApplication(String applicationNumber, String fileName, String applicationType, String userUpdate, Timestamp updateDate) {
+        DAOInsertDocuments did = new DAOInsertDocuments();
+        return did.softDeleteFileAnnexeApplication(applicationNumber, fileName, applicationType, userUpdate, updateDate);
     }
 }

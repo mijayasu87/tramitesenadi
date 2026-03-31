@@ -23,14 +23,15 @@ import java.util.Vector;
 public class FTPFiles {
 
     //producción
-    private static final String REMOTE_HOST = "10.0.20.130";
-    private static final String USERNAME = "root";
-    private static final String PASSWORD = "B7GJuaxu3Y";
+//    private static final String REMOTE_HOST = "10.0.20.130";
+//    private static final String USERNAME = "root";
+//    private static final String PASSWORD = "B7GJuaxu3Y";
 
     //prueba
-//    public static String REMOTE_HOST = "10.0.26.130";
-//    public static String USERNAME = "root";
-//    public static String PASSWORD = "temporal123";
+    public static String REMOTE_HOST = "10.0.26.130";
+    public static String USERNAME = "root";
+    public static String PASSWORD = "temporal123";
+    
     private static final int REMOTE_PORT = 22;
     private static final int SESSION_TIMEOUT = 10000;
     private static final int CHANNEL_TIMEOUT = 30000;
@@ -82,6 +83,106 @@ public class FTPFiles {
         }
         System.out.println("Done");
         return false;
+    }
+
+    /**
+     * Sube un archivo desde InputStream a la ruta remota usando FTPConnectionPool
+     * OPTIMIZADO: Reutiliza conexiones SFTP para mejor rendimiento
+     * 
+     * @param is InputStream del archivo a subir
+     * @param remotePath Ruta completa del archivo en el servidor remoto (ej: /ruta/archivo.pdf)
+     * @return true si se subió correctamente, false en caso de error
+     */
+    public boolean uploadFileOptimized(InputStream is, String remotePath) {
+        FTPConnectionPool.ChannelSftpWrapper wrapper = null;
+
+        try {
+            // Obtener conexión del pool (reutilizable)
+            FTPConnectionPool pool = FTPConnectionPool.getInstance();
+            wrapper = pool.getConnection();
+            ChannelSftp channelSftp = wrapper.getChannelSftp();
+
+            // Subir archivo
+            channelSftp.put(is, remotePath);
+            
+            System.out.println("[UPLOAD] Archivo subido exitosamente: " + remotePath);
+            return true;
+
+        } catch (JSchException | SftpException e) {
+            System.err.println("[UPLOAD ERROR] Error al subir archivo a " + remotePath);
+            e.printStackTrace();
+            return false;
+
+        } finally {
+            // Retornar conexión al pool para reutilización
+            if (wrapper != null) {
+                FTPConnectionPool.getInstance().releaseConnection(wrapper);
+            }
+        }
+    }
+
+    /**
+     * Elimina un archivo del servidor remoto
+     */
+    public boolean deleteFile(String remotePath) {
+        FTPConnectionPool.ChannelSftpWrapper wrapper = null;
+        try {
+            FTPConnectionPool pool = FTPConnectionPool.getInstance();
+            wrapper = pool.getConnection();
+            ChannelSftp channelSftp = wrapper.getChannelSftp();
+            channelSftp.rm(remotePath);
+            System.out.println("[DELETE] Archivo eliminado: " + remotePath);
+            return true;
+        } catch (JSchException | SftpException e) {
+            System.err.println("[DELETE ERROR] Error al eliminar archivo a " + remotePath);
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (wrapper != null) {
+                FTPConnectionPool.getInstance().releaseConnection(wrapper);
+            }
+        }
+    }
+
+    /**
+     * Crea un directorio en el servidor remoto si no existe
+     * 
+     * @param remotePath Ruta del directorio a crear
+     * @return true si se creó o ya existe, false en caso de error
+     */
+    public boolean createDirectoryIfNotExists(String remotePath) {
+        FTPConnectionPool.ChannelSftpWrapper wrapper = null;
+
+        try {
+            FTPConnectionPool pool = FTPConnectionPool.getInstance();
+            wrapper = pool.getConnection();
+            ChannelSftp channelSftp = wrapper.getChannelSftp();
+
+            try {
+                channelSftp.stat(remotePath);
+                // El directorio existe
+                return true;
+            } catch (SftpException e) {
+                if (e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+                    // No existe, crear
+                    channelSftp.mkdir(remotePath);
+                    System.out.println("[MKDIR] Directorio creado: " + remotePath);
+                    return true;
+                } else {
+                    throw e;
+                }
+            }
+
+        } catch (JSchException | SftpException e) {
+            System.err.println("[MKDIR ERROR] Error al crear directorio: " + remotePath);
+            e.printStackTrace();
+            return false;
+
+        } finally {
+            if (wrapper != null) {
+                FTPConnectionPool.getInstance().releaseConnection(wrapper);
+            }
+        }
     }
 
     public boolean doCopyFromLocalToRemote(String localFile, String remotePath) {
@@ -188,23 +289,14 @@ public class FTPFiles {
 //        System.out.println("ruta en sftp: "+ruta);
         
         List<String> lista = new ArrayList<>();
-
-        Session session = null;
-        ChannelSftp channelSftp = null;
+        FTPConnectionPool.ChannelSftpWrapper wrapper = null;
 
         try {
-            JSch jsch = new JSch();
-            session = jsch.getSession(USERNAME, REMOTE_HOST, REMOTE_PORT);
-            session.setPassword(PASSWORD);
-
-            java.util.Properties config = new java.util.Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-
-            session.connect();
-
-            channelSftp = (ChannelSftp) session.openChannel("sftp");
-            channelSftp.connect();
+            // Obtener conexión del pool (reutilizable)
+            FTPConnectionPool pool = FTPConnectionPool.getInstance();
+            wrapper = pool.getConnection();
+            ChannelSftp channelSftp = wrapper.getChannelSftp();
+            
             channelSftp.cd(ruta);
 
             @SuppressWarnings("unchecked")
@@ -237,13 +329,9 @@ public class FTPFiles {
             e.printStackTrace();
             return new ArrayList<>();
         } finally {
-
-            if (channelSftp != null && channelSftp.isConnected()) {
-                channelSftp.disconnect();
-            }
-
-            if (session != null && session.isConnected()) {
-                session.disconnect();
+            // Retornar conexión al pool para reutilización
+            if (wrapper != null) {
+                FTPConnectionPool.getInstance().releaseConnection(wrapper);
             }
         }
 

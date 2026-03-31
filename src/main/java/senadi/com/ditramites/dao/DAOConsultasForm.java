@@ -12,6 +12,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.BreederForms;
+import senadi.com.ditramites.model.DenominationForms;
+import senadi.com.ditramites.model.FileAnnexesApplication;
 import senadi.com.ditramites.model.HallmarkForm;
 import senadi.com.ditramites.model.OppositionForms;
 import senadi.com.ditramites.model.PatentForms;
@@ -20,6 +22,7 @@ import senadi.com.ditramites.model.RenewalForm;
 import senadi.com.ditramites.model.ScopeForms;
 import senadi.com.ditramites.model.TutelageForms;
 import senadi.com.ditramites.model.VoucherForm;
+import senadi.com.ditramites.model.mod.FileAnnex;
 import senadi.com.ditramites.util.Operaciones;
 import senadi.com.ditramites.util.ParametrosBD;
 
@@ -28,13 +31,65 @@ import senadi.com.ditramites.util.ParametrosBD;
  * @author micharesp
  */
 public class DAOConsultasForm {
-    
-    public BreederForms getBreederForm(String applicationNumber){
+
+    public DenominationForms getDenominationForm(String applicationNumber) {
+        String query = "Select * "
+                + "from denomination_forms as df "
+                + "where df.application_number = '" + applicationNumber + "'";
+
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            DenominationForms denomination = new DenominationForms();
+            while (rs.next()) {
+                denomination.setId(rs.getInt("id"));
+                denomination.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
+                denomination.setOwnerId(rs.getInt("owner_id"));
+                denomination.setApplicationNumber(rs.getString("application_number"));
+                denomination.setApplicationDate(rs.getTimestamp("application_date"));
+                denomination.setDenomination(rs.getString("denomination"));
+                denomination.setPartOfProcess(rs.getString("part_of_process"));
+                denomination.setInspectionPlace(rs.getString("inspection_place"));
+                denomination.setStatus(rs.getString("status"));
+                denomination.setDiscountFile(rs.getString("discount_file"));
+            }
+
+            con.close();
+            return denomination;
+        } catch (SQLException ex) {
+            System.err.println("Error en obtener denomination_forms " + applicationNumber + ": " + ex);
+            return new DenominationForms();
+        }
+    }
+
+    public String getDenominationNombreArchivo(String archivo) {
+        String query = "SELECT da.name FROM "
+                + "denomination_annexes_data AS dad "
+                + "INNER JOIN denomination_annexes AS da ON da.id = dad.denomination_annex_id "
+                + "WHERE dad.file = '" + archivo + "'";
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            String nombre = "";
+            while (rs.next()) {
+                nombre = rs.getString("name");
+            }
+            con.close();
+            return nombre;
+        } catch (SQLException ex) {
+            System.out.println("error al obtener denomination nombre documento " + archivo + ": " + ex);
+            return "";
+        }
+    }
+
+    public BreederForms getBreederForm(String applicationNumber) {
         String query = "Select * "
                 + "from breeder_forms as bf "
                 + "where bf.application_number = '" + applicationNumber + "'";
-        
-        try{
+
+        try {
             Connection con = ParametrosBD.doConnectionToFormularios();
             PreparedStatement pst = con.prepareStatement(query);
             ResultSet rs = pst.executeQuery();
@@ -44,18 +99,18 @@ public class DAOConsultasForm {
                 breeder.setApplicationDate(rs.getTimestamp("application_date"));
                 breeder.setApplicationNumber(rs.getString("application_number"));
                 breeder.setCommercialName(rs.getString("commercial_name"));
-                breeder.setCreateDate(rs.getTimestamp("create_date"));                
+                breeder.setCreateDate(rs.getTimestamp("create_date"));
                 breeder.setDiscountFile(rs.getString("discount_file"));
-                breeder.setGroup(rs.getString("group"));                
+                breeder.setGroup(rs.getString("group"));
                 breeder.setOwnerId(rs.getInt("owner_id"));
                 breeder.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
                 breeder.setProposedName(rs.getString("proposed_name"));
-                breeder.setStatus(rs.getString("status"));                                
+                breeder.setStatus(rs.getString("status"));
             }
 
             con.close();
             return breeder;
-        }catch(SQLException ex){            
+        } catch (SQLException ex) {
             System.err.println("Error en obtener breeder " + applicationNumber + ": " + ex);
             return new BreederForms();
         }
@@ -98,8 +153,8 @@ public class DAOConsultasForm {
                 marca.setTipoSigno(rs.getString("tiposigno"));
                 marca.setNaturalezaSigno(rs.getString("naturalezasigno"));
                 marca.setCasillero(rs.getInt("casillero") + "");
-                marca.setDiscountFile(rs.getString("discount_file"));                
-                
+                marca.setDiscountFile(rs.getString("discount_file"));
+
             }
 
             con.close();
@@ -527,12 +582,12 @@ public class DAOConsultasForm {
             return new RenewalForm();
         }
     }
-    
+
     public String getBreederNombreArchivo(String archivo) {
         String query = "SELECT va.name FROM "
                 + "vegetable_annexes_data as vad "
                 + "INNER JOIN vegetable_annexes AS va ON va.id = vad.vegetable_annexes_id "
-                + "WHERE vad.file_name = '"+archivo+"'";
+                + "WHERE vad.file_name = '" + archivo + "'";
         try {
             Connection con = ParametrosBD.doConnectionToVegetable();
             PreparedStatement pst = con.prepareStatement(query);
@@ -544,14 +599,72 @@ public class DAOConsultasForm {
             con.close();
             return nombre;
         } catch (SQLException ex) {
-            System.out.println("error al obtener patent nombre documento " + archivo + ": " + ex);
+            System.out.println("error al obtener vegetable nombre documento " + archivo + ": " + ex);
             return "";
         }
     }
-    
-    public Integer getVegetableFormsId(String applicationNumber){
-        String query = "SELECT id FROM vegetable_forms " 
-                + "WHERE application_number = '"+applicationNumber+"'";
+
+    public FileAnnex getDenominationFile(String archivo) {
+        String query = "SELECT * FROM "
+                + "denomination_annexes_data as dad "
+                + "INNER JOIN denomination_annexes AS da ON da.id = dad.denomination_annex_id "
+                + "WHERE dad.file = '" + archivo + "'";
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            FileAnnex file = new FileAnnex();
+            while (rs.next()) {
+                file.setApplicationId(rs.getInt("dad.denomination_form_id"));
+                file.setAnnexId(rs.getInt("dad.denomination_annex_id"));
+                file.setFile(rs.getString("dad.file"));
+                file.setFileDescription(rs.getString("dad.file_description"));
+                file.setUserUpload(rs.getString("dad.user_upload"));
+                file.setUploadDate(rs.getTimestamp("dad.upload_date"));
+                file.setDocumentName(rs.getString("da.name"));
+            }
+            con.close();
+            return file;
+        } catch (SQLException ex) {
+            System.out.println("error al obtener denomination nombre documento " + archivo + ": " + ex);
+            return new FileAnnex();
+        }
+    }
+
+    public FileAnnexesApplication getFileAnnexesApplication(String applicationNumber, String fileName, String applicationType) {
+        String query = "SELECT * FROM "
+                + "file_annexes_application "
+                + "WHERE application_number = '"+applicationNumber+"' "
+                + "and file_name = '" + fileName + "' "
+                + "and application_type = '" + applicationType + "' "
+                + "and file_status = 'UPLOAD'";
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            FileAnnexesApplication file = new FileAnnexesApplication();
+            while (rs.next()) {
+                file.setId(rs.getInt("id"));
+                file.setFileName(rs.getString("file_name"));
+                file.setFileDescription(rs.getString("file_description"));
+                file.setUserUpload(rs.getString("user_upload"));
+                file.setUploadDate(rs.getTimestamp("upload_date"));
+                file.setFileStatus(rs.getString("file_status"));
+                file.setApplicationType(rs.getString("application_type"));
+                file.setUserUpdate(rs.getString("user_update"));
+                file.setUpdateDate(rs.getTimestamp("update_date"));
+            }
+            con.close();
+            return file;
+        } catch (SQLException ex) {
+            System.out.println("error al obtener file_annexes_application " + fileName + ": " + ex);
+            return new FileAnnexesApplication();
+        }
+    }
+
+    public Integer getVegetableFormsId(String applicationNumber) {
+        String query = "SELECT id FROM vegetable_forms "
+                + "WHERE application_number = '" + applicationNumber + "'";
         try {
             Connection con = ParametrosBD.doConnectionToVegetable();
             PreparedStatement pst = con.prepareStatement(query);
@@ -567,7 +680,6 @@ public class DAOConsultasForm {
             return 0;
         }
     }
-    
 
     public String getPatentNombreArchivo(String archivo) {
         String query = "SELECT pa.name FROM "
@@ -633,7 +745,7 @@ public class DAOConsultasForm {
             return "";
         }
     }
-    
+
     public String getPlayNombreArchivo(String archivo) {
         String query = "SELECT pa.name FROM "
                 + "play_annexes_data AS pad "
@@ -655,7 +767,7 @@ public class DAOConsultasForm {
             return "";
         }
     }
-    
+
     public String getHallmarkNombreArchivo(String archivo) {
         String query = "SELECT pa.name FROM "
                 + "hallmark_annexes_data AS pad "
@@ -676,7 +788,7 @@ public class DAOConsultasForm {
             return "";
         }
     }
-    
+
     public String getTutelageNombreArchivo(String archivo) {
         String query = "SELECT pa.name FROM "
                 + "tutelage_annexes_data AS pad "
@@ -697,10 +809,10 @@ public class DAOConsultasForm {
             return "";
         }
     }
-    
+
     public String getTutelageSampleNombreArchivo(String archivo) {
         String query = "SELECT ts.name FROM "
-                + "tutelage_samples AS ts "                
+                + "tutelage_samples AS ts "
                 + "WHERE ts.file = '" + archivo + "'";
         try {
             Connection con = ParametrosBD.doConnectionToFormularios();
@@ -717,7 +829,7 @@ public class DAOConsultasForm {
             return "";
         }
     }
-    
+
     public String getRenewalNombreArchivo(String archivo) {
         String query = "SELECT pa.name FROM "
                 + "renewal_annexes_data AS pad "
@@ -738,25 +850,25 @@ public class DAOConsultasForm {
             return "";
         }
     }
-    
-    public boolean updateOwnerHallmark(HallmarkForm hallmark){
-        String query = "UPDATE hallmark_forms set owner_id = "+hallmark.getOwnerId()+" where application_number = '"+hallmark.getApplicationNumber()+"' "
-                + "and id = "+hallmark.getId();
-        try{
+
+    public boolean updateOwnerHallmark(HallmarkForm hallmark) {
+        String query = "UPDATE hallmark_forms set owner_id = " + hallmark.getOwnerId() + " where application_number = '" + hallmark.getApplicationNumber() + "' "
+                + "and id = " + hallmark.getId();
+        try {
             Connection con = ParametrosBD.doConnectionToFormularios();
             PreparedStatement pst = con.prepareStatement(query);
             int n = pst.executeUpdate();
             con.close();
-            return n > 0;            
-        }catch(SQLException se){
-            System.out.println("Error al actualizar el owner id de la marca: "+hallmark.getApplicationNumber());
+            return n > 0;
+        } catch (SQLException se) {
+            System.out.println("Error al actualizar el owner id de la marca: " + hallmark.getApplicationNumber());
             return false;
         }
     }
-    
-    public String getApplicationType(String applicationNumber){
-        String query = "Select * from applications where application_number = '"+applicationNumber+"'";
-        try{
+
+    public String getApplicationType(String applicationNumber) {
+        String query = "Select * from applications where application_number = '" + applicationNumber + "'";
+        try {
             Connection con = ParametrosBD.doConnectionToFormularios();
             PreparedStatement pst = con.prepareStatement(query);
             ResultSet rs = pst.executeQuery();
@@ -767,10 +879,9 @@ public class DAOConsultasForm {
             }
             con.close();
             return application_type;
-        }catch(SQLException ex){
-            System.err.println("No se pudo encontrar el tipo del trámite: "+applicationNumber);
+        } catch (SQLException ex) {
+            System.err.println("No se pudo encontrar el tipo del trámite: " + applicationNumber + ": " + ex);
             return "";
         }
-    }    
+    }
 }
-

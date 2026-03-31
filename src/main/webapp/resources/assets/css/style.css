@@ -65,6 +65,11 @@
     color: white !important;
 }
 
+body .ui-button.ui-state-hover{
+    background: black !important;
+    color: white !important;
+}
+
 .btn_buscar{
     color: black !important;
     font-size: 16px !important;

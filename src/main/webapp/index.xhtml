@@ -141,12 +141,12 @@ and open the template in the editor.
 
                             <p:outputLabel value="Expediente:" for="expm" class="bordesuperior"/>
                             <p:inputText id="expm" value="#{tramiteBean.hallmarkForm.expedient}" readonly="true" class="maxsize"/>
-                            
+
                             <p:outputLabel value=""/>
                             <p:commandLink value="Ver productos" actionListener="#{tramiteBean.prepararVerProductos}" process="@parent"
-                                       oncomplete="if(args.verprods){PF('dlgProductos').show();}" update="allform:dlgProductos mensajes"
-                                       style="color: blue; font-size: 16px; font-weight: bold" 
-                                       title="Ver productos seleccionados del trámite #{tramiteBean.hallmarkForm.applicationNumber}"/>
+                                           oncomplete="if(args.verprods){PF('dlgProductos').show();}" update="allform:dlgProductos mensajes"
+                                           style="color: blue; font-size: 16px; font-weight: bold" 
+                                           title="Ver productos seleccionados del trámite #{tramiteBean.hallmarkForm.applicationNumber}"/>
 
                         </p:panelGrid>
                         <p:panelGrid columns="1" style="width: 100%" class="noBorders" id="exped">
@@ -207,7 +207,7 @@ and open the template in the editor.
                             </c:forEach>
                         </p:panelGrid>
                     </p:panelGrid>
-                    
+
                     <p:panelGrid columns="2" id="breederpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conbreeder}" 
                                  columnClasses="fivety-seven-percent,forty-two-percent">
 
@@ -226,10 +226,10 @@ and open the template in the editor.
 
                             <p:outputLabel value="Grupo:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.group}" readonly="true" class="maxsize"/>
-                            
+
                             <p:outputLabel value="Estado:" class="bordesuperior"/>
                             <p:inputText value="#{tramiteBean.breederForm.estado}" readonly="true" class="maxsize"/>
-                           
+
 
                         </p:panelGrid>
                         <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
@@ -241,6 +241,57 @@ and open the template in the editor.
                                 </p:panel>
                             </c:forEach>
                         </p:panelGrid>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="2" id="denominationpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.condenomination}" 
+                                 columnClasses="fivety-seven-percent,forty-two-percent">
+
+                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                            <p:outputLabel value="Trámite:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.denominationForms.applicationNumber}" readonly="true" class="maxsize"/>                            
+
+                            <p:outputLabel value="Fecha Presentación:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.denominationForms.applicationDate}" readonly="true" class="maxsize"/>
+
+                            <p:outputLabel value="Denominación:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.denominationForms.denomination}" readonly="true" class="maxsize"/>
+
+                            <p:outputLabel value="Parte del proceso:" class="bordesuperior"/>
+                            <p:inputTextarea value="#{tramiteBean.denominationForms.partOfProcess}" readonly="true" class="maxsize"/>
+
+                            <p:outputLabel value="Lugar de inspección:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.denominationForms.inspectionPlace}" readonly="true" class="maxsize"/>
+
+                            <p:outputLabel value="Estado:" class="bordesuperior"/>
+                            <p:inputText value="#{tramiteBean.denominationForms.estado}" readonly="true" class="maxsize"/>
+
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
+                            <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
+                            <p:panelGrid columns="1" id="denDocumentos">
+                                <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
+                                    <p:panel >
+                                        <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;" immediate="true"
+                                                       onclick="otherpage('#{tramiteBean.denominationForms.sitio}#{tramiteBean.denominationForms.id}/#{expediente.archivo}')"/>
+                                        <p:commandLink class="link_remove" style="float: right"
+                                                       process="@this" title="Eliminar documento"
+                                                       actionListener="#{tramiteBean.eliminarDocumentoDenomination(expediente)}"
+                                                       update="denDocumentos mensajes"
+                                                       rendered="#{expediente.uploaded}"
+                                                       onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
+                                            <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                        </p:commandLink>
+                                    </p:panel>
+                                </c:forEach>
+                            </p:panelGrid>
+                            <p:fileUpload listener="#{tramiteBean.uploadDocumentoDenomination}"
+                                          accept=".pdf"
+                                          auto="true"
+                                          label="SUBIR DOCUMENTO"
+                                          update="denDocumentos mensajes"                                              
+                                          style="margin: 10px 0; width: 100%;">                            
+                            </p:fileUpload>
+                        </p:panelGrid>                        
                     </p:panelGrid>
 
                     <p:panel id="renewalpanel" rendered="#{tramiteBean.conmodificacion}">
@@ -470,12 +521,22 @@ and open the template in the editor.
                                     <p:inputText value="#{oposicion.oppositionForm.status}" readonly="true" class="maxsize"/>
                                 </p:panelGrid>                                
 
-                                <c:forEach items="#{oposicion.documentos}" var="documento" id="eachdata" >
-                                    <p:panel>
-                                        <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
-                                                       onclick="otherpage('#{oposicion.sitio}#{oposicion.oppositionForm.id}/#{documento.archivo}')"/>
-                                    </p:panel>
-                                </c:forEach> 
+                                <p:panelGrid id="opoDocumentos#{oposicion.oppositionForm.id}" columns="1">
+                                    <c:forEach items="#{oposicion.documentos}" var="documento" id="eachdata" >
+                                        <p:panel>
+                                            <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
+                                                           onclick="otherpage('#{oposicion.sitio}#{oposicion.oppositionForm.id}/#{documento.archivo}')"/>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
+                                <p:fileUpload listener="#{tramiteBean.uploadDocumentoOposicion}"
+                                              accept=".pdf"
+                                              auto="true"
+                                              label="SUBIR DOCUMENTO"
+                                              update="opoDocumentos#{oposicion.oppositionForm.id} mensajes"                                              
+                                              style="margin: 10px 0; width: 100%;">
+                                    <f:attribute name="oposicion" value="#{oposicion}"/>
+                                </p:fileUpload>
                             </p:panelGrid>
                         </c:forEach>
                     </p:panel>
@@ -521,7 +582,7 @@ and open the template in the editor.
 
                 </p:panelGrid>                                
             </div>
-            
+
             <p:dialog id="dlgProductos" modal="true" resizable="true"
                       header="PRODUCTOS SELECCIONADOS EN EL TRÁMITE #{tramiteBean.hallmarkForm.applicationNumber}" fitViewport="true"
                       widgetVar="dlgProductos" showEffect="explode"  
@@ -614,7 +675,7 @@ and open the template in the editor.
                                                  oncomplete="if(args.casit){PF('dlgCambioCasillero').show();}" process="@form" 
                                                  update="mensajes allform:dlgCambioCasillero tramen"/>
                             </p:panelGrid>                                                       
-                            
+
                             <p:outputLabel value="Titular Casillero: " for="titCasNuevoForm" style="margin-top: 10px !important;" class="bordesuperior"/>
                             <p:inputText id="titCasNuevoForm" value="#{tramiteBean.cambiarCasillero.titularCasilleroNuevo}" readonly="true" 
                                          class="maxsize" style="margin-top: 10px !important; background: #C8E6C9 !important;"/>
@@ -634,12 +695,12 @@ and open the template in the editor.
                             <p:outputLabel value="Teléfono " for="telfNuevoForm" class="bordesuperior"/>
                             <p:inputText id="telfNuevoForm" value="#{tramiteBean.owneraux.phone}" 
                                          readonly="true" class="maxsize" style="background: #C8E6C9 !important"/>
-                            
+
                             <p:outputLabel value="Fecha Escrito: " for="fechaPForm" rendered="#{tramiteBean.cambiarCasillero.fechaProvidencia eq null?false:true}"
                                            class="bordesuperior"/>
                             <p:calendar id="fechaPForm" value="#{tramiteBean.cambiarCasillero.fechaProvidencia}" required="true"
                                         rendered="#{tramiteBean.cambiarCasillero.fechaProvidencia eq null?false:true}"
-                                    mask="true" pattern="yyyy-MM-dd" title="Fecha de Providencia" inputStyleClass="maxsize greencc"/>
+                                        mask="true" pattern="yyyy-MM-dd" title="Fecha de Providencia" inputStyleClass="maxsize greencc"/>
 
                             <p:outputLabel value="Visualizar Providencia: " class="bordesuperior"/>
                             <p:commandLink class="linkcas" title="Providencia"

@@ -11,6 +11,7 @@ package senadi.com.ditramites.model;
 public class Documento {
     private String archivo;
     private String tipo;
+    private Boolean uploaded = false;
 
     /**
      * @return the archivo
@@ -38,5 +39,19 @@ public class Documento {
      */
     public void setTipo(String tipo) {
         this.tipo = tipo;
+    }
+
+    /**
+     * @return the uploaded
+     */
+    public Boolean getUploaded() {
+        return uploaded;
+    }
+
+    /**
+     * @param uploaded the uploaded to set
+     */
+    public void setUploaded(Boolean uploaded) {
+        this.uploaded = uploaded;
     }
 }
