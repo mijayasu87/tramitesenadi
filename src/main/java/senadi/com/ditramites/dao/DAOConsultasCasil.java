@@ -97,9 +97,11 @@ public class DAOConsultasCasil {
 
     public List<Notifications> getNotificationsByTramite(String tramite) {
         String query = "SELECT n.create_dt, n.document, n.id, lon.id as lo_id,  lon.locker_id, "
-                + "n.mat_id, n.matter, n.not_id, lon.open_dt, n.source, lon.status "
+                + "n.mat_id, n.matter, n.not_id, lon.open_dt, n.source, lon.status, mt.name, nt.name "
                 + "FROM notifications AS n "
                 + "INNER JOIN locker_notifications AS lon ON lon.notification_id = n.id "
+                + "INNER JOIN matter_types AS mt ON mt.id = n.mat_id "
+                + "INNER JOIN notification_types AS nt ON nt.id = n.not_id "
                 + "WHERE n.matter = '" + tramite + "' order by n.create_dt";
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
@@ -136,6 +138,9 @@ public class DAOConsultasCasil {
                 } else {
                     notification.setType("NOTIFICACIÓN");
                 }
+                
+                notification.setMatterType(rs.getString("mt.name"));
+                notification.setNotificationType(rs.getString("nt.name"));                                
 
                 notifications.add(notification);
             }
@@ -149,9 +154,11 @@ public class DAOConsultasCasil {
     
     public List<Notifications> getNotificationsByTramiteAndCasillero(String tramite, int casillero) {
         String query = "SELECT n.create_dt, n.document, n.id, lon.id as lo_id,  lon.locker_id, "
-                + "n.mat_id, n.matter, n.not_id, lon.open_dt, n.source, lon.status "
+                + "n.mat_id, n.matter, n.not_id, lon.open_dt, n.source, lon.status, mt.name, nt.name "
                 + "FROM notifications AS n "
                 + "INNER JOIN locker_notifications AS lon ON lon.notification_id = n.id "
+                + "INNER JOIN matter_types AS mt ON mt.id = n.mat_id "
+                + "INNER JOIN notification_types AS nt ON nt.id = n.not_id "
                 + "WHERE n.matter = '" + tramite + "' and lon.locker_id = "+casillero+" order by n.create_dt";
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
@@ -188,6 +195,9 @@ public class DAOConsultasCasil {
                 } else {
                     notification.setType("NOTIFICACIÓN");
                 }
+                
+                notification.setMatterType(rs.getString("mt.name"));
+                notification.setNotificationType(rs.getString("nt.name"));
 
                 notifications.add(notification);
             }

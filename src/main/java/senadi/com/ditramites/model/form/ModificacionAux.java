@@ -7,6 +7,7 @@ package senadi.com.ditramites.model.form;
 import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -27,16 +28,17 @@ public class ModificacionAux {
     private String titulo;
     private String fechaTitulo;
     private String casillero;
+    private String powerOfAttorney;
 //    private List<String> documentos;
     private List<Documento> documentos;
 
     private String ftp;
     private String sitio;
-    
-    public ModificacionAux(){
+
+    public ModificacionAux() {
         documentos = new ArrayList<>();
-        ftp = "/var/www/html/solicitudes/media/files/renewal_forms/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/renewal_forms/";
+        ftp = ParametrosBD.ftpPath + "renewal_forms/";
+        sitio = ParametrosBD.urlPath + "renewal_forms/";
     }
 
     /**
@@ -247,6 +249,20 @@ public class ModificacionAux {
      */
     public void setCasillero(String casillero) {
         this.casillero = casillero;
+    }
+
+    /**
+     * @return the powerOfAttorney
+     */
+    public String getPowerOfAttorney() {
+        return powerOfAttorney;
+    }
+
+    /**
+     * @param powerOfAttorney the powerOfAttorney to set
+     */
+    public void setPowerOfAttorney(String powerOfAttorney) {
+        this.powerOfAttorney = powerOfAttorney;
     }
 
     /**

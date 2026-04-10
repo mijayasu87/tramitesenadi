@@ -82,7 +82,7 @@ public class DAOInsertDocuments {
     }
 
     public boolean softDeleteFileAnnexeApplication(String applicationNumber, String fileName, String applicationType, String userUpdate, Timestamp updateDate) {
-        String query = "UPDATE file_annexes_application SET file_status = 'DELETE', user_update = ?, update_date = ? "
+        String query = "UPDATE file_annexes_application SET file_status = 'DELETED', user_update = ?, update_date = ? "
                 + "WHERE application_number = ? AND file_name = ? AND application_type = ?";
         try {
             Connection con = ParametrosBD.doConnectionToFormularios();
@@ -96,7 +96,7 @@ public class DAOInsertDocuments {
             con.close();
             return num > 0;
         } catch (SQLException ex) {
-            System.out.println("Hubo un problema al marcar file_annexes_application como DELETE: " + ex);
+            System.out.println("Hubo un problema al marcar file_annexes_application como DELETED: " + ex);
             return false;
         }
     }

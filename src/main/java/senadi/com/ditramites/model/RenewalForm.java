@@ -29,7 +29,7 @@ public class RenewalForm implements Serializable {
     private Integer id;
 
     @Column(name = "application_date")
-    private String applicationDate;
+    private Timestamp applicationDate;
 
     @Column(name = "application_number")
     private String applicationNumber;
@@ -89,15 +89,6 @@ public class RenewalForm implements Serializable {
     private String tipo;
     
     private String casillero;
-
-
-    public String getApplicationDate() {
-        return this.applicationDate;
-    }
-
-    public void setApplicationDate(String applicationDate) {
-        this.applicationDate = applicationDate;
-    }
 
     public String getApplicationNumber() {
         return this.applicationNumber;
@@ -297,6 +288,20 @@ public class RenewalForm implements Serializable {
      */
     public void setCasillero(String casillero) {
         this.casillero = casillero;
+    }
+
+    /**
+     * @return the applicationDate
+     */
+    public Timestamp getApplicationDate() {
+        return applicationDate;
+    }
+
+    /**
+     * @param applicationDate the applicationDate to set
+     */
+    public void setApplicationDate(Timestamp applicationDate) {
+        this.applicationDate = applicationDate;
     }
 
 }

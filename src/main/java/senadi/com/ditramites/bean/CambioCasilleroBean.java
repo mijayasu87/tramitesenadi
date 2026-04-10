@@ -26,6 +26,7 @@ import senadi.com.ditramites.model.postgres.PpdiSolicitudSignoDistintivo;
 import senadi.com.ditramites.util.Codekru;
 import senadi.com.ditramites.util.Controlador;
 import senadi.com.ditramites.util.Operaciones;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -98,11 +99,11 @@ public class CambioCasilleroBean implements Serializable {
                     String pdfName = cambioCasillero.getTramite() + "_" + cambioCasillero.getProvidencia() + "_cambio_casillero-signed.pdf";
                     pdfName = pdfName.trim().replace(" ", "");
                     HallmarkForm hf = c.getHallmarkForm(cambioCasillero.getTramite());
-                    String rutamarca = "/var/www/html/solicitudes/media/files/hallmark_forms/" + hf.getId() + "/" + pdfName;
+                    String rutamarca = ParametrosBD.ftpPath+"hallmark_forms/" + hf.getId() + "/" + pdfName;
                     if (uploadDocumentoToExpedient(rutamarca, file, cambioCasillero)) {
                         Codekru cod = new Codekru();
 
-                        String rutacas = "/var/www/html/casilleros/media/files/" + cambioCasillero.getCasilleroAnterior() + "/";
+                        String rutacas = ParametrosBD.ftpLockerPath + cambioCasillero.getCasilleroAnterior() + "/";
                         String comando = "cp " + rutamarca + " " + rutacas + " && echo 'copiado'";
 
                         if (cod.exeComando(comando)) {
@@ -130,7 +131,7 @@ public class CambioCasilleroBean implements Serializable {
                                     lon.setOpenDt(null);
                                     lon.setStatus("SENT");
                                     if (c.saveLockerNotifications(lon)) {
-                                        rutacas = "/var/www/html/casilleros/media/files/" + cambioCasillero.getNuevoCasillero() + "/";
+                                        rutacas = ParametrosBD.ftpLockerPath + cambioCasillero.getNuevoCasillero() + "/";
                                         comando = "cp " + rutamarca + " " + rutacas + " && echo 'copiado'";
                                         if (cod.exeComando(comando)) {
                                             lon = new LockerNotifications();
@@ -218,7 +219,7 @@ public class CambioCasilleroBean implements Serializable {
                 HallmarkForm hallmark = c.getHallmarkForm(caux.getTramite());
                 if (hallmark.getId() != null) {
 
-                    String rutaux = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/hallmark_forms/" + hallmark.getId() + "/" + caux.getDocumento();
+                    String rutaux = ParametrosBD.urlPath+"hallmark_forms/" + hallmark.getId() + "/" + caux.getDocumento();
 
                     System.out.println("rutaprovidencia: " + rutaux);
                     PrimeFaces.current().ajax().addCallbackParam("viewdoc", true);

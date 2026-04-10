@@ -4,7 +4,12 @@
  */
 package senadi.com.ditramites.bean;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -58,8 +63,12 @@ import senadi.com.ditramites.util.Operaciones;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import senadi.com.ditramites.model.Cpis;
 import senadi.com.ditramites.model.FileAnnexesApplication;
-import senadi.com.ditramites.model.mod.FileAnnex;
+import senadi.com.ditramites.model.PowerOfAttorney;
+import senadi.com.ditramites.model.postgres.polaris.IpasApi;
+import senadi.com.ditramites.util.IpasApiClient;
+import senadi.com.ditramites.util.PatentJson;
 
 /**
  *
@@ -87,6 +96,7 @@ public class TramiteBean implements Serializable {
     private PatentForms patentForm;
     private BreederForms breederForm;
     private DenominationForms denominationForms;
+    private List<Cpis> cpis;
 
     private List<ScopeFormsAux> alcances;
 
@@ -108,6 +118,10 @@ public class TramiteBean implements Serializable {
     private boolean conpatente;
     private boolean connotificacion;
     private boolean conbreeder;
+    private boolean concpi;
+
+    private Documento selectedLogoDocument;
+
     private boolean condenomination;
 
     private boolean resultadopanel;
@@ -143,6 +157,10 @@ public class TramiteBean implements Serializable {
 
     private PpdiSolicitudSignoDistintivo ppdiSolicitudSignoDistintivo;
 
+    private boolean searchIPAS;
+
+    private PowerOfAttorney powerOfAttorneyData;
+
     public TramiteBean() {
         Controlador c = new Controlador();
         login = c.getLogin();
@@ -151,7 +169,7 @@ public class TramiteBean implements Serializable {
         cambiocas = false;
     }
 
-    public void buscarTramite(ActionEvent ae) {
+    public void buscarTramite(ActionEvent ae) throws JsonProcessingException {
         FacesMessage msg = null;
         System.out.println("--------- usuario: " + login.getNombre() + " ------- tramite: " + tramiteText + " -------------");
         if (tramiteText.trim().isEmpty() && tramiteText.trim().length() < 4) {
@@ -160,163 +178,239 @@ public class TramiteBean implements Serializable {
             limpiarDatos(false);
             tramiteText = tramiteText.trim().replace(" ", "").toUpperCase();
 
-            Controlador c = new Controlador();
-
-            String tipoTram = c.getApplicationType(tramiteText);
             boolean flag = true;
-            if (!tipoTram.trim().isEmpty()) {
-                System.out.println("**** TIPO TRÁMITE: " + tipoTram + " ****");
-                System.out.println("Inicio lectura de trámite: " + Operaciones.getCurrentTimeStamp());
-                switch (tipoTram) {
-                    case "BreederForm":
-                        if (cargarBreederAVisualizarByTramite(tramiteText)) {
-                            System.out.println("OBTENCIONES VEGETALES");
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OBTENCIÓN VEGETAL");
-                            resultadopanel = true;
-                        }
-                        break;
-                    // No existe este trámite aún
-                    case "Denominationform":
-                        if (cargarDenominationAVisualizarByTramite(tramiteText)) {
-                            System.out.println("DENOMINATION FORMS");
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA DENOMINATION FORMS");
-                            resultadopanel = true;
-                        }
-                        break;
-                    case "Hallmarkform":
-                        if (cargarMarcasAVisualizarByTramite(tramiteText)) {
-                            System.out.println("SIGNO DISTINTIVO");
-                            ppdiSolicitudSignoDistintivo = c.getPpdiSolicitudSignoDistintivoByTramite(tramiteText);
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
+            if (searchIPAS) {
+                if (cargarPatenteIPASByTramite(tramiteText)) {
 
-                            // Cargas en paralelo para mejor rendimiento
-                            cargarAlcancesOposicionesModificacionesEnParalelo(hallmarkForm.getApplicationNumber(), hallmarkForm.getTitulo(), tramiteText, true);
+                    System.out.println("------> Patente cargada <------");
+                    ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                    cargarCpiRelacionadoByTramite(tramiteText);
+//                cargarNotificacionesAVisualizarByTramite(tramiteText);
 
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL SIGNO DISTINTIVO");
-                            resultadopanel = true;
-                        }
-                        break;
-                    case "Oppositionform":
-                        if (cargarOposicionesAVisualizarByTramite(tramiteText, false)) {
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            hijas = true;
-                            System.out.println("OPOSICIÓN");
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-
-                            // Carga en paralelo
-                            ExecutorService executor = Executors.newSingleThreadExecutor();
-                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
-                            executor.shutdown();
-
-                            tituloTramiteText = "OPOSICIÓN";
-                            resultadopanel = true;
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OPOSICIÓN");
-                        }
-                        break;
-                    case "Patentform":
-                        if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
-                            System.out.println("------> Patente cargada <------");
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-
-                            // Cargas en paralelo
-                            cargarAlcancesOposicionesModificacionesEnParalelo(tramiteText, tramiteText, tramiteText, false);
-
-                            resultadopanel = true;
-                            System.out.println("Fin Trámite Patente: " + Operaciones.getCurrentTimeStamp());
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
-                        }
-                        break;
-                    case "Playform":
-                        if (cargarPlayFormAVisualizarByTramite(tramiteText)) {
-                            System.out.println("*********** ENTRO EN DERECHOS DE AUTOR ****************");
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            hijas = true;
-                            System.out.println("DERECHO DE AUTOR");
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-
-                            // Carga en paralelo
-                            ExecutorService executor = Executors.newSingleThreadExecutor();
-                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
-                            executor.shutdown();
-
-                            tituloTramiteText = "DERECHOS DE AUTOR";
-                            resultadopanel = true;
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL DERECHO DE AUTOR");
-                        }
-                        break;
-                    case "Renewalform":
-                    case "renewal_forms":
-                        if (cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true)) {
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            hijas = true;
-                            System.out.println("MODIFICACIÓN AL REGISTRO");
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-
-                            // Carga en paralelo
-                            ExecutorService executor = Executors.newSingleThreadExecutor();
-                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
-                            executor.shutdown();
-
-                            tituloTramiteText = "MODIFICACIÓN AL REGISTRO";
-                            resultadopanel = true;
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA MODIFICACIÓN");
-                        }
-                        break;
-                    case "Scopeform":
-                        if (cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, true)) {
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            hijas = true;
-                            System.out.println("ALCANCE");
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-                            tituloTramiteText = "ALCANCE";
-                            resultadopanel = true;
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL ALCANCE");
-                        }
-                        break;
-                    case "Tutelageform":
-                        if (cargarTutelasAVisualizarByTramite(tramiteText)) {
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-//                            hijas = true;
-                            System.out.println("TUTELAS");
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-
-                            // Carga en paralelo
-                            ExecutorService executor = Executors.newSingleThreadExecutor();
-                            executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
-                            executor.shutdown();
-
-                            resultadopanel = true;
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA TUTELA ADMINISTRATIVA");
-                        }
-                        break;
-                    case "Voucher":
-                        if (cargarNolineaAVisualizarByAppOrDoc(tramiteText, true)) {
-                            ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
-                            hijas = true;
-                            System.out.println("TRÁMITE NO EN LÍNEA");
-                            cargarNotificacionesAVisualizarByTramite(tramiteText);
-                            tituloTramiteText = "TRÁMITE NO EN LÍNEA";
-                            resultadopanel = true;
-                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE NO EN LÍNEA");
-                        }
-                        break;
-                    default:
-                        flag = false;
-                        break;
+                    // Cargas en paralelo
+//                cargarAlcancesOposicionesModificacionesEnParalelo(tramiteText, tramiteText, tramiteText, false);
+                    resultadopanel = true;
+                    System.out.println("Fin Trámite Patente: " + Operaciones.getCurrentTimeStamp());
+                    msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE EN IPAS");
+                } else {
+                    flag = false;
                 }
             } else {
-                flag = false;
+
+                Controlador c = new Controlador();
+
+                String tipoTram = c.getApplicationType(tramiteText);
+
+                if (!tipoTram.trim().isEmpty()) {
+
+                    System.out.println("**** TIPO TRÁMITE: " + tipoTram + " ****");
+                    System.out.println("Inicio lectura de trámite: " + Operaciones.getCurrentTimeStamp());
+                    switch (tipoTram) {
+                        case "BreederForm":
+                            if (cargarBreederAVisualizarByTramite(tramiteText)) {
+                                System.out.println("OBTENCIONES VEGETALES");
+                                cargarCpiRelacionadoByTramite(tramiteText);
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OBTENCIÓN VEGETAL");
+                                resultadopanel = true;
+                            }
+                            break;
+                        // No existe este trámite aún
+                        case "Denominationform":
+                            if (cargarDenominationAVisualizarByTramite(tramiteText)) {
+                                System.out.println("DENOMINATION FORMS");
+                                cargarCpiRelacionadoByTramite(tramiteText);
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA DENOMINATION FORMS");
+                                resultadopanel = true;
+                            }
+                            break;
+                        case "Hallmarkform":
+                            if (cargarMarcasAVisualizarByTramite(tramiteText)) {
+                                System.out.println("SIGNO DISTINTIVO");
+                                ppdiSolicitudSignoDistintivo = c.getPpdiSolicitudSignoDistintivoByTramite(tramiteText);
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+
+                                // Cargas en paralelo para mejor rendimiento
+                                cargarAlcancesOposicionesModificacionesEnParalelo(hallmarkForm.getApplicationNumber(), hallmarkForm.getTitulo(), tramiteText, true);
+
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL SIGNO DISTINTIVO");
+                                resultadopanel = true;
+                            }
+                            break;
+                        case "Oppositionform":
+                            if (cargarOposicionesAVisualizarByTramite(tramiteText, false)) {
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                                hijas = true;
+                                System.out.println("OPOSICIÓN");
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+
+                                // Carga en paralelo
+                                ExecutorService executor = Executors.newSingleThreadExecutor();
+                                executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                                executor.shutdown();
+
+                                tituloTramiteText = "OPOSICIÓN";
+                                resultadopanel = true;
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA OPOSICIÓN");
+                            }
+                            break;
+                        case "Patentform":
+                            if (cargarPatentFormAVisualizarByTramite(tramiteText)) {
+                                System.out.println("------> Patente cargada <------");
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+
+                                // Cargas en paralelo
+                                cargarAlcancesOposicionesModificacionesEnParalelo(tramiteText, tramiteText, tramiteText, true);
+
+                                resultadopanel = true;
+                                System.out.println("Fin Trámite Patente: " + Operaciones.getCurrentTimeStamp());
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA PATENTE");
+                            }
+                            break;
+                        case "Playform":
+                            if (cargarPlayFormAVisualizarByTramite(tramiteText)) {
+                                System.out.println("*********** ENTRO EN DERECHOS DE AUTOR ****************");
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                                hijas = true;
+                                System.out.println("DERECHO DE AUTOR");
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+
+                                // Carga en paralelo
+                                ExecutorService executor = Executors.newSingleThreadExecutor();
+                                executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                                executor.shutdown();
+
+                                tituloTramiteText = "DERECHOS DE AUTOR";
+                                resultadopanel = true;
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL DERECHO DE AUTOR");
+                            }
+                            break;
+                        case "Renewalform":
+                        case "renewal_forms":
+                            if (cargarModificacionesAVisualizarByTituloOrTramite(tramiteText, true)) {
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                                hijas = true;
+                                System.out.println("MODIFICACIÓN AL REGISTRO");
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+
+                                // Carga en paralelo
+                                ExecutorService executor = Executors.newSingleThreadExecutor();
+                                executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                                executor.shutdown();
+
+                                tituloTramiteText = "MODIFICACIÓN AL REGISTRO";
+                                resultadopanel = true;
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA MODIFICACIÓN");
+                            }
+                            break;
+                        case "Scopeform":
+                            if (cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, true)) {
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                                hijas = true;
+                                System.out.println("ALCANCE");
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+                                tituloTramiteText = "ALCANCE";
+                                resultadopanel = true;
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL ALCANCE");
+                            }
+                            break;
+                        case "Tutelageform":
+                            if (cargarTutelasAVisualizarByTramite(tramiteText)) {
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+//                            hijas = true;
+                                System.out.println("TUTELAS");
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+
+                                // Carga en paralelo
+                                ExecutorService executor = Executors.newSingleThreadExecutor();
+                                executor.submit(() -> cargarAlcancesAVisualizarByAfforAplicationNumber(tramiteText, false));
+                                executor.shutdown();
+
+                                resultadopanel = true;
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ LA TUTELA ADMINISTRATIVA");
+                            }
+                            break;
+                        case "Voucher":
+                            if (cargarNolineaAVisualizarByAppOrDoc(tramiteText, true)) {
+                                ppdiSolicitudSignoDistintivo = new PpdiSolicitudSignoDistintivo();
+                                hijas = true;
+                                System.out.println("TRÁMITE NO EN LÍNEA");
+                                cargarNotificacionesAVisualizarByTramite(tramiteText);
+                                cargarCpiRelacionadoByTramite(tramiteText);
+                                tituloTramiteText = "TRÁMITE NO EN LÍNEA";
+                                resultadopanel = true;
+                                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE NO EN LÍNEA");
+                            }
+                            break;
+                        default:
+                            flag = false;
+                            break;
+                    }
+                } else {
+                    flag = false;
+                }
             }
             if (!flag) {
-//                System.out.println("entro aquí <----------------------------");
-//                loadApplication(msg);
-                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL TRÁMITE " + tipoTram);
+                Controlador c = new Controlador();
+                PpdiTituloSignoDistintivo tit = c.getPpdiTituloSignoDistintivoByNumeroTitulo(tramiteText);
+                if (tit.getCodigoTituloSignoDistintivo() != null && tit.getCodigoSolicitudSigno() != null) {
+                    PpdiSolicitudSignoDistintivo solic = c.getPpdiSolicitudSignoDistintivoByCodigoSolicitud(tit.getCodigoSolicitudSigno());
+                    if (solic.getCodigoSolicitudSigno() != null) {
+                        tramiteText = solic.getNumeroTramite().trim();
+                        buscarTramite(ae);
+                        return;
+                    }
+                }
+                
+                if (cargarCpiAVisualizarByTramite(tramiteText)) {
+                    resultadopanel = true;
+                    msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE CPI");
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL TRÁMITE " + tramiteText);
+                }
             }
             System.out.println("Fin lectura trámite: " + Operaciones.getCurrentTimeStamp());
             System.out.println("");
         }
         FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public boolean cargarPatenteIPASByTramite(String applicationNumber) throws JsonProcessingException {
+        Controlador c = new Controlador();
+        IpasApiClient ipasApiClient = new IpasApiClient("PATENTE");
+        IpasApi ipasApi = c.getIpasApi(ipasApiClient);
+        if (ipasApi.getId() != null) {
+            if (ipasApi.getxAccessToken() != null && !ipasApi.getxAccessToken().trim().isEmpty()) {
+                String response = ipasApiClient.getApplicationBiblioGraphicData(applicationNumber, ipasApi.getxAccessToken());
+                if (!response.contains("No se encontró")) {
+//                    System.out.println("Trámite " + applicationNumber + " verificado en IPAS: \n" + response);
+                    ObjectMapper mapper = new ObjectMapper();
+
+                    PatentJson jsonObj = mapper.readValue(response, PatentJson.class);
+                    patentForm = c.mapFromJson(jsonObj);
+
+                    tituloTramiteText = "PATENTE";
+                    conpatente = true;
+
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                System.err.println("No se pudieron obtener ni crear los tokens.");
+                return false;
+            }
+        } else {
+            System.err.println("No se pudieron obtener los tokens, error en la conexión");
+            return false;
+        }
     }
 
     /**
@@ -349,7 +443,7 @@ public class TramiteBean implements Serializable {
                 }
             });
 
-            // Tarea 3: Oposiciones (solo para Hallmark)
+            // Tarea 3: Oposiciones por searched_application_number
             if (isHallmark) {
                 executor.submit(() -> {
                     try {
@@ -416,7 +510,11 @@ public class TramiteBean implements Serializable {
                     doc.setTipo(nombre);
 
                 } else {
-                    if (doc.getArchivo().contains("pdf_patentfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(patentForm.getApplicationNumber(), doc.getArchivo(), "Patentform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_patentfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_patentfrm_")) {
                         doc.setTipo("Comprobante");
@@ -437,6 +535,74 @@ public class TramiteBean implements Serializable {
             conpatente = false;
         }
         return conpatente;
+    }
+
+    public void abrirDocumentoCpi(Cpis cpi) {
+        FacesMessage msg;
+
+        if (cpi == null || cpi.getWrittenFile() == null || cpi.getWrittenFile().trim().isEmpty()) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "DOCUMENTO NO DISPONIBLE");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            PrimeFaces.current().ajax().addCallbackParam("viewdoc", false);
+            return;
+        }
+
+        String documentUrl = resolverUrlDocumentoCpi(cpi);
+        if (!documentUrl.isEmpty()) {
+            PrimeFaces.current().ajax().addCallbackParam("viewdoc", true);
+            PrimeFaces.current().ajax().addCallbackParam("view", documentUrl);
+            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "DOCUMENTO CPI CARGADO");
+        } else {
+            PrimeFaces.current().ajax().addCallbackParam("viewdoc", false);
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "DOCUMENTO NO DISPONIBLE");
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    private String resolverUrlDocumentoCpi(Cpis cpi) {
+        String notificationUrl = cpi.getDocumentUrl();
+        if (urlExiste(notificationUrl)) {
+            return notificationUrl;
+        }
+
+        String resolutionUrl = cpi.getResolutionDocumentUrl();
+        if (urlExiste(resolutionUrl)) {
+            return resolutionUrl;
+        }
+
+        return "";
+    }
+
+    private boolean urlExiste(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(3000);
+            connection.setRequestMethod("HEAD");
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
+                connection.disconnect();
+                connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setInstanceFollowRedirects(true);
+                connection.setConnectTimeout(3000);
+                connection.setReadTimeout(3000);
+                connection.setRequestMethod("GET");
+                responseCode = connection.getResponseCode();
+            }
+
+            connection.disconnect();
+            return responseCode >= 200 && responseCode < 400;
+        } catch (IOException ex) {
+            System.err.println("No se pudo validar URL CPI: " + url + " - " + ex.getMessage());
+            return false;
+        }
     }
 
     public void prepararVerProductos(ActionEvent ae) {
@@ -504,12 +670,10 @@ public class TramiteBean implements Serializable {
     public boolean cargarMarcasAVisualizarByTramite(String applicationNumber) {
         Controlador c = new Controlador();
         hallmarkForm = c.getHallmarkForm(applicationNumber);
-        System.out.println("llegooooo 1 <-------");
         if (hallmarkForm.getId() != null) {
             System.out.println("denominación: " + hallmarkForm.getDenomination());
             tituloTramiteText = "SIGNO DISTINTIVO";
             conmarca = true;
-            System.out.println("llegooooo 2");
             if (hallmarkForm.getStatus().equals("DELIVERED")) {
                 PpdiSolicitudSignoDistintivo signo = c.getPpdiSolicitudSignoDistintivoByTramite(hallmarkForm.getApplicationNumber());
                 if (signo.getCodigoSolicitudSigno() != null) {
@@ -564,20 +728,31 @@ public class TramiteBean implements Serializable {
             for (int i = 0; i < documentosExpediente.size(); i++) {
                 Documento doc = new Documento();
                 doc.setArchivo(documentosExpediente.get(i));
-                String nombre = c.getHallmarkNombreArchivo(doc.getArchivo());
+
+                String archivo = doc.getArchivo();
+                if (archivo != null && archivo.toLowerCase().matches("^logo\\d+_.*")) {
+                    // No mostrar logos de respaldo antiguos (solo el logo final debe verse)
+                    continue;
+                }
+
+                String nombre = c.getHallmarkNombreArchivo(archivo);
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().equals(hallmarkForm.getDiscountFile())) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(hallmarkForm.getApplicationNumber(), archivo, "Hallmarkform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (archivo.equals(hallmarkForm.getDiscountFile())) {
                         doc.setTipo("Documento Descuento");
-                    } else if (doc.getArchivo().contains("pdf_hallmarkfrm_")) {
+                    } else if (archivo.contains("pdf_hallmarkfrm_")) {
                         doc.setTipo("Formulario");
-                    } else if (doc.getArchivo().contains("logo_")) {
+                    } else if (archivo.contains("logo_")) {
                         doc.setTipo("Logo");
-                    } else if (doc.getArchivo().contains("pdf_voucher_hallmarkfrm_")) {
+                    } else if (archivo.contains("pdf_voucher_hallmarkfrm_")) {
                         doc.setTipo("Comprobante");
                     } else {
-                        doc.setTipo(doc.getArchivo());
+                        doc.setTipo(archivo);
                     }
                 }
                 documentos.add(doc);
@@ -588,6 +763,29 @@ public class TramiteBean implements Serializable {
             conmarca = false;
             return conmarca;
         }
+    }
+
+    public boolean cargarCpiAVisualizarByTramite(String applicationNumber) {
+        if (cargarCpiRelacionadoByTramite(applicationNumber)) {
+            tituloTramiteText = "CPI";
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean cargarCpiRelacionadoByTramite(String applicationNumber) {
+        Controlador c = new Controlador();
+        cpis = c.getCpisByApplicationNumber(applicationNumber);
+
+        if (cpis != null && !cpis.isEmpty()) {
+            concpi = true;
+            return true;
+        }
+
+        concpi = false;
+        cpis = new ArrayList<>();
+        return false;
     }
 
     public boolean cargarPlayFormAVisualizarByTramite(String applicationNumber) {
@@ -607,43 +805,7 @@ public class TramiteBean implements Serializable {
                 playFormAux.getPlayForm().setStatus("SIN PAGO");
             }
 
-            String tipo = playFormAux.getPlayForm().getAlias();
-            System.out.println("tipo: " + tipo + ", id: " + playForm.getId());
-            String exten = "";
-            switch (tipo) {
-                case "literaria":
-                    exten = "literaryplay_forms/";
-                    break;
-                case "artistica":
-                    if (playForm.getId() < 82312) {
-                        exten = "artmusicplay_forms/";
-                    } else {
-                        exten = "artplay_forms/";
-                    }
-                    break;
-                case "audiovisua":
-                    exten = "audiovisualplay_forms/";
-                    break;
-                case "software":
-                    exten = "softwareplay_forms/";
-                    break;
-                case "radio":
-                    if (playForm.getId() < 82312) {
-                        exten = "newsradioplay_forms/";
-                    } else {
-                        exten = "newsplay_forms/";
-                    }
-                    break;
-                case "musicales":
-                    exten = "musicplay_forms/";
-                    break;
-                case "Radio":
-                    exten = "radioplay_forms/";
-                    break;
-                default:
-                    exten = "phonogramplay_forms/";
-                    break;
-            }
+            String exten = resolvePlayFormDirectory(playFormAux.getPlayForm());
 
             System.out.println("tipo play: " + exten);
 
@@ -670,6 +832,14 @@ public class TramiteBean implements Serializable {
                 docs.add(doc);
             }
 
+            for (Documento doc : docs) {
+                FileAnnexesApplication fap = c.getFileAnnexesApplication(playFormAux.getPlayForm().getApplicationNumber().trim(), doc.getArchivo(), "Playform");
+                if (fap != null && fap.getFileStatus() != null && fap.getFileStatus().equals("UPLOADED")) {
+                    doc.setUploaded(true);
+                    doc.setTipo(doc.getArchivo() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                }
+            }
+
             playFormAux.setDocumentos(docs);
 
             playFormAux.setSitio(playFormAux.getSitio() + exten);
@@ -679,6 +849,29 @@ public class TramiteBean implements Serializable {
             conderechos = false;
         }
         return conderechos;
+    }
+
+    private String resolvePlayFormDirectory(PlayForm currentPlayForm) {
+        String tipo = currentPlayForm.getAlias();
+        System.out.println("tipo: " + tipo + ", id: " + currentPlayForm.getId());
+        switch (tipo) {
+            case "literaria":
+                return "literaryplay_forms/";
+            case "artistica":
+                return (currentPlayForm.getId() < 82312) ? "artmusicplay_forms/" : "artplay_forms/";
+            case "audiovisua":
+                return "audiovisualplay_forms/";
+            case "software":
+                return "softwareplay_forms/";
+            case "radio":
+                return (currentPlayForm.getId() < 82312) ? "newsradioplay_forms/" : "newsplay_forms/";
+            case "musicales":
+                return "musicplay_forms/";
+            case "Radio":
+                return "radioplay_forms/";
+            default:
+                return "phonogramplay_forms/";
+        }
     }
 
     public boolean cargarNolineaAVisualizarByAppOrDoc(String appordoc, boolean avisa) {
@@ -828,6 +1021,14 @@ public class TramiteBean implements Serializable {
                             }
                         }
                         docs.add(doc);
+                    }
+
+                    for (Documento doc : docs) {
+                        FileAnnexesApplication fap = c.getFileAnnexesApplication(oppsaux.getOppositionForm().getApplicationNumber().trim(), doc.getArchivo(), "Oppositionform");
+                        if (fap != null && fap.getFileStatus() != null && fap.getFileStatus().equals("UPLOADED")) {
+                            doc.setUploaded(true);
+                            doc.setTipo(doc.getArchivo() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        }
                     }
 
                     oppsaux.setDocumentos(docs);
@@ -1348,7 +1549,10 @@ public class TramiteBean implements Serializable {
     public boolean loadRenewalFormToShow(RenewalForm renewal, String titulo, String fecha) {
         ModificacionAux mod = new ModificacionAux();
         mod.setSolicitud(renewal.getApplicationNumber());
-        mod.setFechaPresentacion(renewal.getApplicationDate());
+        if (renewal.getApplicationDate() != null) {
+            mod.setFechaPresentacion(Operaciones.formatTimesTamp(renewal.getApplicationDate()));
+        }
+
         mod.setActor1("--");
         mod.setActor2("--");
         mod.setCertificado("--");
@@ -1358,6 +1562,7 @@ public class TramiteBean implements Serializable {
         mod.setTitulo(titulo);
         mod.setFechaTitulo(fecha);
         mod.setCasillero(renewal.getCasillero());
+        mod.setPowerOfAttorney(renewal.getPowerAttorney());
 
         mod.setId(renewal.getId());
 
@@ -1373,7 +1578,11 @@ public class TramiteBean implements Serializable {
             if (!nombre.isEmpty()) {
                 doc.setTipo(nombre);
             } else {
-                if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                FileAnnexesApplication fap = c.getFileAnnexesApplication(renewal.getApplicationNumber(), doc.getArchivo(), "Renewalform");
+                if (fap != null && fap.getId() != null) {
+                    doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                    doc.setUploaded(true);
+                } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                     doc.setTipo("Formulario");
                 } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                     doc.setTipo("Comprobante");
@@ -1517,6 +1726,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
 
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
@@ -1529,7 +1739,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1568,6 +1782,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
             List<Documento> docs = new ArrayList<>();
@@ -1578,7 +1793,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1617,6 +1836,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
 
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
@@ -1629,7 +1849,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1669,6 +1893,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
 
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
@@ -1681,7 +1906,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1723,6 +1952,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
 
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
@@ -1735,7 +1965,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1775,6 +2009,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
 
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
@@ -1787,7 +2022,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1828,6 +2067,7 @@ public class TramiteBean implements Serializable {
             if (rf.getId() != null) {
                 mod.setId(rf.getId());
                 mod.setCasillero(rf.getCasillero());
+                mod.setPowerOfAttorney(rf.getPowerAttorney());
             }
 
             List<String> docstra = files.listarDirectorio(mod.getFtp() + mod.getId());
@@ -1840,7 +2080,11 @@ public class TramiteBean implements Serializable {
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
-                    if (doc.getArchivo().contains("pdf_renewalfrm_")) {
+                    FileAnnexesApplication fap = c.getFileAnnexesApplication(mod.getSolicitud(), doc.getArchivo(), "Renewalform");
+                    if (fap != null && fap.getId() != null) {
+                        doc.setTipo(fap.getFileName() + " | " + fap.getUserUpload() + " | " + Operaciones.formatTimesTamp(fap.getUploadDate()));
+                        doc.setUploaded(true);
+                    } else if (doc.getArchivo().contains("pdf_renewalfrm_")) {
                         doc.setTipo("Formulario");
                     } else if (doc.getArchivo().contains("pdf_voucher_renewalfrm_")) {
                         doc.setTipo("Comprobante");
@@ -1895,6 +2139,7 @@ public class TramiteBean implements Serializable {
         conderechos = enable;
         conpatente = enable;
         connotificacion = enable;
+        concpi = enable;
         hijas = enable;
 
         // Limpiar listas de datos para evitar duplicados en cargas paralelas
@@ -1913,6 +2158,7 @@ public class TramiteBean implements Serializable {
             playForm = null;
             breederForm = null;
             tutelageForm = null;
+            cpis = new ArrayList<>();
         }
     }
 
@@ -1982,6 +2228,7 @@ public class TramiteBean implements Serializable {
     public void limpiarPaneles(ActionEvent ae) {
         FacesMessage msg = null;
         tramiteText = "";
+        searchIPAS = false;
         limpiarDatos(false);
 
         msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "LIMPIEZA REALIZADA..!");
@@ -2119,6 +2366,95 @@ public class TramiteBean implements Serializable {
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
 
+    public void prepareHallmarkPowerAttorney(ActionEvent ae) {
+        if (hallmarkForm != null && hallmarkForm.getId() != null) {
+            Controlador c = new Controlador();
+            powerOfAttorneyData = c.getPowerOfAttorneyByApplicationNumber(hallmarkForm.getPowerOfAttorney().trim());
+            if (powerOfAttorneyData.getId() != null) {
+
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", true);
+            } else {
+                FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL PODER EN LOS REGISTROS");
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", false);
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+            }
+        } else {
+            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "HAY UN PROBLEMA CON LA MARCA ACTUAL");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+        }
+    }
+
+    public void preparePatentPowerAttorney(ActionEvent ae) {
+        if (patentForm != null && patentForm.getId() != null && patentForm.getPowerOfAttorney() != null && !patentForm.getPowerOfAttorney().trim().isEmpty()) {
+            Controlador c = new Controlador();
+            powerOfAttorneyData = c.getPowerOfAttorneyByApplicationNumber(patentForm.getPowerOfAttorney().trim());
+            if (powerOfAttorneyData.getId() != null) {
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", true);
+            } else {
+                FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL PODER EN LOS REGISTROS");
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", false);
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+            }
+        } else {
+            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "HAY UN PROBLEMA CON LA PATENTE ACTUAL");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+        }
+    }
+
+    public void prepareRenewalPowerAttorney(ModificacionAux modificacion) {
+        if (modificacion != null && modificacion.getPowerOfAttorney() != null && !modificacion.getPowerOfAttorney().trim().isEmpty()) {
+            Controlador c = new Controlador();
+            powerOfAttorneyData = c.getPowerOfAttorneyByApplicationNumber(modificacion.getPowerOfAttorney().trim());
+            if (powerOfAttorneyData.getId() != null) {
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", true);
+            } else {
+                FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL PODER EN LOS REGISTROS");
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", false);
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+            }
+        } else {
+            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "HAY UN PROBLEMA CON LA MODIFICACIÓN ACTUAL");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+        }
+    }
+
+    public void prepareOppositionPowerAttorney(OppositionFormsAux oposicion) {
+        if (oposicion != null
+                && oposicion.getOppositionForm() != null
+                && oposicion.getOppositionForm().getPowerAttorney() != null
+                && !oposicion.getOppositionForm().getPowerAttorney().trim().isEmpty()) {
+            Controlador c = new Controlador();
+            powerOfAttorneyData = c.getPowerOfAttorneyByApplicationNumber(oposicion.getOppositionForm().getPowerAttorney().trim());
+            if (powerOfAttorneyData.getId() != null) {
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", true);
+            } else {
+                FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL PODER EN LOS REGISTROS");
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", false);
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+            }
+        } else {
+            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "HAY UN PROBLEMA CON LA OPOSICIÓN ACTUAL");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+        }
+    }
+
+    public void preparePlayPowerAttorney(ActionEvent ae) {
+        if (playForm != null && playForm.getId() != null && playForm.getPowerAttorney() != null && !playForm.getPowerAttorney().trim().isEmpty()) {
+            Controlador c = new Controlador();
+            powerOfAttorneyData = c.getPowerOfAttorneyByApplicationNumber(playForm.getPowerAttorney().trim());
+            if (powerOfAttorneyData.getId() != null) {
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", true);
+            } else {
+                FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL PODER EN LOS REGISTROS");
+                PrimeFaces.current().ajax().addCallbackParam("powerexists", false);
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+            }
+        } else {
+            FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "HAY UN PROBLEMA CON EL TRÁMITE DE DERECHOS DE AUTOR ACTUAL");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+        }
+    }
+
     /**
      * @return the tramiteText
      */
@@ -2173,6 +2509,14 @@ public class TramiteBean implements Serializable {
      */
     public void setHallmarkForm(HallmarkForm hallmarkForm) {
         this.hallmarkForm = hallmarkForm;
+    }
+
+    public List<Cpis> getCpis() {
+        return cpis;
+    }
+
+    public void setCpis(List<Cpis> cpis) {
+        this.cpis = cpis;
     }
 
     /**
@@ -2271,6 +2615,14 @@ public class TramiteBean implements Serializable {
      */
     public void setConmarca(boolean conmarca) {
         this.conmarca = conmarca;
+    }
+
+    public boolean isConcpi() {
+        return concpi;
+    }
+
+    public void setConcpi(boolean concpi) {
+        this.concpi = concpi;
     }
 
     /**
@@ -2807,6 +3159,20 @@ public class TramiteBean implements Serializable {
     }
 
     /**
+     * @return the selectedLogoDocument
+     */
+    public Documento getSelectedLogoDocument() {
+        return selectedLogoDocument;
+    }
+
+    /**
+     * @param selectedLogoDocument the selectedLogoDocument to set
+     */
+    public void setSelectedLogoDocument(Documento selectedLogoDocument) {
+        this.selectedLogoDocument = selectedLogoDocument;
+    }
+
+    /**
      * @return the conbreeder
      */
     public boolean isConbreeder() {
@@ -2887,6 +3253,18 @@ public class TramiteBean implements Serializable {
 
             // Subir el archivo
             if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                // Guardar referencia en file_annexes_application
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(fileNameFormato);
+                fap.setFileDescription("UPLOADED BY EMPLOYEE");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("UPLOADED");
+                fap.setApplicationType("Hallmarkform");
+                fap.setApplicationNumber(hallmarkForm.getApplicationNumber());
+                c.saveFileAnnexeApplication(fap);
+
                 msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
                         "Archivo '" + fileName + "' subido correctamente");
 
@@ -2907,6 +3285,121 @@ public class TramiteBean implements Serializable {
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
 
+    public void iniciarReemplazoLogo(Documento documento) {
+        this.selectedLogoDocument = documento;
+    }
+
+    private String obtenerNombreRespaldoLogo(String actualLogoNombre, List<String> listaArchivos) {
+        int mayor = 0;
+        for (String f : listaArchivos) {
+            if (f.matches("^logo(\\d+)_.*")) {
+                try {
+                    int n = Integer.parseInt(f.replaceAll("^logo(\\d+)_.*", "$1"));
+                    if (n > mayor) {
+                        mayor = n;
+                    }
+                } catch (NumberFormatException ex) {
+                    // ignorar
+                }
+            }
+        }
+
+        String sufijo = "";
+        if (actualLogoNombre.startsWith("logo_")) {
+            sufijo = actualLogoNombre.substring("logo_".length());
+        } else if (actualLogoNombre.matches("^logo\\d+_.*")) {
+            sufijo = actualLogoNombre.replaceFirst("^logo\\d+_", "");
+        } else {
+            sufijo = actualLogoNombre;
+        }
+
+        return "logo" + (mayor + 1) + "_" + sufijo;
+    }
+
+    public void uploadLogoHallmark(FileUploadEvent event) {
+        FacesMessage msg = null;
+
+        try {
+            if (hallmarkForm == null || hallmarkForm.getId() == null) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UN SIGNO DISTINTIVO CARGADO");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String fileName = event.getFile().getFileName();
+            if (!fileName.toLowerCase().endsWith(".jpg") && !fileName.toLowerCase().endsWith(".jpeg")) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS JPG/JPEG");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            String logoActual = null;
+            if (selectedLogoDocument != null && selectedLogoDocument.getArchivo() != null
+                    && selectedLogoDocument.getArchivo().toLowerCase().contains("logo_")) {
+                logoActual = selectedLogoDocument.getArchivo();
+            } else {
+                FTPFiles files = new FTPFiles();
+                List<String> docs = files.listarDirectorio(hallmarkForm.getFtp() + hallmarkForm.getId());
+                for (String f : docs) {
+                    if (f.toLowerCase().contains("logo_") && (f.toLowerCase().endsWith(".jpg") || f.toLowerCase().endsWith(".jpeg"))) {
+                        logoActual = f;
+                        break;
+                    }
+                }
+            }
+
+            if (logoActual == null || logoActual.trim().isEmpty()) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se encontró logo actual para reemplazar");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            FTPFiles ftpFiles = new FTPFiles();
+            String carpeta = hallmarkForm.getFtp() + hallmarkForm.getId();
+            List<String> documentosEnServidor = ftpFiles.listarDirectorio(carpeta);
+
+            // renombrar el logo actual como respaldo
+            String nuevoNombreRespaldo = obtenerNombreRespaldoLogo(logoActual, documentosEnServidor);
+            boolean respaldoOk = ftpFiles.renameFile(carpeta + "/" + logoActual, carpeta + "/" + nuevoNombreRespaldo);
+
+            if (!respaldoOk) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo crear respaldo del logo actual");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
+
+            // subir el nuevo logo con el nombre original
+            String destino = carpeta + "/" + logoActual;
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), destino)) {
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(logoActual);
+                fap.setFileDescription("LOGO REEMPLAZADO EN MARCAS");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("LOGO_UPDATED");
+                fap.setApplicationType("Hallmarkform");
+                fap.setApplicationNumber(hallmarkForm.getApplicationNumber());
+                c.saveFileAnnexeApplication(fap);
+
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
+                        "Logo reemplazado exitosamente y respaldo creado: " + nuevoNombreRespaldo);
+
+                cargarMarcasAVisualizarByTramite(hallmarkForm.getApplicationNumber());
+                selectedLogoDocument = null;
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "Hubo un problema al subir el nuevo logo");
+            }
+
+        } catch (Exception e) {
+            System.err.println("[UPLOAD LOGO ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "Excepción al reemplazar logo: " + e.getMessage());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
     /**
      * Maneja la carga de PDFs para panel PATENTE
      */
@@ -2915,7 +3408,12 @@ public class TramiteBean implements Serializable {
 
         try {
             if (patentForm == null || patentForm.getId() == null) {
-                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UNA PATENTE CARGADA");
+                if (searchIPAS) {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE PUEDEN CARGAR DOCUMENTOS EN IPAS DESDE AQUÍ");
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UNA PATENTE CARGADA");
+                }
+
                 FacesContext.getCurrentInstance().addMessage(null, msg);
                 return;
             }
@@ -2937,6 +3435,18 @@ public class TramiteBean implements Serializable {
             ftpFiles.createDirectoryIfNotExists(patentForm.getFtp() + patentForm.getId());
 
             if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                // Guardar referencia en file_annexes_application
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(fileNameFormato);
+                fap.setFileDescription("UPLOADED BY EMPLOYEE");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("UPLOADED");
+                fap.setApplicationType("Patentform");
+                fap.setApplicationNumber(patentForm.getApplicationNumber());
+                c.saveFileAnnexeApplication(fap);
+
                 msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
                         "Archivo '" + fileName + "' subido correctamente");
                 cargarPatentFormAVisualizarByTramite(patentForm.getApplicationNumber());
@@ -3034,13 +3544,22 @@ public class TramiteBean implements Serializable {
             ftpFiles.createDirectoryIfNotExists(mod.getFtp() + mod.getId());
 
             if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                // Guardar referencia en file_annexes_application
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(fileNameFormato);
+                fap.setFileDescription("UPLOADED BY EMPLOYEE");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("UPLOADED");
+                fap.setApplicationType("Renewalform");
+                fap.setApplicationNumber(mod.getSolicitud());
+                c.saveFileAnnexeApplication(fap);
+
                 msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
                         "Archivo '" + fileNameFormato + "' subido correctamente");
                 // Recargar modificaciones
-                //if (conmarca && hallmarkForm != null) {
-
                 cargarModificacionesAVisualizarByTituloOrTramite(mod.getSolicitud(), (!conmarca && !conpatente));
-                //}
             } else {
                 msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
                         "Hubo un problema al subir el archivo");
@@ -3084,10 +3603,10 @@ public class TramiteBean implements Serializable {
 
                     FileAnnexesApplication fap = new FileAnnexesApplication();
                     fap.setFileName(fileNameFormato);
-                    fap.setFileDescription("UPLOAD BY EMPLOYEE");
+                    fap.setFileDescription("UPLOADED BY EMPLOYEE");
                     fap.setUserUpload(login.getNombre());
                     fap.setUploadDate(Operaciones.getCurrentTimestamp());
-                    fap.setFileStatus("UPLOAD");
+                    fap.setFileStatus("UPLOADED");
                     fap.setApplicationType("Denominationform");
                     fap.setApplicationNumber(denominationForms.getApplicationNumber());
 
@@ -3118,48 +3637,215 @@ public class TramiteBean implements Serializable {
     }
 
     /**
-     * Elimina un documento para DENOMINATION_FORMS, borra FTP y registro de la
-     * DB
+     * Elimina un documento registrado en FileAnnexesApplication para cualquier
+     * tipo de trámite. El registro no se borra, se marca con
+     * file_status='DELETED', user_update y update_date.
      */
-    public void eliminarDocumentoDenomination(Documento expediente) {
+    public void eliminarDocumento(Documento expediente) {
         FacesMessage msg;
 
-        if (denominationForms == null || denominationForms.getId() == null || expediente == null || expediente.getArchivo() == null) {
+        String fileName = (expediente != null) ? expediente.getArchivo() : null;
+        if (expediente == null || fileName == null || fileName.trim().isEmpty()) {
             msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se puede eliminar: datos incompletos");
             FacesContext.getCurrentInstance().addMessage(null, msg);
             return;
         }
 
-        String fileName = expediente.getArchivo();
-        String remotePath = denominationForms.getFtp() + denominationForms.getId() + "/" + fileName;
+        String remotePath = null;
+        String applicationNumber = null;
+        String applicationType = null;
+
+        if (condenomination && denominationForms != null && denominationForms.getId() != null) {
+            remotePath = denominationForms.getFtp() + denominationForms.getId() + "/" + fileName;
+            applicationNumber = denominationForms.getApplicationNumber();
+            applicationType = "Denominationform";
+        } else if (conmarca && hallmarkForm != null && hallmarkForm.getId() != null) {
+            remotePath = hallmarkForm.getFtp() + hallmarkForm.getId() + "/" + fileName;
+            applicationNumber = hallmarkForm.getApplicationNumber();
+            applicationType = "Hallmarkform";
+        } else if (conpatente && patentForm != null && patentForm.getId() != null) {
+            remotePath = patentForm.getFtp() + patentForm.getId() + "/" + fileName;
+            applicationNumber = patentForm.getApplicationNumber();
+            applicationType = "Patentform";
+        } else {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo determinar el trámite activo");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
 
         FTPFiles ftpFiles = new FTPFiles();
         boolean ftpDeleted = ftpFiles.deleteFile(remotePath);
 
         Controlador c = new Controlador();
-        FileAnnexesApplication fap = c.getFileAnnexesApplication(denominationForms.getApplicationNumber().trim(), fileName, "Denominationform");
+        FileAnnexesApplication fap = c.getFileAnnexesApplication(applicationNumber.trim(), fileName, applicationType);
 
         boolean dbUpdated = false;
         if (fap != null && fap.getId() != null && fap.getId() > 0) {
-            dbUpdated = c.softDeleteFileAnnexeApplication(denominationForms.getApplicationNumber().trim(), fileName, "Denominationform", login.getNombre(), Operaciones.getCurrentTimestamp());
-            // reflect in object for possible UI consistency
-            fap.setFileStatus("DELETE");
+            dbUpdated = c.softDeleteFileAnnexeApplication(applicationNumber.trim(), fileName, applicationType, login.getNombre(), Operaciones.getCurrentTimestamp());
+            fap.setFileStatus("DELETED");
             fap.setUserUpdate(login.getNombre());
             fap.setUpdateDate(Operaciones.getCurrentTimestamp());
         }
 
-        // No eliminamos el registro histórico de ANNEXES_DATA para mantener el audit trail
-        // (Mensaje original del usuario pide solo marcar delete en FileAnnexesApplication)
-
-        if (ftpDeleted && (dbUpdated || (fap == null || fap.getId() == null))) {
-            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Documento "+fileName+" eliminado (Se lleva un historial)");
+        if (ftpDeleted && (dbUpdated || fap == null || fap.getId() == null)) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Documento " + fileName + " eliminado (historial guardado)");
         } else if (ftpDeleted) {
-            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "ADVERTENCIA", "Se eliminó del FTP pero no se pudo eliminar completamente el registro en BD");
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "ADVERTENCIA", "Se eliminó del FTP pero no se pudo marcar el registro en BD");
         } else {
             msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar el archivo en el servidor FTP");
         }
 
-        cargarDenominationAVisualizarByTramite(denominationForms.getApplicationNumber());
+        if (condenomination) {
+            cargarDenominationAVisualizarByTramite(denominationForms.getApplicationNumber());
+        } else if (conmarca) {
+            cargarMarcasAVisualizarByTramite(hallmarkForm.getApplicationNumber());
+        } else if (conpatente) {
+            cargarPatentFormAVisualizarByTramite(patentForm.getApplicationNumber());
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public void eliminarDocumentoModificacion(Documento expediente, ModificacionAux modificacion) {
+        FacesMessage msg;
+
+        String fileName = (expediente != null) ? expediente.getArchivo() : null;
+        if (expediente == null || fileName == null || fileName.trim().isEmpty()) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se puede eliminar: datos incompletos");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        if (modificacion == null || modificacion.getId() == null) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No hay una modificación cargada");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        String remotePath = modificacion.getFtp() + modificacion.getId() + "/" + fileName;
+        String applicationNumber = modificacion.getSolicitud();
+        String applicationType = "Renewalform";
+
+        FTPFiles ftpFiles = new FTPFiles();
+        boolean ftpDeleted = ftpFiles.deleteFile(remotePath);
+
+        Controlador c = new Controlador();
+        FileAnnexesApplication fap = c.getFileAnnexesApplication(applicationNumber.trim(), fileName, applicationType);
+
+        boolean dbUpdated = false;
+        if (fap != null && fap.getId() != null && fap.getId() > 0) {
+            dbUpdated = c.softDeleteFileAnnexeApplication(applicationNumber.trim(), fileName, applicationType, login.getNombre(), Operaciones.getCurrentTimestamp());
+            fap.setFileStatus("DELETED");
+            fap.setUserUpdate(login.getNombre());
+            fap.setUpdateDate(Operaciones.getCurrentTimestamp());
+        }
+
+        if (ftpDeleted && (dbUpdated || fap == null || fap.getId() == null)) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Documento " + fileName + " eliminado (historial guardado)");
+        } else if (ftpDeleted) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "ADVERTENCIA", "Se eliminó del FTP pero no se pudo marcar el registro en BD");
+        } else {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar el archivo en el servidor FTP");
+        }
+
+        // Recargar las modificaciones
+        cargarModificacionesAVisualizarByTituloOrTramite(modificacion.getSolicitud(), (!conmarca && !conpatente));
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public void eliminarDocumentoOposicion(Documento expediente, OppositionFormsAux oposicion) {
+        FacesMessage msg;
+
+        String fileName = (expediente != null) ? expediente.getArchivo() : null;
+        if (expediente == null || fileName == null || fileName.trim().isEmpty()) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se puede eliminar: datos incompletos");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        if (oposicion == null || oposicion.getOppositionForm().getId() == null) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No hay una oposición cargada");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        String remotePath = oposicion.getFtp() + oposicion.getOppositionForm().getId() + "/" + fileName;
+        String applicationNumber = oposicion.getOppositionForm().getApplicationNumber();
+        String applicationType = "Oppositionform";
+
+        FTPFiles ftpFiles = new FTPFiles();
+        boolean ftpDeleted = ftpFiles.deleteFile(remotePath);
+
+        Controlador c = new Controlador();
+        FileAnnexesApplication fap = c.getFileAnnexesApplication(applicationNumber.trim(), fileName, applicationType);
+
+        boolean dbUpdated = false;
+        if (fap != null && fap.getId() != null && fap.getId() > 0) {
+            dbUpdated = c.softDeleteFileAnnexeApplication(applicationNumber.trim(), fileName, applicationType, login.getNombre(), Operaciones.getCurrentTimestamp());
+            fap.setFileStatus("DELETED");
+            fap.setUserUpdate(login.getNombre());
+            fap.setUpdateDate(Operaciones.getCurrentTimestamp());
+        }
+
+        if (ftpDeleted && (dbUpdated || fap == null || fap.getId() == null)) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Documento " + fileName + " eliminado (historial guardado)");
+        } else if (ftpDeleted) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "ADVERTENCIA", "Se eliminó del FTP pero no se pudo marcar el registro en BD");
+        } else {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar el archivo en el servidor FTP");
+        }
+
+        // Recargar las oposiciones
+        cargarOposicionesAVisualizarByTramite(oposicion.getOppositionForm().getApplicationNumber(), false);
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public void eliminarDocumentoPlayForm(Documento expediente) {
+        FacesMessage msg;
+
+        String fileName = (expediente != null) ? expediente.getArchivo() : null;
+        if (expediente == null || fileName == null || fileName.trim().isEmpty()) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se puede eliminar: datos incompletos");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        if (playFormAux == null || playFormAux.getPlayForm() == null || playFormAux.getPlayForm().getId() == null) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No hay un trámite de derechos de autor cargado");
+            FacesContext.getCurrentInstance().addMessage(null, msg);
+            return;
+        }
+
+        String exten = resolvePlayFormDirectory(playFormAux.getPlayForm());
+        String remotePath = playFormAux.getFtp() + exten + playFormAux.getPlayForm().getId() + "/" + fileName;
+        String applicationNumber = playFormAux.getPlayForm().getApplicationNumber();
+        String applicationType = "Playform";
+
+        FTPFiles ftpFiles = new FTPFiles();
+        boolean ftpDeleted = ftpFiles.deleteFile(remotePath);
+
+        Controlador c = new Controlador();
+        FileAnnexesApplication fap = c.getFileAnnexesApplication(applicationNumber.trim(), fileName, applicationType);
+
+        boolean dbUpdated = false;
+        if (fap != null && fap.getId() != null && fap.getId() > 0) {
+            dbUpdated = c.softDeleteFileAnnexeApplication(applicationNumber.trim(), fileName, applicationType, login.getNombre(), Operaciones.getCurrentTimestamp());
+            fap.setFileStatus("DELETED");
+            fap.setUserUpdate(login.getNombre());
+            fap.setUpdateDate(Operaciones.getCurrentTimestamp());
+        }
+
+        if (ftpDeleted && (dbUpdated || fap == null || fap.getId() == null)) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Documento " + fileName + " eliminado (historial guardado)");
+        } else if (ftpDeleted) {
+            msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "ADVERTENCIA", "Se eliminó del FTP pero no se pudo marcar el registro en BD");
+        } else {
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar el archivo en el servidor FTP");
+        }
+
+        cargarPlayFormAVisualizarByTramite(playFormAux.getPlayForm().getApplicationNumber());
 
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
@@ -3195,6 +3881,18 @@ public class TramiteBean implements Serializable {
             ftpFiles.createDirectoryIfNotExists(opo.getFtp() + opo.getOppositionForm().getId());
 
             if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                // Guardar referencia en file_annexes_application
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(fileNameFormato);
+                fap.setFileDescription("UPLOADED BY EMPLOYEE");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("UPLOADED");
+                fap.setApplicationType("Oppositionform");
+                fap.setApplicationNumber(opo.getOppositionForm().getApplicationNumber());
+                c.saveFileAnnexeApplication(fap);
+
                 msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
                         "Archivo '" + fileNameFormato + "' subido correctamente");
                 // Recargar modificaciones
@@ -3241,34 +3939,7 @@ public class TramiteBean implements Serializable {
             String fileNameFormato = formatearNombreArchivo(fileName);
 
             // Determinar subdirectorio según el tipo
-            String tipo = playFormAux.getPlayForm().getAlias();
-            String exten = "";
-            switch (tipo) {
-                case "literaria":
-                    exten = "literaryplay_forms/";
-                    break;
-                case "artistica":
-                    exten = (playFormAux.getPlayForm().getId() < 82312) ? "artmusicplay_forms/" : "artplay_forms/";
-                    break;
-                case "audiovisua":
-                    exten = "audiovisualplay_forms/";
-                    break;
-                case "software":
-                    exten = "softwareplay_forms/";
-                    break;
-                case "radio":
-                    exten = (playFormAux.getPlayForm().getId() < 82312) ? "newsradioplay_forms/" : "newsplay_forms/";
-                    break;
-                case "musicales":
-                    exten = "musicplay_forms/";
-                    break;
-                case "Radio":
-                    exten = "radioplay_forms/";
-                    break;
-                default:
-                    exten = "phonogramplay_forms/";
-                    break;
-            }
+            String exten = resolvePlayFormDirectory(playFormAux.getPlayForm());
 
             String remotePath = playFormAux.getFtp() + exten + playFormAux.getPlayForm().getId() + "/" + fileNameFormato;
 
@@ -3276,6 +3947,17 @@ public class TramiteBean implements Serializable {
             ftpFiles.createDirectoryIfNotExists(playFormAux.getFtp() + exten + playFormAux.getPlayForm().getId());
 
             if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(fileNameFormato);
+                fap.setFileDescription("UPLOADED BY EMPLOYEE");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("UPLOADED");
+                fap.setApplicationType("Playform");
+                fap.setApplicationNumber(playFormAux.getPlayForm().getApplicationNumber());
+                c.saveFileAnnexeApplication(fap);
+
                 msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO",
                         "Archivo '" + fileNameFormato + "' subido correctamente");
                 cargarPlayFormAVisualizarByTramite(playFormAux.getPlayForm().getApplicationNumber());
@@ -3376,5 +4058,33 @@ public class TramiteBean implements Serializable {
      */
     public void setCondenomination(boolean condenomination) {
         this.condenomination = condenomination;
+    }
+
+    /**
+     * @return the searchIPAS
+     */
+    public boolean isSearchIPAS() {
+        return searchIPAS;
+    }
+
+    /**
+     * @param searchIPAS the searchIPAS to set
+     */
+    public void setSearchIPAS(boolean searchIPAS) {
+        this.searchIPAS = searchIPAS;
+    }
+
+    /**
+     * @return the powerOfAttorneyData
+     */
+    public PowerOfAttorney getPowerOfAttorneyData() {
+        return powerOfAttorneyData;
+    }
+
+    /**
+     * @param powerOfAttorneyData the powerOfAttorneyData to set
+     */
+    public void setPowerOfAttorneyData(PowerOfAttorney powerOfAttorneyData) {
+        this.powerOfAttorneyData = powerOfAttorneyData;
     }
 }

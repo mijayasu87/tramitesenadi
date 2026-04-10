@@ -545,6 +545,7 @@ body{
     width: 100%
 }
 
+
 .fileupcustom .ui-button{
     background: #0d89ec !important;
     color: black !important;
@@ -628,6 +629,8 @@ body .ui-widget {
     background: #00e5ff !important;
 }
 
+
+
 .forty-two-percent {
     width: 42%;
     background: transparent !important;
@@ -666,10 +669,15 @@ body .ui-widget {
 }
 
 .thirty-five-percent{
-    width: 35%;
+    width: 35% !important;
     text-align: right !important;
     margin-right: 5px !important;
 }
+
+.seventy-four-percent{
+    width: 63% !important;
+}
+
 .sixty-five-percent{
     width: 65%;
 }

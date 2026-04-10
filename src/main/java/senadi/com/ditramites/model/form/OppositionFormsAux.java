@@ -8,25 +8,27 @@ import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
 import senadi.com.ditramites.model.OppositionForms;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
  * @author micharesp
  */
 public class OppositionFormsAux {
+
     private OppositionForms oppositionForm;
 //    private List<String> documentos;
     private List<Documento> documentos;
-    
+
     private String numOposicion;
-    
+
     private String ftp;
     private String sitio;
 
-    public OppositionFormsAux(){
+    public OppositionFormsAux() {
         documentos = new ArrayList<>();
-        ftp = "/var/www/html/solicitudes/media/files/opposition_forms/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/opposition_forms/";
+        ftp = ParametrosBD.ftpPath + "opposition_forms/";
+        sitio = ParametrosBD.urlPath + "opposition_forms/";
     }
 
     /**
@@ -42,7 +44,7 @@ public class OppositionFormsAux {
     public void setOppositionForm(OppositionForms oppositionForm) {
         this.oppositionForm = oppositionForm;
     }
-    
+
     /**
      * @return the ftp
      */

@@ -13,6 +13,7 @@ public class PlayForm {
     private Integer playTypeId;
     private Integer paymentReceiptId;
     private Integer ownerId;
+    private String powerAttorney;
     private String title;
     private String description;
     private String titleOriginal;
@@ -79,6 +80,20 @@ public class PlayForm {
      */
     public void setOwnerId(Integer ownerId) {
         this.ownerId = ownerId;
+    }
+
+    /**
+     * @return the powerAttorney
+     */
+    public String getPowerAttorney() {
+        return powerAttorney;
+    }
+
+    /**
+     * @param powerAttorney the powerAttorney to set
+     */
+    public void setPowerAttorney(String powerAttorney) {
+        this.powerAttorney = powerAttorney;
     }
 
     /**

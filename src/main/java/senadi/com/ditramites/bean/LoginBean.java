@@ -35,12 +35,14 @@ public class LoginBean implements Serializable {
     private Usuario usuarioCambioCasillero;
 
     private boolean depurarDuplicado;
+    private boolean grupoPatentes;
 
     public LoginBean() {
         shake = true;
         usuarioCambioCasillero = new Usuario();
         usuarioCambioCasillero.setTipo("USUARIO");
         depurarDuplicado = false;
+        grupoPatentes = false;
     }
 
     public boolean estaLogeado() {
@@ -77,6 +79,7 @@ public class LoginBean implements Serializable {
         String grup = "SC_TramitesSENADI";
         String grupocas = "SC_CambioCasillero";
         String grupodep = "SC_DEPURAR_DUP";
+        String grupopat = "SC_Patentes";
 
         int n = c.validarIngresoLDAPRestringido(nombre, clave, grup);
 //        int n = c.validarIngresoLDAPSinrestrinccion(nombre, clave) ? 1 : 0;
@@ -88,6 +91,9 @@ public class LoginBean implements Serializable {
             } else {
                 grupo = grup;
             }
+
+            n = c.validarIngresoLDAPRestringido(nombre, clave, grupopat);
+            grupoPatentes = n == 1;
 
             shake = false;
             logeado = true;
@@ -117,10 +123,26 @@ public class LoginBean implements Serializable {
                 if (logeado) {
                     PrimeFaces.current().ajax().addCallbackParam("view", "index.xhtml");
                 }
-            } else if (n == -1) {
-                msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "Login Error", "No tiene autorización para ingresar");
+                n = c.validarIngresoLDAPRestringido(nombre, clave, grupopat);
+                grupoPatentes = n == 1;
             } else {
-                msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "Login Error", "Credenciales Incorrectas");
+                n = c.validarIngresoLDAPRestringido(nombre, clave, grupopat);
+                if (n == 1) {
+                    grupo = grupopat;
+                    grupoPatentes = true;
+                    shake = false;
+                    logeado = true;
+                    lectura = false;
+
+                    PrimeFaces.current().ajax().addCallbackParam("estaLogeado", logeado);
+                    if (logeado) {
+                        PrimeFaces.current().ajax().addCallbackParam("view", "index.xhtml");
+                    }
+                } else if (n == -1) {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "Login Error", "No tiene autorización para ingresar");
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "Login Error", "Credenciales Incorrectas");
+                }
             }
             n = c.validarIngresoLDAPRestringido(nombre, clave, grupodep);
             depurarDuplicado = n == 1;
@@ -137,6 +159,7 @@ public class LoginBean implements Serializable {
         session.invalidate();
         logeado = false;
         shake = false;
+        grupoPatentes = false;
     }
 
     /**
@@ -235,6 +258,14 @@ public class LoginBean implements Serializable {
      */
     public void setDepurarDuplicado(boolean depurarDuplicado) {
         this.depurarDuplicado = depurarDuplicado;
+    }
+
+    public boolean isGrupoPatentes() {
+        return grupoPatentes;
+    }
+
+    public void setGrupoPatentes(boolean grupoPatentes) {
+        this.grupoPatentes = grupoPatentes;
     }
 
 }

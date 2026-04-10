@@ -17,26 +17,34 @@ import javax.persistence.Temporal;
  * @author micharesp
  */
 @Entity
-@Table(name = "patente", schema = "iepi_procesos")
-public class PpdiSolicitudPatente implements Serializable{
-    
+@Table(name = "ppdi_solicitud_patente", schema = "iepi_procesos")
+public class PpdiSolicitudPatente implements Serializable {
+
     @Id
     @Column(name = "id")
     private Integer codigoSolicitudPatente;
+    
     @Column(name = "codigo_tipo_derecho")
     private Integer codigoTipoDerecho;
+    
     @Column(name = "numero_expediente_patente")
     private String numeroExpediente;
-    
+
     @Column(name = "numero_tramite_patente")
     private String numeroTramite;
-    
+
     @Column(name = "fecha_presentacion")
     @Temporal(javax.persistence.TemporalType.DATE)
     private Date fechaPresentacion;
     
+    @Column(name = "casillero_iepi")
+    private String casilleroIepi;
+
     @Column(name = "titulo")
     private String titulo;
+    
+    @Column(name = "numero_gaceta")
+    private String numeroGaceta;
 
     /**
      * @return the codigoSolicitudPatente
@@ -120,5 +128,33 @@ public class PpdiSolicitudPatente implements Serializable{
      */
     public void setTitulo(String titulo) {
         this.titulo = titulo;
+    }
+
+    /**
+     * @return the casilleroIepi
+     */
+    public String getCasilleroIepi() {
+        return casilleroIepi;
+    }
+
+    /**
+     * @param casilleroIepi the casilleroIepi to set
+     */
+    public void setCasilleroIepi(String casilleroIepi) {
+        this.casilleroIepi = casilleroIepi;
+    }
+
+    /**
+     * @return the numeroGaceta
+     */
+    public String getNumeroGaceta() {
+        return numeroGaceta;
+    }
+
+    /**
+     * @param numeroGaceta the numeroGaceta to set
+     */
+    public void setNumeroGaceta(String numeroGaceta) {
+        this.numeroGaceta = numeroGaceta;
     }
 }

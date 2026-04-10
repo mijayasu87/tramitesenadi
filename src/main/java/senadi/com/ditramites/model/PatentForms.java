@@ -4,6 +4,8 @@
  */
 package senadi.com.ditramites.model;
 
+import senadi.com.ditramites.util.ParametrosBD;
+
 /**
  *
  * @author micharesp
@@ -24,6 +26,7 @@ public class PatentForms {
     private String tipo;
     private Integer claims;
     private String image;
+    private String powerOfAttorney;
     
     private String casillero;
 
@@ -31,8 +34,8 @@ public class PatentForms {
     private String ftp;
 
     public PatentForms() {
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/patent_forms/";
-        ftp = "/var/www/html/solicitudes/media/files/patent_forms/";
+        sitio = ParametrosBD.urlPath+"patent_forms/";
+        ftp = ParametrosBD.ftpPath+"patent_forms/";
     }
 
     /**
@@ -257,6 +260,20 @@ public class PatentForms {
      */
     public void setCasillero(String casillero) {
         this.casillero = casillero;
+    }
+
+    /**
+     * @return the powerOfAttorney
+     */
+    public String getPowerOfAttorney() {
+        return powerOfAttorney;
+    }
+
+    /**
+     * @param powerOfAttorney the powerOfAttorney to set
+     */
+    public void setPowerOfAttorney(String powerOfAttorney) {
+        this.powerOfAttorney = powerOfAttorney;
     }
 
     /**

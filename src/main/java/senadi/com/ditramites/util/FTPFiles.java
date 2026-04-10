@@ -131,10 +131,30 @@ public class FTPFiles {
             wrapper = pool.getConnection();
             ChannelSftp channelSftp = wrapper.getChannelSftp();
             channelSftp.rm(remotePath);
-            System.out.println("[DELETE] Archivo eliminado: " + remotePath);
+            System.out.println("[DELETED] Archivo eliminado: " + remotePath);
             return true;
         } catch (JSchException | SftpException e) {
-            System.err.println("[DELETE ERROR] Error al eliminar archivo a " + remotePath);
+            System.err.println("[DELETED ERROR] Error al eliminar archivo a " + remotePath);
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (wrapper != null) {
+                FTPConnectionPool.getInstance().releaseConnection(wrapper);
+            }
+        }
+    }
+
+    public boolean renameFile(String originalPath, String newPath) {
+        FTPConnectionPool.ChannelSftpWrapper wrapper = null;
+        try {
+            FTPConnectionPool pool = FTPConnectionPool.getInstance();
+            wrapper = pool.getConnection();
+            ChannelSftp channelSftp = wrapper.getChannelSftp();
+            channelSftp.rename(originalPath, newPath);
+            System.out.println("[RENAME] " + originalPath + " -> " + newPath);
+            return true;
+        } catch (JSchException | SftpException e) {
+            System.err.println("[RENAME ERROR] Error al renombrar archivo " + originalPath + " a " + newPath);
             e.printStackTrace();
             return false;
         } finally {

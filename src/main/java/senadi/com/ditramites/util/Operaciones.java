@@ -4,14 +4,23 @@
  */
 package senadi.com.ditramites.util;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -63,7 +72,7 @@ public class Operaciones {
         return fecha;
     }
 
-    public static String formatTimesTamp(Timestamp timestamp) {        
+    public static String formatTimesTamp(Timestamp timestamp) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String string = dateFormat.format(timestamp);
         return string;
@@ -148,17 +157,54 @@ public class Operaciones {
                 return "Error";
         }
     }
-    
+
     public static String getCurrentTimeStamp() {
         Date dt = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(dt);
     }
-    
-        public static Timestamp getCurrentTimestamp(){
+
+    public static Timestamp getCurrentTimestamp() {
         ZoneId zonaLocal = ZoneId.of("America/Guayaquil");
         ZonedDateTime ahoraLocal = ZonedDateTime.now(zonaLocal);
         Timestamp timestampParaDB = Timestamp.from(ahoraLocal.toInstant());
         return timestampParaDB;
+    }
+
+    // Método auxiliar para extraer el token del JSON
+    public static String extractToken(String json) {
+        try{
+            return json.split("\"access_token\":\"")[1].split("\"")[0];
+        }catch(ArrayIndexOutOfBoundsException ex){
+            return "Hubo un problema al obtener el token "+ex;
+        }
+        
+    }
+
+    // Método auxiliar para extraer la URL de subida
+    public static String extractUploadUrl(String json) {
+        return json.split("\"documentLocationURI\":\"")[1].split("\"")[0];
+    }
+
+    // Método auxiliar para extraer la URL de subida
+    public static String extractId(String json) {
+        return json.split("\"id\":\"")[1].split("\"")[0];
+    }
+    
+    public static String getCurrenttimeStampPlusSeconds(String currentTime, int seconds) {
+        // Definir el formato
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // Convertir String a LocalDateTime
+        LocalDateTime fecha = LocalDateTime.parse(currentTime, formatter);
+
+        // Sumar 3600 segundos (1 hora)
+        LocalDateTime nuevaFecha = fecha.plusSeconds(seconds);
+
+        // Convertir de nuevo a String
+        String nuevaFechaStr = nuevaFecha.format(formatter);
+
+        // Imprimir resultado
+        return nuevaFechaStr;
     }
 }

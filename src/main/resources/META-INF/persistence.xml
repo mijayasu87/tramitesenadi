@@ -11,6 +11,10 @@
     <class>senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo</class>
     <class>senadi.com.ditramites.model.postgres.PpdiOrdenNiza</class>
     <class>senadi.com.ditramites.model.postgres.PpdiSolicitudOrdenNiza</class>
+    <class>senadi.com.ditramites.model.postgres.polaris.HistorialDocUser</class>
+    <class>senadi.com.ditramites.model.postgres.polaris.HistorialPatente</class>
+    <class>senadi.com.ditramites.model.postgres.polaris.IpasApi</class>
+    <class>senadi.com.ditramites.model.postgres.polaris.IpasEnvironment</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="wildfly.jpa.default-unit" value="true"/>

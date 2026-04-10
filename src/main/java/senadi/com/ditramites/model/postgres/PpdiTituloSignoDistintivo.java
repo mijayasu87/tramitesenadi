@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 
 /**
  *
@@ -47,6 +48,10 @@ public class PpdiTituloSignoDistintivo implements Serializable{
     
     @Column(name = "titular")
     private String titular;
+    
+    @Transient
+    private String numeroTramite;
+    
 
     /**
      * @return the codigoTituloSignoDistintivo
@@ -158,5 +163,19 @@ public class PpdiTituloSignoDistintivo implements Serializable{
      */
     public void setTitular(String titular) {
         this.titular = titular;
+    }
+
+    /**
+     * @return the numeroTramite
+     */
+    public String getNumeroTramite() {
+        return numeroTramite;
+    }
+
+    /**
+     * @param numeroTramite the numeroTramite to set
+     */
+    public void setNumeroTramite(String numeroTramite) {
+        this.numeroTramite = numeroTramite;
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpSession;
 import senadi.com.ditramites.bean.LoginBean;
+import senadi.com.ditramites.dao.DAOConsultasAdmin;
 import senadi.com.ditramites.dao.DAOConsultasCasil;
 import senadi.com.ditramites.dao.DAOConsultasDep;
 import senadi.com.ditramites.dao.DAOConsultasForm;
@@ -21,6 +22,7 @@ import senadi.com.ditramites.dao.mod.UsuarioCasilleroDAO;
 import senadi.com.ditramites.dao.procesos.PpdiSolicitudSignoDAO;
 import senadi.com.ditramites.dao.ren.RenovacionDAO;
 import senadi.com.ditramites.model.BreederForms;
+import senadi.com.ditramites.model.Cpis;
 import senadi.com.ditramites.model.HallmarkForm;
 import senadi.com.ditramites.model.HallmarkFormDepurada;
 import senadi.com.ditramites.model.FileAnnexesApplication;
@@ -32,6 +34,7 @@ import senadi.com.ditramites.model.OppositionForms;
 import senadi.com.ditramites.model.Owner;
 import senadi.com.ditramites.model.PatentForms;
 import senadi.com.ditramites.model.PlayForm;
+import senadi.com.ditramites.model.PowerOfAttorney;
 import senadi.com.ditramites.model.RenewalForm;
 import senadi.com.ditramites.model.ScopeForms;
 import senadi.com.ditramites.model.TutelageForms;
@@ -48,6 +51,10 @@ import senadi.com.ditramites.model.mod.Transferencia;
 import senadi.com.ditramites.model.postgres.PpdiSolicitudSignoDistintivo;
 import senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo;
 import senadi.com.ditramites.model.mod.Usuario;
+import senadi.com.ditramites.model.postgres.polaris.IpasApi;
+import senadi.com.ditramites.model.postgres.polaris.IpasEnvironment;
+import senadi.com.ditramites.model.postgres.polaris.dao.IpasApiDAO;
+import senadi.com.ditramites.model.postgres.polaris.dao.IpasEnvironmentDAO;
 
 /**
  *
@@ -60,13 +67,13 @@ public class Controlador {
         LoginBean loginB = (LoginBean) session.getAttribute("loginBean");
         return loginB;
     }
-    
-    public String getApplicationType(String applicationNumber){
+
+    public String getApplicationType(String applicationNumber) {
         DAOConsultasForm df = new DAOConsultasForm();
         return df.getApplicationType(applicationNumber);
     }
-    
-    public Integer getVegetableFormsId(String applicationNumber){
+
+    public Integer getVegetableFormsId(String applicationNumber) {
         DAOConsultasForm df = new DAOConsultasForm();
         return df.getVegetableFormsId(applicationNumber);
     }
@@ -75,8 +82,13 @@ public class Controlador {
         DAOConsultasForm hd = new DAOConsultasForm();
         return hd.getHallmarkForm(applicationNumber);
     }
-    
-    public BreederForms getBreederForm(String applicationNumber){
+
+    public PowerOfAttorney getPowerOfAttorneyByApplicationNumber(String applicationNumber) {
+        DAOConsultasForm ddf = new DAOConsultasForm();
+        return ddf.getPowerOfAttorneyRemakeByApplicationNumber(applicationNumber);
+    }
+
+    public BreederForms getBreederForm(String applicationNumber) {
         DAOConsultasForm vf = new DAOConsultasForm();
         return vf.getBreederForm(applicationNumber);
     }
@@ -105,6 +117,16 @@ public class Controlador {
     public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(int codigoSolitudSigno) {
         PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
         return pd.getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(codigoSolitudSigno);
+    }
+    
+    public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByNumeroTitulo(String numeroTitulo) {
+        PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
+        return pd.getPpdiTituloSignoDistintivoByNumeroTitulo(numeroTitulo);
+    }
+    
+    public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByCodigoSolicitud(Integer codigoSolicitud){
+        PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
+        return pd.getPpdiSolicitudSignoDistintivoByCodigoSolicitud(codigoSolicitud);
     }
 
     public List<Transferencia> getTransferencias(String titulo, boolean avisa) {
@@ -231,8 +253,8 @@ public class Controlador {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getPlayNombreArchivo(archivo);
     }
-    
-    public String getBreederNombreArchivo(String archivo){
+
+    public String getBreederNombreArchivo(String archivo) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getBreederNombreArchivo(archivo);
     }
@@ -246,11 +268,12 @@ public class Controlador {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getTutelageNombreArchivo(archivo);
     }
-    
-    public String getDenominationNombreArchivo(String archivo){
+
+    public String getDenominationNombreArchivo(String archivo) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getDenominationNombreArchivo(archivo);
     }
+
     public DenominationForms getDenominationFormsByApplicationNumber(String applicationNumber) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getDenominationForm(applicationNumber);
@@ -270,6 +293,7 @@ public class Controlador {
         DAOInsertDocuments did = new DAOInsertDocuments();
         return did.saveFileAnnexeApplication(fap);
     }
+
     public String getTutelageSampleNombreArchivo(String archivo) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getTutelageSampleNombreArchivo(archivo);
@@ -465,9 +489,9 @@ public class Controlador {
 
     public int depurarNotificacionesPorTramiteAndCasillero(String tramite, int casillero, String eti) {
         List<Notifications> notificaciones = getNotificationsByTramiteAndCasillero(tramite, casillero);
-        
+
         int flag;
-        
+
         List<String> documentos = new ArrayList<>();
         List<String> valen = new ArrayList<>();
         List<String> repetidos = new ArrayList<>();
@@ -505,8 +529,8 @@ public class Controlador {
                 if (files.exeComando(comando)) {
                     DAOConsultasCasil dcc = new DAOConsultasCasil();
                     dcc.removeLockerNotification(lockerIds.get(i));
-                }else{
-                    System.out.println("no entró locker_notification_id: "+lockerIds.get(i));
+                } else {
+                    System.out.println("no entró locker_notification_id: " + lockerIds.get(i));
                 }
                 flag = 1;
             }
@@ -535,9 +559,203 @@ public class Controlador {
 //        DAOInsertDocuments did = new DAOInsertDocuments();
 //        return did.deleteFileAnnexeApplication(applicationNumber, fileName, applicationType);
 //    }
-
     public boolean softDeleteFileAnnexeApplication(String applicationNumber, String fileName, String applicationType, String userUpdate, Timestamp updateDate) {
         DAOInsertDocuments did = new DAOInsertDocuments();
         return did.softDeleteFileAnnexeApplication(applicationNumber, fileName, applicationType, userUpdate, updateDate);
+    }
+
+//    public boolean softDeleteFileAnnexeApplication(String applicationNumber, String fileName, String applicationType, String userUpdate, Timestamp updateDate) {
+//        DAOInsertDocuments did = new DAOInsertDocuments();
+//        return did.softDeleteFileAnnexeApplication(applicationNumber, fileName, applicationType, userUpdate, updateDate);
+//    }
+    public IpasEnvironment getIpasEnvironmentActive(boolean active, String tipo) {
+        IpasEnvironmentDAO idao = new IpasEnvironmentDAO(null);
+        return idao.getIpasEnvironmentActive(active, tipo);
+    }
+
+    public IpasApi getIpasApi(IpasApiClient ipasApiClient) {
+        Controlador c = new Controlador();
+        //Obtengo la fecha actual en timestamp
+        String date = Operaciones.getCurrentTimeStamp();
+
+        //Valido si los token de credenciales existen y están vigentes
+        IpasApi ipasApi = c.getIpasApiByDate(date);
+        String cognitoAccessToken;
+        //si están vigentes los obtengo
+
+        if (ipasApi.getId() != null) {
+            System.out.println("--- Si encontró el ipas api con los tokens ---");
+            cognitoAccessToken = ipasApi.getCognitoAccessToken();
+            System.out.println("Entramos 1: cognito-access-token si: " + cognitoAccessToken.substring(0, 15) + "...");
+        } else {
+            // si no están los mandamos a crear
+            cognitoAccessToken = ipasApiClient.getCognitoAccessToken();
+            System.out.println("Entramos 1: cognito-access-token: " + cognitoAccessToken.substring(0, 15) + "...");
+            ipasApi = new IpasApi();
+        }
+
+        String xAccessToken;
+
+        if (ipasApi.getId() != null) {
+            xAccessToken = ipasApi.getxAccessToken();
+            System.out.println("Entramos 2: x-access-token si: " + xAccessToken.substring(0, 15) + "...");
+        } else {
+//            System.out.println("cognitoAccesstoken: "+cognitoAccessToken);
+            if (cognitoAccessToken.contains("Hubo un problema al obtener")) {
+                return ipasApi;
+            } else {
+                xAccessToken = ipasApiClient.getXAccessToken(cognitoAccessToken);
+                if (!xAccessToken.contains("503 Service Temporarily Unavailable")) {
+                    System.out.println("Entramos 2: x-access-token: " + xAccessToken.substring(0, 15) + "...");
+                    //En caso de que no se encuentre ipas api o las fechas ya no soporten, se crea  un nuevo registro en bd
+                    ipasApi.setCognitoAccessToken(cognitoAccessToken);
+                    ipasApi.setxAccessToken(xAccessToken);
+                    ipasApi.setFechaInicio(Timestamp.valueOf(Operaciones.getCurrentTimeStamp()));
+                    Timestamp timfin = Timestamp.valueOf(Operaciones.getCurrenttimeStampPlusSeconds(ipasApi.getFechaInicio().toString().substring(0, ipasApi.getFechaInicio().toString().length() - 2), 3598));
+                    ipasApi.setFechaFin(timfin);
+
+                    Controller con = new Controller();
+                    con.deleteAllIpasApi();
+                    if (con.saveIpasApi(ipasApi)) {
+                        System.out.println("Se guardó el ipas api con los tokens y fechas");
+                    }
+                } else {
+                    System.out.println("El sistema no está en línea 2");
+                    return new IpasApi();
+                }
+            }
+        }
+        return ipasApi;
+    }
+
+    public IpasApi getIpasApiByDate(String date) {
+        IpasApiDAO id = new IpasApiDAO(null);
+        return id.getIpasApiByDate(date);
+    }
+
+    public PatentForms mapFromJson(PatentJson json) {
+
+        PatentForms patentForm = new PatentForms();
+
+        if (json == null) {
+            return patentForm;
+        }
+
+        // 🔹 Número trámite
+        if (json.getApplicationNumber() != null) {
+            patentForm.setApplicationNumber(
+                    json.getApplicationNumber().getApplicationNumberText()
+            );
+        }
+
+        // 🔹 Fecha
+        patentForm.setApplicationDate(json.getAppplicationDate());
+
+        // 🔹 Tipo
+        patentForm.setTipo(json.getTransactionSubCode());
+
+        // 🔹 Estado
+        patentForm.setStatus(json.getCurrentStatusCode());
+
+        // 🔹 Expediente
+        patentForm.setExpedient(json.getApplicantFileReference());
+
+        // 🔥 DETECTAR TIPO
+        boolean isDesign = "INDUSTRIAL_DESIGN".equalsIgnoreCase(json.getIpCategory());
+
+        // =========================================================
+        // 🟢 PATENTES
+        // =========================================================
+        if (!isDesign) {
+
+            // 🔹 Título
+            if (json.getTitleBag() != null && !json.getTitleBag().isEmpty()) {
+                patentForm.setTitle(json.getTitleBag().get(0).getText());
+            }
+
+            // 🔹 Resumen
+            if (json.getAbstracts() != null && !json.getAbstracts().isEmpty()) {
+
+                PatentJson.AbstractData abs = json.getAbstracts().get(0);
+
+                if (abs.getpBag() != null && !abs.getpBag().isEmpty()) {
+
+                    StringBuilder resumen = new StringBuilder();
+
+                    for (PatentJson.PBag p : abs.getpBag()) {
+                        if (p.getText() != null) {
+                            resumen.append(p.getText()).append("\n");
+                        }
+                    }
+
+                    patentForm.setSummary(resumen.toString().trim());
+                }
+            }
+
+            // 🔹 Claims
+            patentForm.setClaims(json.getClaimTotalQuantity());
+        } // =========================================================
+        // 🔵 DISEÑOS INDUSTRIALES
+        // =========================================================
+        else {
+
+            // 🔹 TÍTULO → designStatementBag
+            if (json.getDesignStatementBag() != null && !json.getDesignStatementBag().isEmpty()) {
+                patentForm.setTitle(
+                        json.getDesignStatementBag().get(0).getText()
+                );
+            }
+
+            // 🔹 DESCRIPCIÓN → summary
+            if (json.getDesignBag() != null && !json.getDesignBag().isEmpty()) {
+
+                PatentJson.Design design = json.getDesignBag().get(0);
+
+                if (design.getDescriptionBag() != null && !design.getDescriptionBag().isEmpty()) {
+
+                    StringBuilder desc = new StringBuilder();
+
+                    for (PatentJson.Description d : design.getDescriptionBag()) {
+
+                        if (d.getText() != null && !d.getText().contains("<DATA>")) {
+                            desc.append(d.getText()).append("\n");
+                        }
+                    }
+
+                    patentForm.setSummary(desc.toString().trim());
+                }
+            }
+
+            // 🔹 Claims no aplica
+            patentForm.setClaims(0);
+        }
+
+        // =========================================================
+        // 🔹 CASILLERO (común)
+        // =========================================================
+        if (json.getCustomFields() != null
+                && json.getCustomFields().getDataNumericBag() != null) {
+
+            for (PatentJson.DataNumeric d : json.getCustomFields().getDataNumericBag()) {
+                if ("Casillero virtual".equalsIgnoreCase(d.getId())) {
+                    patentForm.setCasillero(
+                            d.getValue() != null ? String.valueOf(d.getValue()) : ""
+                    );
+                }
+            }
+        }
+
+        // 🔹 Default
+        patentForm.setInternationalClassification("");
+        patentForm.setSitio("");
+        patentForm.setFtp("");
+        patentForm.setImage("");
+
+        return patentForm;
+    }
+
+    public List<Cpis> getCpisByApplicationNumber(String applicationNumber) {
+        DAOConsultasAdmin da = new DAOConsultasAdmin();
+        return da.getCpis(applicationNumber);
     }
 }

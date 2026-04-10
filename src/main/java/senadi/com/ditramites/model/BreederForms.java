@@ -5,6 +5,7 @@
 package senadi.com.ditramites.model;
 
 import java.sql.Timestamp;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -31,8 +32,8 @@ public class BreederForms {
 
     public BreederForms() {
 //        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/breeder_forms/";
-        sitio = "https://pruebas.propiedadintelectual.gob.ec/solicitudes/media/files/breeder_forms/";
-        ftp = "/var/www/html/solicitudes/media/files/breeder_forms/";
+        sitio = ParametrosBD.urlPath+"breeder_forms/";
+        ftp = ParametrosBD.ftpPath+"breeder_forms/";
     }
 
     /**

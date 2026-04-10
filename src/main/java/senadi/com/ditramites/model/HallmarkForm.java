@@ -12,6 +12,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -25,9 +26,9 @@ public class HallmarkForm implements Serializable {
 
     @Id
     private Integer id;
-    
-    private Integer nizaClassId; 
-    
+
+    private Integer nizaClassId;
+
     private Integer paymentReceiptId;
 
     private Timestamp applicationDate;
@@ -38,25 +39,25 @@ public class HallmarkForm implements Serializable {
 
     private String denomination;
 
-    private String description;   
+    private String description;
 
     private String expedient;
 
     @Temporal(javax.persistence.TemporalType.DATE)
-    private Date expedientDate; 
+    private Date expedientDate;
 
     private int ownerId;
 
-    private String priorityNumber;  
+    private String priorityNumber;
 
     private String status;
-    
+
     private String sitio;
     private String ftp;
-    private String discountFile;
-    
-    
-    
+    private String discountFile;    
+
+    private String powerOfAttorney;
+
     private String titulo;
     private String fechaTitulo;
     private String fechaVencimiento;
@@ -64,11 +65,12 @@ public class HallmarkForm implements Serializable {
     private String tipoSigno;
     private String naturalezaSigno;
     private String gaceta;
-    private String casillero;    
+    private String casillero;
 
-    public HallmarkForm(){
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/hallmark_forms/";
-        ftp = "/var/www/html/solicitudes/media/files/hallmark_forms/";
+    public HallmarkForm() {
+        sitio = ParametrosBD.urlPath + "hallmark_forms/";
+        ftp = ParametrosBD.ftpPath + "hallmark_forms/";
+        
     }
 
     public Integer getId() {
@@ -126,7 +128,6 @@ public class HallmarkForm implements Serializable {
     public void setExpedientDate(Date expedientDate) {
         this.expedientDate = expedientDate;
     }
-
 
     public int getOwnerId() {
         return this.ownerId;
@@ -348,4 +349,17 @@ public class HallmarkForm implements Serializable {
         this.discountFile = discountFile;
     }
 
+    /**
+     * @return the powerOfAttorney
+     */
+    public String getPowerOfAttorney() {
+        return powerOfAttorney;
+    }
+
+    /**
+     * @param powerOfAttorney the powerOfAttorney to set
+     */
+    public void setPowerOfAttorney(String powerOfAttorney) {
+        this.powerOfAttorney = powerOfAttorney;
+    }
 }

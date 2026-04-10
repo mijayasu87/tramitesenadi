@@ -776,14 +776,14 @@ img.pull-left { margin-right: 10px; }
     color: blue;
 }
 
-.link_remove{
+/*.link_remove{
     text-decoration: none;
 }
 
 .link_remove>i:hover{
     font-size: 22px;
     color: red;
-}
+}*/
 
 .link_remove{
     text-decoration: none;

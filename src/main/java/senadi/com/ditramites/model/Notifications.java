@@ -25,6 +25,9 @@ public class Notifications {
     private Integer createdId;
     
     private Integer loId;
+    
+    private String matterType;
+    private String notificationType;
 
     /**
      * @return the id
@@ -220,5 +223,33 @@ public class Notifications {
      */
     public void setStatusText(String statusText) {
         this.statusText = statusText;
+    }
+
+    /**
+     * @return the matterType
+     */
+    public String getMatterType() {
+        return matterType;
+    }
+
+    /**
+     * @param matterType the matterType to set
+     */
+    public void setMatterType(String matterType) {
+        this.matterType = matterType;
+    }
+
+    /**
+     * @return the notificationType
+     */
+    public String getNotificationType() {
+        return notificationType;
+    }
+
+    /**
+     * @param notificationType the notificationType to set
+     */
+    public void setNotificationType(String notificationType) {
+        this.notificationType = notificationType;
     }
 }

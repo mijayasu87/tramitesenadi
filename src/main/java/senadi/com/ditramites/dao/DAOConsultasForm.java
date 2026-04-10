@@ -18,6 +18,7 @@ import senadi.com.ditramites.model.HallmarkForm;
 import senadi.com.ditramites.model.OppositionForms;
 import senadi.com.ditramites.model.PatentForms;
 import senadi.com.ditramites.model.PlayForm;
+import senadi.com.ditramites.model.PowerOfAttorney;
 import senadi.com.ditramites.model.RenewalForm;
 import senadi.com.ditramites.model.ScopeForms;
 import senadi.com.ditramites.model.TutelageForms;
@@ -120,7 +121,8 @@ public class DAOConsultasForm {
 
         String query = "Select hf.id, hf.niza_class_id, hf.payment_receipt_id, hf.application_date, hf.application_number,"
                 + "hf.create_date, hf.denomination, hf.description, hf.expedient, hf.owner_id, hf.priority_number, hf.status,"
-                + "t1.name as naturalezasigno, t2.name as tiposigno, ow.firstname, ow.lastname, lo.id as casillero, hf.discount_file "
+                + "t1.name as naturalezasigno, t2.name as tiposigno, ow.firstname, ow.lastname, lo.id as casillero, hf.discount_file, "
+                + "hf.power_attorney "
                 + "from hallmark_forms as hf "
                 + "INNER JOIN form_types AS ft1 ON ft1.id = hf.hallmark_nature_id "
                 + "INNER JOIN forms AS f1 ON f1.id = ft1.form_id "
@@ -154,7 +156,7 @@ public class DAOConsultasForm {
                 marca.setNaturalezaSigno(rs.getString("naturalezasigno"));
                 marca.setCasillero(rs.getInt("casillero") + "");
                 marca.setDiscountFile(rs.getString("discount_file"));
-
+                marca.setPowerOfAttorney(rs.getString("power_attorney"));
             }
 
             con.close();
@@ -163,6 +165,80 @@ public class DAOConsultasForm {
             System.out.println("error en obtener marca " + applicationNumber + ": " + ex);
             return new HallmarkForm();
         }
+    }
+
+    public PowerOfAttorney getPowerOfAttorneyRemakeByApplicationNumber(String applicationNumber) {
+        String query = "SELECT "
+                + "    pa.*,"
+                + "    GROUP_CONCAT(CASE WHEN ppa.type = 'GRANTER' "
+                + "        THEN CONCAT("
+                + "            p.identification_type, ' : ', "
+                + "            p.identification_number, ', ', "
+                + "            p.name, ', ', "
+                + "            p.email"
+                + "        ) END SEPARATOR '; ') AS granters,"
+                + "    GROUP_CONCAT(CASE WHEN ppa.type = 'ATTORNEY' "
+                + "        THEN CONCAT("
+                + "            p.identification_type, ' : ',"
+                + "            p.identification_number, ', ',"
+                + "            p.name, ', ', "
+                + "            p.email"
+                + "        ) END SEPARATOR '; ') AS attorneys,"
+                + "    GROUP_CONCAT(CASE WHEN ppa.type = 'LAW_FIRM' "
+                + "        THEN CONCAT("
+                + "            p.identification_type, ' : ', "
+                + "            p.identification_number, ', ', "
+                + "            p.name, ', ', "
+                + "            p.email"
+                + "        ) END SEPARATOR '; ') AS law_firms,"
+                + "    GROUP_CONCAT(CASE WHEN ppa.type = 'MANAGER' "
+                + "        THEN CONCAT("
+                + "            p.identification_type, ' : ', "
+                + "            p.identification_number, ', ', "
+                + "            p.name, ', ', "
+                + "            p.email"
+                + "        ) END SEPARATOR '; ') AS managers "
+                + "FROM power_of_attorney pa "
+                + "INNER JOIN person_power_of_attorney ppa "
+                + "    ON pa.id = ppa.power_of_attorney_id "
+                + "INNER JOIN person p "
+                + "    ON p.id = ppa.person_id "
+                + "WHERE pa.application_number = '" + applicationNumber + "' "
+                + "GROUP BY pa.id, pa.application_number;";
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            PowerOfAttorney power = new PowerOfAttorney();
+            while (rs.next()) {
+                power.setId(rs.getInt("pa.id"));
+                power.setNumber(rs.getString("pa.number"));
+                power.setType(rs.getString("pa.type"));
+                power.setEffectiveDateFrom(rs.getDate("pa.effective_date_from"));
+                power.setEffectiveDateTo(rs.getDate("pa.effective_date_to"));
+                power.setIssueDate(rs.getDate("pa.issue_date"));
+                power.setIssueAddress(rs.getString("pa.issue_address"));
+                power.setAttorneyLawFirm(rs.getString("pa.attorney_law_firm"));
+                power.setApplicationDate(rs.getTimestamp("pa.application_date"));
+                power.setApplicationNumber(rs.getString("pa.application_number"));
+                power.setFile(rs.getString("pa.file"));
+                power.setFileLawFirm(rs.getString("pa.file_law_firm"));
+                power.setServiceWindowUser(rs.getString("pa.servicewindow_user"));
+                power.setStatus(rs.getString("pa.status"));
+                power.setOwnerId(rs.getInt("pa.owner_id"));
+                power.setGranters(replaceIdentificationTypes(rs.getString("granters").replace("; ", "\n")));
+                power.setAttorneys(replaceIdentificationTypes(rs.getString("attorneys").replace("; ", "\n")));
+            }
+            con.close();
+            return power;
+        } catch (SQLException ex) {
+            System.err.println("Error al obtener power_of_attorney " + applicationNumber + ": " + ex);
+            return new PowerOfAttorney();
+        }
+    }
+
+    public String replaceIdentificationTypes(String text) {
+        return text.replace("COMPANY", "Empresa").replace("CI", "Cédula").replace("PASSPORT", "Pasaporte");
     }
 
     public List<ScopeForms> getScopeFormsByAfforApplicationNumber(String afforApplicationNumber, boolean aviso) {
@@ -428,6 +504,7 @@ public class DAOConsultasForm {
                 playForm.setOwnerId(rs.getInt("owner_id"));
                 playForm.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
                 playForm.setPlayTypeId(rs.getInt("play_type_id"));
+                playForm.setPowerAttorney(rs.getString("power_attorney"));
                 playForm.setStatus(rs.getString("status"));
                 playForm.setSynopsis(rs.getString("synopsis"));
                 playForm.setTitle(rs.getString("title"));
@@ -475,6 +552,7 @@ public class DAOConsultasForm {
                 patentForm.setTipo(rs.getString("name"));
                 patentForm.setTitle(rs.getString("title"));
                 patentForm.setImage(rs.getString("image"));
+                patentForm.setPowerOfAttorney(rs.getString("power_attorney"));
 
                 patentForm.setCasillero(rs.getInt("lo.id") + "");
 
@@ -504,10 +582,8 @@ public class DAOConsultasForm {
             ResultSet rs = pst.executeQuery();
             RenewalForm renewalForm = new RenewalForm();
             while (rs.next()) {
-                Timestamp taux = rs.getTimestamp("application_date");
-                if (taux != null) {
-                    renewalForm.setApplicationDate(Operaciones.formatTimesTamp(taux));
-                }
+
+                renewalForm.setApplicationDate(rs.getTimestamp("application_date"));
                 renewalForm.setApplicationNumber(rs.getString("application_number"));
                 renewalForm.setBranchOffice(rs.getString("branch_office"));
                 renewalForm.setCreateDate(rs.getTimestamp("create_date"));
@@ -552,10 +628,8 @@ public class DAOConsultasForm {
             ResultSet rs = pst.executeQuery();
             RenewalForm renewalForm = new RenewalForm();
             while (rs.next()) {
-                Timestamp taux = rs.getTimestamp("application_date");
-                if (taux != null) {
-                    renewalForm.setApplicationDate(Operaciones.formatTimesTamp(taux));
-                }
+                renewalForm.setApplicationDate(rs.getTimestamp("application_date"));
+
                 renewalForm.setApplicationNumber(rs.getString("application_number"));
                 renewalForm.setBranchOffice(rs.getString("branch_office"));
                 renewalForm.setCreateDate(rs.getTimestamp("create_date"));
@@ -634,10 +708,10 @@ public class DAOConsultasForm {
     public FileAnnexesApplication getFileAnnexesApplication(String applicationNumber, String fileName, String applicationType) {
         String query = "SELECT * FROM "
                 + "file_annexes_application "
-                + "WHERE application_number = '"+applicationNumber+"' "
+                + "WHERE application_number = '" + applicationNumber + "' "
                 + "and file_name = '" + fileName + "' "
                 + "and application_type = '" + applicationType + "' "
-                + "and file_status = 'UPLOAD'";
+                + "and file_status = 'UPLOADED'";
         try {
             Connection con = ParametrosBD.doConnectionToFormularios();
             PreparedStatement pst = con.prepareStatement(query);

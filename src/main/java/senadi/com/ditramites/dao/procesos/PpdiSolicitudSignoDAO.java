@@ -45,7 +45,6 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
         } finally {
             this.getEntityManager().close();
         }
-
     }
 
     public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(int codigoSolicitudSigno) {
@@ -63,4 +62,38 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
             this.getEntityManager().close();
         }
     }
+    
+    public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByNumeroTitulo(String numeroTitulo) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiTituloSignoDistintivo p where p.numeroTitulo = :titulo");
+            query.setParameter("titulo", numeroTitulo);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<PpdiTituloSignoDistintivo> tits = query.getResultList();
+            if (tits.isEmpty()) {
+                return new PpdiTituloSignoDistintivo();
+            } else {
+                return tits.get(0);
+            }
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+    
+    public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByCodigoSolicitud(Integer codigoSolicitud) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where p.codigoSolicitudSigno = :codigo");
+            query.setParameter("codigo", codigoSolicitud);
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            List<PpdiSolicitudSignoDistintivo> signos = query.getResultList();
+            if (signos.isEmpty()) {
+                return new PpdiSolicitudSignoDistintivo();
+            } else {
+                return signos.get(0);
+            }
+        } finally {
+            this.getEntityManager().close();
+        }
+
+    }
+    
 }
