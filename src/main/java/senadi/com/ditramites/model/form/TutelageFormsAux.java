@@ -8,23 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
 import senadi.com.ditramites.model.TutelageForms;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
  * @author micharesp
  */
 public class TutelageFormsAux {
+
     private TutelageForms tutelageForm;
     //private List<String> documentos;
     private List<Documento> documentos;
     private String ftp;
     private String sitio;
 
-    public TutelageFormsAux(){
+    public TutelageFormsAux() {
         documentos = new ArrayList<>();
-        ftp = "/var/www/html/solicitudes/media/files/tutelage_forms/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/tutelage_forms/";
-    }    
+        ftp = ParametrosBD.ftpPath + "tutelage_forms/";
+        sitio = ParametrosBD.urlPath + "tutelage_forms/";
+    }
 
     /**
      * @return the ftp

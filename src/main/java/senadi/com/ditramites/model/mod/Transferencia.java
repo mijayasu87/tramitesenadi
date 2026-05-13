@@ -14,6 +14,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.Transient;
 import senadi.com.ditramites.util.Operaciones;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -479,9 +480,8 @@ public class Transferencia implements Serializable {
     /**
      * @return the rutaExpediente
      */
-    public String getRutaExpediente() {
-        return "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/renewal_forms/"+getIdRenewalForm()+"/";
-//        return rutaExpediente;
+    public String getRutaExpediente() {        
+        return ParametrosBD.urlPath + "renewal_forms/" + getIdRenewalForm() + "/";
     }
 
     /**

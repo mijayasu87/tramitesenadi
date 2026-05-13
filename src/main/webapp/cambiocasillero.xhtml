@@ -61,7 +61,13 @@ and open the template in the editor.
                 <a class="itemm" href="users.xhtml" title="Cambio Casillero" 
                    style="display: #{loginBean.grupo eq 'SC_CambioCasillero' and loginBean.usuarioCambioCasillero.tipo eq 'ADMINISTRADOR'?'block':'none'}">USUARIOS</a>                   
                 <a class="activo" href="#" title="Cambio Casillero" 
-                   style="display: #{loginBean.grupo eq 'SC_CambioCasillero'?'block':'none'}">CAMBIO CASILLERO</a>
+                   style="display: #{loginBean.grupo eq 'SC_CambioCasillero'?'block':'none'}">
+                    CAMBIO CASILLERO
+                    <h:panelGroup layout="inline" styleClass="menu-notification-wrap" rendered="#{cambioCasilleroBean.totalPendientes gt 0}">
+                        <i class="material-icons menu-notification-icon">notifications</i>
+                        <span class="menu-notification-badge">#{cambioCasilleroBean.totalPendientes}</span>
+                    </h:panelGroup>
+                </a>
                 <a class="itemm" href="index.xhtml" title="Trámites" >TRAMITES</a>
             </div>
 
@@ -104,6 +110,10 @@ and open the template in the editor.
 
                     <p:column headerText="Trámite" style="text-align: center;" filterBy="#{cambio.tramite}" >
                         <h:outputText value="#{cambio.tramite}" />
+                    </p:column>
+
+                    <p:column headerText="Tipo" style="text-align: center;" filterBy="#{cambio.fuente}" >
+                        <h:outputText value="#{cambio.fuente}" />
                     </p:column>
 
                     <p:column headerText="Denominación" style="text-align: center;" filterBy="#{cambio.denominacion}" >
@@ -154,7 +164,7 @@ and open the template in the editor.
                         </p:commandLink>
                         <p:commandLink class="linkcam" title="Upload Providencia"
                                        actionListener="#{cambioCasilleroBean.prepararProvidencia}"
-                                       process="@this" style="margin-left: 10px;" disabled="#{cambio.estado eq 'PENDIENTE'?false:true}"
+                                       process="@this" style="margin-left: 10px;" disabled="#{cambio.estado ne 'PENDIENTE' or not cambioCasilleroBean.puedeAdjuntarProvidencia(cambio)}"
                                        update="mensajes allform:dlgProvidencia" oncomplete="if(args.uplo){PF('dlgProvidencia').show();}">
                             <i class="pi pi-upload" style="font-size: 2rem"></i>
                         </p:commandLink>
@@ -176,10 +186,11 @@ and open the template in the editor.
                     <p:fileUpload id="fileup" skinSimple="true" mode="simple" label="ADJUNTAR PROVIDENCIA FIRMADA" accept=".pdf" update="mensajes"
                                   uploadLabel="SUBIR" value="#{cambioCasilleroBean.file}" title="ADJUNTE LA PROVIDENCIA FIRMADA"
                                   rendered="#{cambioCasilleroBean.cambioCasillero.providencia eq null?false:true}" 
-                                  widgetVar="fileup" class="fileupcustom"/>
+                                  widgetVar="fileup" class="fileupcustom" disabled="#{not cambioCasilleroBean.puedeAdjuntarProvidencia(cambioCasilleroBean.cambioCasillero)}"/>
                     <br/><br/>
                     <p:commandButton value="GUARDAR DOCUMENTO" actionListener="#{cambioCasilleroBean.guardarDocumento}" class="btn_buscar"
-                                     process="@form" update="mensajes allform:tablaDeCambios" oncomplete="if(args.provid){PF('dlgProvidencia').hide();}">
+                                     process="@form" update="mensajes allform:tablaDeCambios" oncomplete="if(args.provid){PF('dlgProvidencia').hide();}"
+                                     disabled="#{not cambioCasilleroBean.puedeAdjuntarProvidencia(cambioCasilleroBean.cambioCasillero)}">
                         <p:confirm header="CONFIRMAR" message="SEGURO DE ADJUNTAR LA PROVIDENCIA FIRMADA?"/>
                     </p:commandButton>
                     <p:commandButton value="CERRAR" onclick="PF('dlgProvidencia').hide()" class="btn_cerrar"/>
@@ -241,7 +252,7 @@ and open the template in the editor.
                                 </f:facet>
                                 <f:facet name="input" >
                                     <p:calendar value="#{config.fecha}" inputStyleClass="maxsize center-text" pattern="yyyy-MM-dd" navigator="true"
-                                                disabled="#{(config.tipo eq 'DELEGADO' or config.tipo eq 'DELEGACIÓN')?true: false}"/>
+                                                disabled="#{(config.tipo eq 'DELEGADO' or config.tipo eq 'DELEGACIÓN' or config.tipo eq 'DELEGADO SIGNOS' or config.tipo eq 'DELEGACIÓN SIGNOS' or config.tipo eq 'DELEGADO PATENTES' or config.tipo eq 'DELEGACIÓN PATENTES')?true: false}"/>
                                 </f:facet>
 
                             </p:cellEditor>

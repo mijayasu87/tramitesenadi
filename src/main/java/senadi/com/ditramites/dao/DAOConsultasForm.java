@@ -10,7 +10,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import senadi.com.ditramites.alfresco.AlfNode;
+import senadi.com.ditramites.alfresco.AlfNodeDAO;
 import senadi.com.ditramites.model.BreederForms;
 import senadi.com.ditramites.model.DenominationForms;
 import senadi.com.ditramites.model.FileAnnexesApplication;
@@ -53,7 +57,8 @@ public class DAOConsultasForm {
                 denomination.setPartOfProcess(rs.getString("part_of_process"));
                 denomination.setInspectionPlace(rs.getString("inspection_place"));
                 denomination.setStatus(rs.getString("status"));
-                denomination.setDiscountFile(rs.getString("discount_file"));
+                String discount = rs.getString("discount_file");
+                denomination.setDiscountFile(discount != null ? discount : "");
             }
 
             con.close();
@@ -101,7 +106,8 @@ public class DAOConsultasForm {
                 breeder.setApplicationNumber(rs.getString("application_number"));
                 breeder.setCommercialName(rs.getString("commercial_name"));
                 breeder.setCreateDate(rs.getTimestamp("create_date"));
-                breeder.setDiscountFile(rs.getString("discount_file"));
+                String discount = rs.getString("discount_file");
+                breeder.setDiscountFile(discount != null ? discount : "");
                 breeder.setGroup(rs.getString("group"));
                 breeder.setOwnerId(rs.getInt("owner_id"));
                 breeder.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
@@ -155,14 +161,15 @@ public class DAOConsultasForm {
                 marca.setTipoSigno(rs.getString("tiposigno"));
                 marca.setNaturalezaSigno(rs.getString("naturalezasigno"));
                 marca.setCasillero(rs.getInt("casillero") + "");
-                marca.setDiscountFile(rs.getString("discount_file"));
+                String discount = rs.getString("discount_file");
+                marca.setDiscountFile(discount != null ? discount : "");
                 marca.setPowerOfAttorney(rs.getString("power_attorney"));
             }
 
             con.close();
             return marca;
-        } catch (Exception ex) {
-            System.out.println("error en obtener marca " + applicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error en obtener marca " + applicationNumber + ": " + ex);
             return new HallmarkForm();
         }
     }
@@ -262,17 +269,17 @@ public class DAOConsultasForm {
             List<ScopeForms> scopesForms = new ArrayList<>();
             while (rs.next()) {
                 ScopeForms scope = new ScopeForms();
-                scope.setAffectedApplicationNumber(rs.getString("affected_application_number"));
-                scope.setApplicationDate(rs.getTimestamp("application_date"));
-                scope.setApplicationNumber(rs.getString("application_number"));
-                scope.setDescription(rs.getString("description"));
-                scope.setExpedient(rs.getString("expedient"));
-                scope.setFormTypeId(rs.getInt("form_type_id"));
-                scope.setId(rs.getInt("id"));
-                scope.setOwnerId(rs.getInt("owner_id"));
+                scope.setAffectedApplicationNumber(rs.getString("sf.affected_application_number"));
+                scope.setApplicationDate(rs.getTimestamp("sf.application_date"));
+                scope.setApplicationNumber(rs.getString("sf.application_number"));
+                scope.setDescription(rs.getString("sf.description"));
+                scope.setExpedient(rs.getString("sf.expedient"));
+                scope.setFormTypeId(rs.getInt("sf.form_type_id"));
+                scope.setId(rs.getInt("sf.id"));
+                scope.setOwnerId(rs.getInt("sf.owner_id"));
                 scope.setCasillero(rs.getInt("lo.id") + "");
 
-                String status = rs.getString("status");
+                String status = rs.getString("sf.status");
                 if (status.equals("SAVED") || status.equals("PREVIEW")) {
                     scope.setStatus("ALCANCE NO ENVIADO");
                 } else {
@@ -282,8 +289,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return scopesForms;
-        } catch (Exception ex) {
-            System.out.println("error al obtener alcances del trámite " + afforApplicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener alcances del trámite " + afforApplicationNumber + ": " + ex);
             return new ArrayList<>();
         }
     }
@@ -316,8 +323,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return tutelagesForms;
-        } catch (Exception ex) {
-            System.out.println("error al obtener tutelages del expediente " + expedient + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener tutelages del expediente " + expedient + ": " + ex);
             return new ArrayList<>();
         }
     }
@@ -347,11 +354,13 @@ public class DAOConsultasForm {
                 tutelage.setStatus(rs.getString("status"));
                 tutelage.setSubject(rs.getString("subject"));
                 tutelage.setCasillero(rs.getString("lo.id") + "");
+                String discount = rs.getString("discount_file");
+                tutelage.setDiscountFile(discount != null ? discount : "");
             }
             con.close();
             return tutelage;
-        } catch (Exception ex) {
-            System.out.println("error al obtener tutelages del tramite " + applicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener tutelages del tramite " + applicationNumber + ": " + ex);
             return new TutelageForms();
         }
     }
@@ -385,13 +394,15 @@ public class DAOConsultasForm {
                 opposition.setStatus(rs.getString("status"));
 
                 opposition.setCasillero(rs.getInt("lo.id") + "");
+                String discount = rs.getString("discount_file");
+                opposition.setDiscountFile(discount != null ? discount : "");
 
                 oppositions.add(opposition);
             }
             con.close();
             return oppositions;
-        } catch (Exception ex) {
-            System.out.println("error al obtener oposiciones tramite " + searchedApplicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener oposiciones tramite " + searchedApplicationNumber + ": " + ex);
             return new ArrayList<>();
         }
     }
@@ -424,13 +435,15 @@ public class DAOConsultasForm {
                 opposition.setSearchedApplicationNumber(rs.getString("searched_application_number"));
                 opposition.setStatus(rs.getString("status"));
                 opposition.setCasillero(rs.getInt("lo.id") + "");
+                String discount = rs.getString("discount_file");
+                opposition.setDiscountFile(discount != null ? discount : "");
 
                 oppositions.add(opposition);
             }
             con.close();
             return oppositions;
-        } catch (Exception ex) {
-            System.out.println("error al obtener oposiciones tramite " + applicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener oposiciones tramite " + applicationNumber + ": " + ex);
             return new ArrayList<>();
         }
     }
@@ -476,8 +489,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return vouchers;
-        } catch (Exception ex) {
-            System.out.println("error al obtener oposiciones tramite " + appordoc + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener oposiciones tramite " + appordoc + ": " + ex);
             return new ArrayList<>();
         }
     }
@@ -513,14 +526,16 @@ public class DAOConsultasForm {
                 playForm.setTipo(rs.getString("name"));
                 playForm.setAlias(rs.getString("alias"));
                 playForm.setCasillero(rs.getInt("lo.id") + "");
+                String discount = rs.getString("discount_file");
+                playForm.setDiscountFile(discount != null ? discount : "");
             }
             con.close();
             return playForm;
-        } catch (Exception ex) {
-            System.out.println("error al obtener playforms del tramite " + applicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener playforms del tramite " + applicationNumber + ": " + ex);
             return new PlayForm();
         }
-    }
+    }        
 
     public PatentForms getPatentFormByApplicationNumber(String applicationNumber) {
         String query = "Select * from patent_forms as pf "
@@ -555,12 +570,14 @@ public class DAOConsultasForm {
                 patentForm.setPowerOfAttorney(rs.getString("power_attorney"));
 
                 patentForm.setCasillero(rs.getInt("lo.id") + "");
+                String discount = rs.getString("discount_file");
+                patentForm.setDiscountFile(discount != null ? discount : "");
 
             }
             con.close();
             return patentForm;
-        } catch (Exception ex) {
-            System.out.println("error al obtener playforms del tramite " + applicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener playforms del tramite " + applicationNumber + ": " + ex);
             return new PatentForms();
         }
     }
@@ -568,7 +585,7 @@ public class DAOConsultasForm {
     public RenewalForm getRenewalFormByApplicationNumber(String applicationNumber) {
         String query = "Select rf.application_date, rf.application_number, rf.branch_office, rf.create_date, rf.debug_date, rf.debug_id, "
                 + "rf.debug_table_name, rf.denomination, rf.expedient, rf.id, rf.license_type, rf.owner_id, rf.power_attorney, rf.status, "
-                + "rf.search_clue, t.name as tipo, rf.payment_receipt_id, lo.id as casillero "
+                + "rf.search_clue, t.name as tipo, rf.payment_receipt_id, lo.id as casillero, rf.discount_file "
                 + "from renewal_forms as rf "
                 + "inner join form_types as ft on ft.id = rf.transaction_motive_id "
                 + "inner join forms as f on f.id = ft.form_id "
@@ -602,11 +619,13 @@ public class DAOConsultasForm {
                 renewalForm.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
 
                 renewalForm.setCasillero(rs.getInt("casillero") + "");
+                String discount = rs.getString("discount_file");
+                renewalForm.setDiscountFile(discount != null ? discount : "");
             }
             con.close();
             return renewalForm;
-        } catch (Exception ex) {
-            System.out.println("error al obtener renewalforms del tramite " + applicationNumber + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener renewalforms del tramite " + applicationNumber + ": " + ex);
             return new RenewalForm();
         }
     }
@@ -614,7 +633,7 @@ public class DAOConsultasForm {
     public RenewalForm getRenewalFormByDebugId(Integer debugId) {
         String query = "Select rf.application_date, rf.application_number, rf.branch_office, rf.create_date, rf.debug_date, rf.debug_id, "
                 + "rf.debug_table_name, rf.denomination, rf.expedient, rf.id, rf.license_type, rf.owner_id, rf.power_attorney, rf.status, "
-                + "rf.search_clue, t.name as tipo, rf.payment_receipt_id, lo.id as casillero "
+                + "rf.search_clue, t.name as tipo, rf.payment_receipt_id, lo.id as casillero, rf.discount_file "
                 + "from renewal_forms as rf "
                 + "inner join form_types as ft on ft.id = rf.transaction_motive_id "
                 + "inner join forms as f on f.id = ft.form_id "
@@ -648,11 +667,13 @@ public class DAOConsultasForm {
                 renewalForm.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
 
                 renewalForm.setCasillero(rs.getInt("casillero") + "");
+                String discount = rs.getString("discount_file");
+                renewalForm.setDiscountFile(discount != null ? discount : "");
             }
             con.close();
             return renewalForm;
-        } catch (Exception ex) {
-            System.out.println("error al obtener renewalforms del tramite " + debugId + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener renewalforms del tramite " + debugId + ": " + ex);
             return new RenewalForm();
         }
     }
@@ -673,7 +694,7 @@ public class DAOConsultasForm {
             con.close();
             return nombre;
         } catch (SQLException ex) {
-            System.out.println("error al obtener vegetable nombre documento " + archivo + ": " + ex);
+            System.err.println("error al obtener vegetable nombre documento " + archivo + ": " + ex);
             return "";
         }
     }
@@ -700,7 +721,7 @@ public class DAOConsultasForm {
             con.close();
             return file;
         } catch (SQLException ex) {
-            System.out.println("error al obtener denomination nombre documento " + archivo + ": " + ex);
+            System.err.println("error al obtener denomination nombre documento " + archivo + ": " + ex);
             return new FileAnnex();
         }
     }
@@ -731,8 +752,41 @@ public class DAOConsultasForm {
             con.close();
             return file;
         } catch (SQLException ex) {
-            System.out.println("error al obtener file_annexes_application " + fileName + ": " + ex);
+            System.err.println("error al obtener file_annexes_application " + fileName + ": " + ex);
             return new FileAnnexesApplication();
+        }
+    }
+
+    public Map<String, FileAnnexesApplication> getFileAnnexesApplicationMap(String applicationNumber, String applicationType) {
+        String query = "SELECT * FROM file_annexes_application "
+                + "WHERE application_number = ? "
+                + "AND application_type = ? "
+                + "AND file_status = 'UPLOADED'";
+
+        Map<String, FileAnnexesApplication> filesByName = new LinkedHashMap<>();
+        try (Connection con = ParametrosBD.doConnectionToFormularios(); PreparedStatement pst = con.prepareStatement(query)) {
+            pst.setString(1, applicationNumber);
+            pst.setString(2, applicationType);
+
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                FileAnnexesApplication file = new FileAnnexesApplication();
+                file.setId(rs.getInt("id"));
+                file.setFileName(rs.getString("file_name"));
+                file.setFileDescription(rs.getString("file_description"));
+                file.setUserUpload(rs.getString("user_upload"));
+                file.setUploadDate(rs.getTimestamp("upload_date"));
+                file.setFileStatus(rs.getString("file_status"));
+                file.setApplicationType(rs.getString("application_type"));
+                file.setApplicationNumber(rs.getString("application_number"));
+                file.setUserUpdate(rs.getString("user_update"));
+                file.setUpdateDate(rs.getTimestamp("update_date"));
+                filesByName.put(file.getFileName(), file);
+            }
+            return filesByName;
+        } catch (SQLException ex) {
+            System.err.println("error al obtener file_annexes_application por lote para " + applicationNumber + ": " + ex);
+            return filesByName;
         }
     }
 
@@ -750,7 +804,7 @@ public class DAOConsultasForm {
             con.close();
             return id;
         } catch (SQLException ex) {
-            System.out.println("error al obtener el id de vegetable_forms " + applicationNumber + ": " + ex);
+            System.err.println("error al obtener el id de vegetable_forms " + applicationNumber + ": " + ex);
             return 0;
         }
     }
@@ -770,8 +824,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener patent nombre documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener patent nombre documento " + archivo + ": " + ex);
             return "";
         }
     }
@@ -792,8 +846,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener nombre scope documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener nombre scope documento " + archivo + ": " + ex);
             return "";
         }
     }
@@ -814,31 +868,205 @@ public class DAOConsultasForm {
             }
             con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener nombre oposición documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener nombre oposición documento " + archivo + ": " + ex);
             return "";
         }
     }
 
     public String getPlayNombreArchivo(String archivo) {
-        String query = "SELECT pa.name FROM "
-                + "play_annexes_data AS pad "
-                + "INNER JOIN play_annexes AS pa ON pa.id = pad.play_annex_id "
-                + "WHERE pad.file = '" + archivo + "'";
+        return getPlayNombreArchivo(null, archivo);
+    }
 
-        try {
-            Connection con = ParametrosBD.doConnectionToFormularios();
-            PreparedStatement pst = con.prepareStatement(query);
+    public String getPlayNombreArchivo(Integer playFormId, String archivo) {
+        return getPlayNombreArchivos(playFormId, java.util.Arrays.asList(archivo)).getOrDefault(archivo, "");
+    }
+
+    public Map<String, String> getPlayNombreArchivos(Integer playFormId, List<String> archivos) {
+        Map<String, String> nombresPorArchivo = new LinkedHashMap<>();
+        if (playFormId == null || archivos == null || archivos.isEmpty()) {
+            return nombresPorArchivo;
+        }
+
+        Map<String, String> nombresPorArchivoBd = getPlayNombreArchivosPorPlayForm(playFormId);
+        Map<String, List<String>> originalesPorNormalizado = new LinkedHashMap<>();
+        List<String> normalizadosNoResueltos = new ArrayList<>();
+        List<String> uuidsNoResueltos = new ArrayList<>();
+
+        for (String archivo : archivos) {
+            String normalizado = normalizePlayFileName(archivo);
+            originalesPorNormalizado.computeIfAbsent(normalizado, key -> new ArrayList<>()).add(archivo);
+        }
+
+        for (Map.Entry<String, List<String>> entry : originalesPorNormalizado.entrySet()) {
+            String normalizado = entry.getKey();
+            String nombre = nombresPorArchivoBd.getOrDefault(normalizado, "");
+            if (!nombre.isEmpty()) {
+                asignarNombreAOriginales(nombresPorArchivo, entry.getValue(), nombre);
+            } else if (isUuid(normalizado)) {
+                uuidsNoResueltos.add(normalizado);
+            } else {
+                normalizadosNoResueltos.add(normalizado);
+            }
+        }
+
+        if (!normalizadosNoResueltos.isEmpty()) {
+            Map<String, List<String>> uuidsPorChildNodeName = getUuidsByChildNodeNames(normalizadosNoResueltos);
+            for (String childNodeName : normalizadosNoResueltos) {
+                String nombre = "";
+                for (String uuid : uuidsPorChildNodeName.getOrDefault(childNodeName, new ArrayList<>())) {
+                    nombre = nombresPorArchivoBd.getOrDefault(uuid, "");
+                    if (!nombre.isEmpty()) {
+                        break;
+                    }
+                }
+                if (!nombre.isEmpty()) {
+                    asignarNombreAOriginales(nombresPorArchivo, originalesPorNormalizado.get(childNodeName), nombre);
+                }
+            }
+        }
+
+        if (!uuidsNoResueltos.isEmpty()) {
+            Map<String, String> childNodeNamesByUuid = getChildNodeNamesByUuids(uuidsNoResueltos);
+            for (String uuid : uuidsNoResueltos) {
+                String childNodeName = normalizePlayFileName(childNodeNamesByUuid.getOrDefault(uuid, ""));
+                String nombre = nombresPorArchivoBd.getOrDefault(childNodeName, "");
+                if (!nombre.isEmpty()) {
+                    asignarNombreAOriginales(nombresPorArchivo, originalesPorNormalizado.get(uuid), nombre);
+                }
+            }
+        }
+
+        return nombresPorArchivo;
+    }
+
+    private Map<String, String> getPlayNombreArchivosPorPlayForm(Integer playFormId) {
+        String query = "SELECT pad.file, pa.name FROM play_annexes_data AS pad "
+                + "INNER JOIN play_annexes AS pa ON pa.id = pad.play_annex_id "
+                + "WHERE pad.play_form_id = ?";
+
+        Map<String, String> nombresPorArchivo = new LinkedHashMap<>();
+        try (Connection con = ParametrosBD.doConnectionToFormularios(); PreparedStatement pst = con.prepareStatement(query)) {
+            pst.setInt(1, playFormId);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                nombresPorArchivo.put(rs.getString("file"), rs.getString("name"));
+            }
+            return nombresPorArchivo;
+        } catch (SQLException ex) {
+            System.err.println("error al obtener nombres play por play_form_id " + playFormId + ": " + ex);
+            return nombresPorArchivo;
+        }
+    }
+
+    private String getPlayNombreArchivoDesdeArchivo(Integer playFormId, String archivo) {
+        StringBuilder query = new StringBuilder("SELECT pa.name FROM ")
+                .append("play_annexes_data AS pad ")
+                .append("INNER JOIN play_annexes AS pa ON pa.id = pad.play_annex_id ")
+                .append("WHERE pad.file = ?");
+
+        if (playFormId != null) {
+            query.append(" AND pad.play_form_id = ?");
+        }
+
+        try (Connection con = ParametrosBD.doConnectionToFormularios(); PreparedStatement pst = con.prepareStatement(query.toString())) {
+            pst.setString(1, archivo);
+            if (playFormId != null) {
+                pst.setInt(2, playFormId);
+            }
+
             ResultSet rs = pst.executeQuery();
             String nombre = "";
             while (rs.next()) {
                 nombre = rs.getString("name");
             }
-            con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener nombre play documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener nombre play documento " + archivo + ": " + ex);
             return "";
+        }
+    }
+
+    private String normalizePlayFileName(String archivo) {
+        if (archivo == null || archivo.isEmpty()) {
+            return "";
+        }
+
+        int lastSlash = archivo.lastIndexOf('/');
+        if (lastSlash >= 0 && lastSlash < archivo.length() - 1) {
+            return archivo.substring(lastSlash + 1);
+        }
+
+        return archivo;
+    }
+
+    private String getChildNodeNameByUuid(String archivo) {
+        if (archivo == null || archivo.isEmpty() || !archivo.matches("^[0-9a-fA-F-]{36}$")) {
+            return "";
+        }
+
+        try {
+            AlfNodeDAO alfNodeDAO = new AlfNodeDAO(new AlfNode());
+            return normalizePlayFileName(alfNodeDAO.getChildNodeNameByUuid(archivo));
+        } catch (Exception ex) {
+            System.err.println("error al obtener child_node_name de play documento " + archivo + ": " + ex);
+            return "";
+        }
+    }
+
+    private List<String> getUuidsByChildNodeName(String archivo) {
+        if (archivo == null || archivo.isEmpty() || archivo.matches("^[0-9a-fA-F-]{36}$")) {
+            return new ArrayList<>();
+        }
+
+        try {
+            AlfNodeDAO alfNodeDAO = new AlfNodeDAO(new AlfNode());
+            return alfNodeDAO.getUuidsByChildNodeName(archivo);
+        } catch (Exception ex) {
+            System.err.println("error al obtener uuids de play documento " + archivo + ": " + ex);
+            return new ArrayList<>();
+        }
+    }
+
+    private Map<String, String> getChildNodeNamesByUuids(List<String> archivos) {
+        if (archivos == null || archivos.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        try {
+            AlfNodeDAO alfNodeDAO = new AlfNodeDAO(new AlfNode());
+            return alfNodeDAO.getChildNodeNamesByUuids(archivos);
+        } catch (Exception ex) {
+            System.err.println("error al obtener child_node_name por lote para play: " + ex);
+            return new LinkedHashMap<>();
+        }
+    }
+
+    private Map<String, List<String>> getUuidsByChildNodeNames(List<String> archivos) {
+        if (archivos == null || archivos.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        try {
+            AlfNodeDAO alfNodeDAO = new AlfNodeDAO(new AlfNode());
+            return alfNodeDAO.getUuidsByChildNodeNames(archivos);
+        } catch (Exception ex) {
+            System.err.println("error al obtener uuids por lote para play: " + ex);
+            return new LinkedHashMap<>();
+        }
+    }
+
+    private boolean isUuid(String archivo) {
+        return archivo != null && archivo.matches("^[0-9a-fA-F-]{36}$");
+    }
+
+    private void asignarNombreAOriginales(Map<String, String> nombresPorArchivo, List<String> archivosOriginales, String nombre) {
+        if (archivosOriginales == null) {
+            return;
+        }
+
+        for (String archivoOriginal : archivosOriginales) {
+            nombresPorArchivo.put(archivoOriginal, nombre);
         }
     }
 
@@ -857,8 +1085,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener hallmark nombre documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener hallmark nombre documento " + archivo + ": " + ex);
             return "";
         }
     }
@@ -878,8 +1106,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener tutelage nombre documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener tutelage nombre documento " + archivo + ": " + ex);
             return "";
         }
     }
@@ -919,8 +1147,8 @@ public class DAOConsultasForm {
             }
             con.close();
             return nombre;
-        } catch (Exception ex) {
-            System.out.println("error al obtener renewal nombre documento " + archivo + ": " + ex);
+        } catch (SQLException ex) {
+            System.err.println("error al obtener renewal nombre documento " + archivo + ": " + ex);
             return "";
         }
     }
@@ -935,7 +1163,35 @@ public class DAOConsultasForm {
             con.close();
             return n > 0;
         } catch (SQLException se) {
-            System.out.println("Error al actualizar el owner id de la marca: " + hallmark.getApplicationNumber());
+            System.err.println("Error al actualizar el owner id de la marca: " + hallmark.getApplicationNumber());
+            return false;
+        }
+    }
+
+    public boolean updateOwnerPatent(PatentForms patent) {
+        String query = "UPDATE patent_forms set owner_id = " + patent.getOwnerId() + " where application_number = '" + patent.getApplicationNumber() + "' and id = " + patent.getId();
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            int n = pst.executeUpdate();
+            con.close();
+            return n > 0;
+        } catch (SQLException se) {
+            System.err.println("Error al actualizar el owner id de la patente: " + patent.getApplicationNumber());
+            return false;
+        }
+    }
+
+    public boolean updateOwnerOpposition(OppositionForms opposition) {
+        String query = "UPDATE opposition_forms set owner_id = " + opposition.getOwnerId() + " where application_number = '" + opposition.getApplicationNumber() + "' and id = " + opposition.getId();
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            int n = pst.executeUpdate();
+            con.close();
+            return n > 0;
+        } catch (SQLException se) {
+            System.err.println("Error al actualizar el owner id de la oposición: " + opposition.getApplicationNumber());
             return false;
         }
     }

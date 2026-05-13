@@ -64,7 +64,13 @@ and open the template in the editor.
                 </div>
                 <a class="activo" href="#" title="Usuarios" >USUARIOS</a>                
                 <a class="itemm" href="cambiocasillero.xhtml" title="Cambio Casillero" 
-                   style="display: #{loginBean.grupo eq 'SC_CambioCasillero'?'block':'none'}">CAMBIOS CASILLERO</a>
+                   style="display: #{loginBean.grupo eq 'SC_CambioCasillero'?'block':'none'}">
+                    CAMBIOS CASILLERO
+                    <h:panelGroup layout="inline" styleClass="menu-notification-wrap" rendered="#{cambioCasilleroBean.totalPendientes gt 0}">
+                        <i class="material-icons menu-notification-icon">notifications</i>
+                        <span class="menu-notification-badge">#{cambioCasilleroBean.totalPendientes}</span>
+                    </h:panelGroup>
+                </a>
                 <a class="itemm" href="index.xhtml" title="Trámites" >TRAMITES</a>
             </div>
 

@@ -591,6 +591,36 @@ img.pull-left { margin-right: 10px; }
     color: white;
 }
 
+.menu-notification-icon{
+    font-size: 12px;
+    margin-left: 3px;
+    vertical-align: middle;
+}
+
+.menu-notification-wrap{
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.menu-notification-badge{
+    background: #EF9A9A;
+    color: #191919;
+    border-radius: 999px;
+    padding: 0;
+    margin-left: 0;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    display: block;
+    min-width: 16px;
+    height: 16px;
+    text-align: center;
+    position: absolute;
+    top: 1px;
+    right: -8px;
+}
+
 .sideactivo{
     border: 0;
     background: #C9E7C5;

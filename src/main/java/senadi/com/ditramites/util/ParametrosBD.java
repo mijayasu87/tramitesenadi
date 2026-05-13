@@ -21,27 +21,39 @@ public class ParametrosBD {
 //    public static String iepi_formularios = "jdbc:mysql://localhost:3306/iepi_formularios?useSSL=false";
 
 //Producción    
-//    public static String USER = "iepi-solicitudes";
-//    public static String PASSWORD = "5ad0d5c3fced39d5048f";
-//    public static String iepi_formularios = "jdbc:mysql://10.0.20.130:3306/iepi_formularios";
-//    public static String iepi_depurar = "jdbc:mysql://10.0.20.130:3306/iepi_depurar";
-//    public static String iepi_casilleros = "jdbc:mysql://10.0.20.130:3306/iepi_casilleros";
-//    public static String iepi_admin = "jdbc:mysql://10.0.20.130:3306/iepi_admin";
+    public static String USER = "iepi-solicitudes";
+    public static String PASSWORD = "5ad0d5c3fced39d5048f";
+    public static String iepi_formularios = "jdbc:mysql://10.0.20.130:3306/iepi_formularios";
+    public static String iepi_depurar = "jdbc:mysql://10.0.20.130:3306/iepi_depurar";
+    public static String iepi_casilleros = "jdbc:mysql://10.0.20.130:3306/iepi_casilleros";
+    public static String iepi_admin = "jdbc:mysql://10.0.20.130:3306/iepi_admin";
     public static String ftpPath = "/var/www/html/solicitudes/media/files/";
-//    public static String urlPath = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/";
+    public static String urlPath = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/";
     
     public static String urlCpis = "http://administracion.propiedadintelectual.gob.ec/servicemanager/media/files/cpis/";
     public static String ftpLockerPath = "/var/www/html/casilleros/media/files/";
+    public static String urlLockerPath = "https://registro.propiedadintelectual.gob.ec/casilleros/media/files/";
+    
+        //producción
+    public static final String REMOTE_HOSTFTP = "10.0.20.130";
+    public static final String USERNAMEFTP = "root";
+    public static final String PASSWORDFTP = "B7GJuaxu3Y";
+
+    //prueba
+//    public static String REMOTE_HOST = "10.0.26.130";
+//    public static String USERNAME = "root";
+//    public static String PASSWORD = "temporal123";
 
 //    Prueba
-    public static String USER = "iepi-solicitudes";
-    public static String PASSWORD = "5ad0d5c3fced39d5048f";
-    public static String iepi_formularios = "jdbc:mysql://10.0.26.130:3306/iepi_formularios";
-    public static String iepi_depurar = "jdbc:mysql://10.0.26.130:3306/iepi_depurar";
-    public static String iepi_casilleros = "jdbc:mysql://10.0.26.130:3306/iepi_casilleros";
-    public static String iepi_admin = "jdbc:mysql://10.0.26.130:3306/iepi_admin";
+//    public static String USER = "iepi-solicitudes";
+//    public static String PASSWORD = "5ad0d5c3fced39d5048f";
+//    public static String iepi_formularios = "jdbc:mysql://10.0.26.130:3306/iepi_formularios";
+//    public static String iepi_depurar = "jdbc:mysql://10.0.26.130:3306/iepi_depurar";
+//    public static String iepi_casilleros = "jdbc:mysql://10.0.26.130:3306/iepi_casilleros";
+//    public static String iepi_admin = "jdbc:mysql://10.0.26.130:3306/iepi_admin";
 
-    public static String urlPath = "https://pruebas.propiedadintelectual.gob.ec/solicitudes/media/files/";
+//    public static String urlPath = "https://pruebas.propiedadintelectual.gob.ec/solicitudes/media/files/";
+//    public static String urlLockerPath = "https://pruebas.propiedadintelectual.gob.ec/casilleros/media/files/";
     
 
     //Localhost vegetable

@@ -56,7 +56,7 @@ public class DAOConsultasCasil {
             pst.setInt(2, ln.getNotification_id());
             pst.setTimestamp(3, null);
             pst.setString(4, "SENT");
-            pst.setString(5, ln.getDocument());            
+            pst.setString(5, ln.getDocument());
             int num = pst.executeUpdate();
             con.close();
             return num > 0;
@@ -67,7 +67,7 @@ public class DAOConsultasCasil {
     }
 
     public Notifications getNotificationsByMatterAndCreateDt(String matter, String createDt) {
-        String query = "SELECT * FROM notifications WHERE matter = ? and create_dt = '"+createDt+"'";
+        String query = "SELECT * FROM notifications WHERE matter = ? and create_dt = '" + createDt + "'";
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
             PreparedStatement pst = con.prepareStatement(query);
@@ -100,8 +100,8 @@ public class DAOConsultasCasil {
                 + "n.mat_id, n.matter, n.not_id, lon.open_dt, n.source, lon.status, mt.name, nt.name "
                 + "FROM notifications AS n "
                 + "INNER JOIN locker_notifications AS lon ON lon.notification_id = n.id "
-                + "INNER JOIN matter_types AS mt ON mt.id = n.mat_id "
-                + "INNER JOIN notification_types AS nt ON nt.id = n.not_id "
+                + "LEFT JOIN matter_types AS mt ON mt.id = n.mat_id "
+                + "LEFT JOIN notification_types AS nt ON nt.id = n.not_id "
                 + "WHERE n.matter = '" + tramite + "' order by n.create_dt";
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
@@ -118,9 +118,9 @@ public class DAOConsultasCasil {
                 notification.setMatId(rs.getInt("mat_id"));
                 notification.setMatter(rs.getString("matter"));
                 notification.setNotId(rs.getInt("not_id"));
-                
+
                 notification.setLoId(rs.getInt("lo_id"));
-                
+
                 Timestamp tt = rs.getTimestamp("open_dt");
                 if (tt != null) {
                     notification.setOpenDate(Operaciones.formatTimesTamp(tt));
@@ -138,9 +138,11 @@ public class DAOConsultasCasil {
                 } else {
                     notification.setType("NOTIFICACIÓN");
                 }
-                
-                notification.setMatterType(rs.getString("mt.name"));
-                notification.setNotificationType(rs.getString("nt.name"));                                
+
+                String mtname = rs.getString("mt.name");
+                notification.setMatterType(mtname == null ? "--" : mtname);
+                String ntname = rs.getString("nt.name");
+                notification.setNotificationType(ntname == null ? "--":ntname);
 
                 notifications.add(notification);
             }
@@ -151,7 +153,7 @@ public class DAOConsultasCasil {
             return new ArrayList<>();
         }
     }
-    
+
     public List<Notifications> getNotificationsByTramiteAndCasillero(String tramite, int casillero) {
         String query = "SELECT n.create_dt, n.document, n.id, lon.id as lo_id,  lon.locker_id, "
                 + "n.mat_id, n.matter, n.not_id, lon.open_dt, n.source, lon.status, mt.name, nt.name "
@@ -159,7 +161,7 @@ public class DAOConsultasCasil {
                 + "INNER JOIN locker_notifications AS lon ON lon.notification_id = n.id "
                 + "INNER JOIN matter_types AS mt ON mt.id = n.mat_id "
                 + "INNER JOIN notification_types AS nt ON nt.id = n.not_id "
-                + "WHERE n.matter = '" + tramite + "' and lon.locker_id = "+casillero+" order by n.create_dt";
+                + "WHERE n.matter = '" + tramite + "' and lon.locker_id = " + casillero + " order by n.create_dt";
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
             PreparedStatement pst = con.prepareStatement(query);
@@ -175,9 +177,9 @@ public class DAOConsultasCasil {
                 notification.setMatId(rs.getInt("mat_id"));
                 notification.setMatter(rs.getString("matter"));
                 notification.setNotId(rs.getInt("not_id"));
-                
+
                 notification.setLoId(rs.getInt("lo_id"));
-                
+
                 Timestamp tt = rs.getTimestamp("open_dt");
                 if (tt != null) {
                     notification.setOpenDate(Operaciones.formatTimesTamp(tt));
@@ -195,7 +197,7 @@ public class DAOConsultasCasil {
                 } else {
                     notification.setType("NOTIFICACIÓN");
                 }
-                
+
                 notification.setMatterType(rs.getString("mt.name"));
                 notification.setNotificationType(rs.getString("nt.name"));
 
@@ -208,12 +210,12 @@ public class DAOConsultasCasil {
             return new ArrayList<>();
         }
     }
-    
+
     public List<String> getTramitesNotificationsByCasillero(int casillero) {
         String query = "SELECT DISTINCT(n.matter) AS tram, COUNT(n.matter) AS cantidad "
                 + "FROM notifications AS n "
                 + "INNER JOIN locker_notifications AS lon ON lon.notification_id = n.id "
-                + "WHERE lon.locker_id = " + casillero+" "
+                + "WHERE lon.locker_id = " + casillero + " "
                 + "GROUP BY n.matter "
                 + "HAVING COUNT(n.matter) > 1";
         try {
@@ -327,43 +329,43 @@ public class DAOConsultasCasil {
             return new ArrayList<>();
         }
     }
-    
-    public boolean removeLockerNotifications(List<Integer> lockerIds){
+
+    public boolean removeLockerNotifications(List<Integer> lockerIds) {
         String ids = "";
         for (int i = 0; i < lockerIds.size(); i++) {
-            ids += lockerIds.get(i)+",";
+            ids += lockerIds.get(i) + ",";
         }
         ids = ids.trim();
-        ids = ids.substring(0,ids.length()-1);
-        System.out.println("locker_notifications a eliminar: "+ids);
-        
-        String query = "delete from locker_notifications where id in ("+ids+")" ;
+        ids = ids.substring(0, ids.length() - 1);
+        System.out.println("locker_notifications a eliminar: " + ids);
+
+        String query = "delete from locker_notifications where id in (" + ids + ")";
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
-            PreparedStatement pst = con.prepareStatement(query);            
+            PreparedStatement pst = con.prepareStatement(query);
             int num = pst.executeUpdate();
             con.close();
             return num > 0;
         } catch (SQLException ex) {
             System.out.println("Hubo un problema al eliminar los locker_notifications: " + ids);
             return false;
-        }        
+        }
     }
-    
-    public boolean removeLockerNotification(int id){
-        
-        System.out.println("locker_notification a eliminar: "+id);
-        
-        String query = "delete from locker_notifications where id = "+id ;
+
+    public boolean removeLockerNotification(int id) {
+
+        System.out.println("locker_notification a eliminar: " + id);
+
+        String query = "delete from locker_notifications where id = " + id;
         try {
             Connection con = ParametrosBD.doConnectionToCasilleros();
-            PreparedStatement pst = con.prepareStatement(query);            
+            PreparedStatement pst = con.prepareStatement(query);
             int num = pst.executeUpdate();
             con.close();
             return num > 0;
         } catch (SQLException ex) {
             System.out.println("Hubo un problema al eliminar el locker_notification: " + id);
             return false;
-        }        
+        }
     }
 }

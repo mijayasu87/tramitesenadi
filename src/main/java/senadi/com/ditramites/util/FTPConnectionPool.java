@@ -20,9 +20,9 @@ public class FTPConnectionPool {
     private static final Logger LOGGER = Logger.getLogger(FTPConnectionPool.class.getName());
     
     //prueba
-    private static final String REMOTE_HOST = "10.0.26.130";
-    private static final String USERNAME = "root";
-    private static final String PASSWORD = "temporal123";
+//    private static final String REMOTE_HOST = "10.0.26.130";
+//    private static final String USERNAME = "root";
+//    private static final String PASSWORD = "temporal123";
     
     //produccion
 //    private static final String REMOTE_HOST = "10.0.20.130";
@@ -127,8 +127,8 @@ public class FTPConnectionPool {
     private ChannelSftpWrapper createNewConnection() throws JSchException {
         try {
             JSch jsch = new JSch();
-            Session session = jsch.getSession(USERNAME, REMOTE_HOST, REMOTE_PORT);
-            session.setPassword(PASSWORD);
+            Session session = jsch.getSession(ParametrosBD.USERNAMEFTP, ParametrosBD.REMOTE_HOSTFTP, REMOTE_PORT);
+            session.setPassword(ParametrosBD.PASSWORDFTP);
             
             java.util.Properties config = new java.util.Properties();
             config.put("StrictHostKeyChecking", "no");

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
 import senadi.com.ditramites.model.PlayForm;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -23,8 +24,8 @@ public class PlayFormsAux {
 
     public PlayFormsAux(){
         documentos = new ArrayList<>();
-        ftp = "/var/www/html/solicitudes/media/files/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/";
+        ftp = ParametrosBD.ftpPath;
+        sitio = ParametrosBD.urlPath;
     }    
 
     /**

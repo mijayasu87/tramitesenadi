@@ -6,7 +6,9 @@ package senadi.com.ditramites.util;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpSession;
 import senadi.com.ditramites.bean.LoginBean;
@@ -19,6 +21,7 @@ import senadi.com.ditramites.dao.mod.CambioCasilleroDAO;
 import senadi.com.ditramites.dao.mod.ConfiguracionCCDAO;
 import senadi.com.ditramites.dao.mod.TransferenciaDAO;
 import senadi.com.ditramites.dao.mod.UsuarioCasilleroDAO;
+import senadi.com.ditramites.dao.procesos.PpdiSolicitudPatenteDAO;
 import senadi.com.ditramites.dao.procesos.PpdiSolicitudSignoDAO;
 import senadi.com.ditramites.dao.ren.RenovacionDAO;
 import senadi.com.ditramites.model.BreederForms;
@@ -48,6 +51,7 @@ import senadi.com.ditramites.model.mod.PrendaComercial;
 import senadi.com.ditramites.model.modren.Renovacion;
 import senadi.com.ditramites.model.mod.SubLicenciaUso;
 import senadi.com.ditramites.model.mod.Transferencia;
+import senadi.com.ditramites.model.postgres.PpdiSolicitudPatente;
 import senadi.com.ditramites.model.postgres.PpdiSolicitudSignoDistintivo;
 import senadi.com.ditramites.model.postgres.PpdiTituloSignoDistintivo;
 import senadi.com.ditramites.model.mod.Usuario;
@@ -103,6 +107,11 @@ public class Controlador {
         return pd.getPpdiSolicitudSignoDistintivoByTramite(tramite);
     }
 
+    public PpdiSolicitudPatente getPpdiSolicitudPatenteByTramite(String tramite) {
+        PpdiSolicitudPatenteDAO pd = new PpdiSolicitudPatenteDAO(null);
+        return pd.getPpdiSolicitudPatenteByTramite(tramite);
+    }
+
     public boolean updatePpdiSolicitudSignoDistintivo(PpdiSolicitudSignoDistintivo signo) {
         PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(signo);
         try {
@@ -110,6 +119,17 @@ public class Controlador {
             return true;
         } catch (Exception ex) {
             System.out.println("No se pudo editar el ppdi_solicitud_signo " + signo.getNumeroTramite() + ": " + ex);
+            return false;
+        }
+    }
+
+    public boolean updatePpdiSolicitudPatente(PpdiSolicitudPatente patente) {
+        PpdiSolicitudPatenteDAO pd = new PpdiSolicitudPatenteDAO(patente);
+        try {
+            pd.update();
+            return true;
+        } catch (Exception ex) {
+            System.out.println("No se pudo editar el ppdi_solicitud_patente " + patente.getNumeroTramite() + ": " + ex);
             return false;
         }
     }
@@ -254,6 +274,21 @@ public class Controlador {
         return dc.getPlayNombreArchivo(archivo);
     }
 
+    public String getPlayNombreArchivo(Integer playFormId, String archivo) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getPlayNombreArchivo(playFormId, archivo);
+    }
+
+    public Map<String, String> getPlayNombreArchivos(Integer playFormId, List<String> archivos) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getPlayNombreArchivos(playFormId, archivos);
+    }
+
+    public Map<String, FileAnnexesApplication> getFileAnnexesApplicationMap(String applicationNumber, String applicationType) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getFileAnnexesApplicationMap(applicationNumber, applicationType);
+    }
+
     public String getBreederNombreArchivo(String archivo) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.getBreederNombreArchivo(archivo);
@@ -382,6 +417,11 @@ public class Controlador {
         return cd.getConfiguracionesActivas();
     }
 
+    public String getConfiguracionesActivas(String fuente) {
+        ConfiguracionCCDAO cd = new ConfiguracionCCDAO(null);
+        return cd.getConfiguracionesActivas(fuente);
+    }
+
     public boolean saveCambioCasillero(CambioCasillero cc) {
         CambioCasilleroDAO cd = new CambioCasilleroDAO(cc);
         try {
@@ -442,6 +482,21 @@ public class Controlador {
     public boolean updateOwnerHallmark(HallmarkForm hallmark) {
         DAOConsultasForm dc = new DAOConsultasForm();
         return dc.updateOwnerHallmark(hallmark);
+    }
+
+    public boolean updateOwnerPatent(PatentForms patent) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.updateOwnerPatent(patent);
+    }
+
+    public boolean updateOwnerOpposition(OppositionForms opposition) {
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.updateOwnerOpposition(opposition);
+    }
+
+    public List<CambioCasillero> getCambiosCasillero() {
+        CambioCasilleroDAO cd = new CambioCasilleroDAO(null);
+        return cd.getCambiosCasillero();
     }
 
     public boolean updateUsuario(Usuario usuario) {
@@ -519,15 +574,32 @@ public class Controlador {
         System.out.println("repetidos: " + repetidos.toString());
         System.out.println("ids: " + lockerIds.toString());
         FTPFiles files = new FTPFiles();
+        Map<String, Integer> conteoPorDocumento = new HashMap<>();
+        for (Notifications notificacion : notificaciones) {
+            String documento = notificacion.getDocument();
+            if (documento != null && !documento.trim().isEmpty()) {
+                conteoPorDocumento.put(documento, conteoPorDocumento.getOrDefault(documento, 0) + 1);
+            }
+        }
 
         if (lockerIds.size() == repetidos.size()) {
             flag = -1;
+            DAOConsultasCasil dcc = new DAOConsultasCasil();
             for (int i = 0; i < repetidos.size(); i++) {
-                String rutanot = "/var/www/html/casilleros/media/files/" + notificaciones.get(0).getLocker() + "/" + repetidos.get(i);
+                String documentoRepetido = repetidos.get(i);
+                boolean documentoCompartido = conteoPorDocumento.getOrDefault(documentoRepetido, 0) > 1;
+
+                if (documentoCompartido) {
+                    System.out.println("Se conserva PDF compartido: " + documentoRepetido + ". Solo se elimina registro id=" + lockerIds.get(i));
+                    dcc.removeLockerNotification(lockerIds.get(i));
+                    flag = 1;
+                    continue;
+                }
+
+                String rutanot = "/var/www/html/casilleros/media/files/" + notificaciones.get(0).getLocker() + "/" + documentoRepetido;
                 System.out.println("borrar: " + (i + 1) + ": " + rutanot);
                 String comando = "rm -R " + rutanot + " && echo 'borrado'";
                 if (files.exeComando(comando)) {
-                    DAOConsultasCasil dcc = new DAOConsultasCasil();
                     dcc.removeLockerNotification(lockerIds.get(i));
                 } else {
                     System.out.println("no entró locker_notification_id: " + lockerIds.get(i));

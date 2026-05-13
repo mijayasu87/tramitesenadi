@@ -8,24 +8,26 @@ import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
 import senadi.com.ditramites.model.VoucherForm;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
  * @author micharesp
  */
 public class NolineaAux {
+
     private VoucherForm voucherForm;
     //private List<String> documentos;
     private List<Documento> documentos;
     private String numNoLinea;
-    
+
     private String ftp;
     private String sitio;
 
-    public NolineaAux(){
+    public NolineaAux() {
         documentos = new ArrayList<>();
-        ftp = "/var/www/html/solicitudes/media/files/vouchers/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/vouchers/";
+        ftp = ParametrosBD.ftpPath + "vouchers/";
+        sitio = ParametrosBD.urlPath + "vouchers/";
     }
 
     /**

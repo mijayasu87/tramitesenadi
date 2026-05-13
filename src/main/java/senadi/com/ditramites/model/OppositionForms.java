@@ -21,6 +21,7 @@ public class OppositionForms {
     private String powerAttorney;
     private String searchClue;
     private String casillero;
+    private String discountFile;
 
     /**
      * @return the id
@@ -188,5 +189,19 @@ public class OppositionForms {
      */
     public void setCasillero(String casillero) {
         this.casillero = casillero;
+    }
+
+    /**
+     * @return the discountFile
+     */
+    public String getDiscountFile() {
+        return discountFile;
+    }
+
+    /**
+     * @param discountFile the discountFile to set
+     */
+    public void setDiscountFile(String discountFile) {
+        this.discountFile = discountFile;
     }
 }

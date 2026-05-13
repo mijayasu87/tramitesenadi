@@ -18,6 +18,7 @@
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="wildfly.jpa.default-unit" value="true"/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
     </properties>
   </persistence-unit>
   <persistence-unit name="modificacionPU" transaction-type="JTA">
@@ -32,6 +33,7 @@
     <class>senadi.com.ditramites.model.mod.CambioCasillero</class>
     <class>senadi.com.ditramites.model.mod.ConfiguracionCC</class>
     <class>senadi.com.ditramites.model.mod.Usuario</class>
+    <class>senadi.com.ditramites.model.mod.ModificationScope</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
         </properties>
@@ -39,6 +41,14 @@
   <persistence-unit name="renovacionPU" transaction-type="JTA">
     <jta-data-source>java:/jboss/datasources/modificacion_prod</jta-data-source>
     <class>senadi.com.ditramites.model.modren.Renovacion</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+    </properties>
+  </persistence-unit>
+  <persistence-unit name="alfrescoPU" transaction-type="JTA">
+    <jta-data-source>java:/jboss/datasources/alfresco</jta-data-source>
+    <class>senadi.com.ditramites.alfresco.AlfChildAssoc</class>
+    <class>senadi.com.ditramites.alfresco.AlfNode</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
     </properties>

@@ -31,6 +31,9 @@ import senadi.com.ditramites.util.Report;
 @WebServlet(name = "ServletCambioCasillero", urlPatterns = {"/cambiocas"})
 public class InformeCambioCasillero extends HttpServlet {
 
+    private static final String DEFAULT_REPORT = "/WEB-INF/report/CambioCasillero.jrxml";
+    private static final String PATENT_REPORT = "/WEB-INF/report/CambioCasilleroPatente.jrxml";
+
     @Override
     public void init() throws ServletException {
         super.init(); //To change body of generated methods, choose Tools | Templates.
@@ -65,7 +68,7 @@ public class InformeCambioCasillero extends HttpServlet {
 
         HttpSession mises = (HttpSession) request.getSession();
 
-        LoginBean lb = (LoginBean) mises.getValue("loginBean");
+        LoginBean lb = (LoginBean) mises.getAttribute("loginBean");
         ServletOutputStream out = response.getOutputStream();
 
         ServletContext context = request.getServletContext();
@@ -105,7 +108,10 @@ public class InformeCambioCasillero extends HttpServlet {
                 nombre = cambio.getTramite() + "_" + cambio.getProvidencia() + "_cambio_casillero";
                 nombre = nombre.trim().replace(" ", "_");
                 response.setHeader("Content-disposition", "inline; filename=" + nombre + ".pdf");
-                is = getServletContext().getResourceAsStream("/WEB-INF/report/CambioCasillero.jrxml");
+                is = getServletContext().getResourceAsStream(resolveReportPath(cambio));
+                if (is == null) {
+                    is = getServletContext().getResourceAsStream(DEFAULT_REPORT);
+                }
                 in = report.viewCambioCasillero(path, is, cambio, "archivo.xls", config, usuariocc);
             }
 
@@ -151,5 +157,12 @@ public class InformeCambioCasillero extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+
+    private String resolveReportPath(CambioCasillero cambio) {
+        if (cambio != null && "PATENTES".equalsIgnoreCase(cambio.getFuente())) {
+            return PATENT_REPORT;
+        }
+        return DEFAULT_REPORT;
+    }
 
 }

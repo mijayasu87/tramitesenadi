@@ -7,6 +7,7 @@ package senadi.com.ditramites.model.form;
 import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Notifications;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
@@ -21,9 +22,9 @@ public class NotificationsAux {
     private String sitio;
 
     public NotificationsAux(){
-        documentos = new ArrayList<>();
-        ftp = "/var/www/html/casilleros/media/files/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/casilleros/media/files/";
+        documentos = new ArrayList<>();        
+        ftp = ParametrosBD.ftpLockerPath;
+        sitio = ParametrosBD.urlLockerPath;
     }
     
 

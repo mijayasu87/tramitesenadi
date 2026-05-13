@@ -703,3 +703,29 @@ body .ui-widget {
 .eigthy-five-percent{
     width: 80%;
 }
+
+.panel-tog-card .ui-panel-titlebar {
+    background: #e3e3e3 !important;
+    color: black !important;
+    border-color: #5e5e5e !important;
+    font-weight: bold !important;
+    padding: 3px !important;
+}
+.panel-tog-card .ui-panel-titlebar .ui-panel-title {
+    font-size: 20px;
+}
+
+.panel-tog-card-light .ui-panel-titlebar {
+    background: #ddeeff !important;
+    color: black !important;
+    border-color: #5e5e5e !important;
+    font-weight: bold !important;
+    padding: 2px !important;
+}
+.panel-tog-card-light .ui-panel-titlebar .ui-panel-title {
+    font-size: 12px !important;
+}
+
+.panel-info .ui-panel-titlebar{
+    color: black !important;
+}

@@ -99,10 +99,15 @@
             <type>jar</type>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>9.4-1200-jdbc41</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.6.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/net.sf.jasperreports/jasperreports -->
         <dependency>
@@ -181,6 +186,6 @@
                 </executions>
             </plugin>
         </plugins>
-        <finalName>tramitesenadi</finalName>
+        <finalName>tramitesenadi_prueba</finalName>
     </build>
 </project>

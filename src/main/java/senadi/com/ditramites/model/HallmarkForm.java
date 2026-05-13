@@ -7,11 +7,14 @@ package senadi.com.ditramites.model;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
+import javax.persistence.Transient;
 import senadi.com.ditramites.util.ParametrosBD;
 
 /**
@@ -67,10 +70,15 @@ public class HallmarkForm implements Serializable {
     private String gaceta;
     private String casillero;
 
+    @Transient
+    private boolean jobReviewsExists;
+    @Transient
+    private List<Documento> jobReviewDocs;
+
     public HallmarkForm() {
         sitio = ParametrosBD.urlPath + "hallmark_forms/";
         ftp = ParametrosBD.ftpPath + "hallmark_forms/";
-        
+        jobReviewDocs = new ArrayList<>();
     }
 
     public Integer getId() {
@@ -361,5 +369,21 @@ public class HallmarkForm implements Serializable {
      */
     public void setPowerOfAttorney(String powerOfAttorney) {
         this.powerOfAttorney = powerOfAttorney;
+    }
+
+    public boolean isJobReviewsExists() {
+        return jobReviewsExists;
+    }
+
+    public void setJobReviewsExists(boolean jobReviewsExists) {
+        this.jobReviewsExists = jobReviewsExists;
+    }
+
+    public List<Documento> getJobReviewDocs() {
+        return jobReviewDocs;
+    }
+
+    public void setJobReviewDocs(List<Documento> jobReviewDocs) {
+        this.jobReviewDocs = jobReviewDocs;
     }
 }

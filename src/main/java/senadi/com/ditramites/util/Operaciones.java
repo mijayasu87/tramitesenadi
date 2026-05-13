@@ -4,11 +4,6 @@
  */
 package senadi.com.ditramites.util;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -19,8 +14,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -82,10 +75,14 @@ public class Operaciones {
         List<String> tipos = new ArrayList<>();
         tipos.add("ACCIÓN DE PERSONAL");
         tipos.add("RESOLUCIÓN");
-//        tipos.add("DELEGADO");
-//        tipos.add("DELEGACIÓN");
         tipos.add("DELEGADO");
         tipos.add("DELEGACIÓN");
+        tipos.add("DELEGADO SIGNOS");
+        tipos.add("DELEGACIÓN SIGNOS");
+        tipos.add("DELEGADO PATENTES");
+        tipos.add("DELEGACIÓN PATENTES");
+        tipos.add("DELEGADO OPOSICION");
+        tipos.add("DELEGACIÓN OPOSICION");
         return tipos;
     }
 

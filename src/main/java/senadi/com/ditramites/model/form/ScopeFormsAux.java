@@ -8,26 +8,27 @@ import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
 import senadi.com.ditramites.model.ScopeForms;
+import senadi.com.ditramites.util.ParametrosBD;
 
 /**
  *
  * @author micharesp
  */
 public class ScopeFormsAux {
+
     private ScopeForms scopeForm;
 //    private List<String> documentos;
     private List<Documento> documentos;
     private String numAlcance;
-    
+
     private String ftp;
     private String sitio;
 
-    public ScopeFormsAux(){
+    public ScopeFormsAux() {
         documentos = new ArrayList<>();
-        ftp = "/var/www/html/solicitudes/media/files/scope_forms/";
-        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/scope_forms/";
+        ftp = ParametrosBD.ftpPath + "scope_forms/";
+        sitio = ParametrosBD.urlPath + "scope_forms/";
     }
-    
 
 //    /**
 //     * @return the documentos
@@ -42,7 +43,6 @@ public class ScopeFormsAux {
 //    public void setDocumentos(List<String> documentos) {
 //        this.documentos = documentos;
 //    }
-
     /**
      * @return the scopeForm
      */

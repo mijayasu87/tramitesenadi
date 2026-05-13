@@ -20,8 +20,11 @@ import org.primefaces.model.file.UploadedFile;
 import senadi.com.ditramites.model.HallmarkForm;
 import senadi.com.ditramites.model.LockerNotifications;
 import senadi.com.ditramites.model.Notifications;
+import senadi.com.ditramites.model.OppositionForms;
 import senadi.com.ditramites.model.Owner;
+import senadi.com.ditramites.model.PatentForms;
 import senadi.com.ditramites.model.mod.CambioCasillero;
+import senadi.com.ditramites.model.postgres.PpdiSolicitudPatente;
 import senadi.com.ditramites.model.postgres.PpdiSolicitudSignoDistintivo;
 import senadi.com.ditramites.util.Codekru;
 import senadi.com.ditramites.util.Controlador;
@@ -51,7 +54,7 @@ public class CambioCasilleroBean implements Serializable {
 
     private void load() {
         Controlador c = new Controlador();
-        cambiosCasillero = c.getCambiosCasilleroSignos();
+        cambiosCasillero = c.getCambiosCasillero();
         login = c.getLogin();
     }
 
@@ -75,14 +78,37 @@ public class CambioCasilleroBean implements Serializable {
         FacesMessage msg = null;
         cambioCasillero = (CambioCasillero) cambiosCasilleroDataTable.getRowData();
         if (cambioCasillero != null && cambioCasillero.getId() != null) {
+            if (!puedeAdjuntarProvidencia(cambioCasillero)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "SOLO EL USUARIO QUE GENERÓ LA PROVIDENCIA PUEDE ADJUNTAR EL DOCUMENTO FIRMADO");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
             Controlador c = new Controlador();
-            HallmarkForm hfaux = c.getHallmarkForm(cambioCasillero.getTramite());
-            System.out.println("antes: "+cambioCasillero.getCasilleroAnterior()+" - "+hfaux.getCasillero());
-            if (cambioCasillero.getCasilleroAnterior().equals(hfaux.getCasillero())) {
-                PrimeFaces.current().ajax().addCallbackParam("uplo", true);
-                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "ADJUNTE LA PROVIDENCIA FIRMADA");
+            if (esCambioOposicion(cambioCasillero)) {
+                OppositionForms oppositionAux = getOppositionForm(c, cambioCasillero);
+                if (oppositionAux.getId() != null && cambioCasillero.getCasilleroAnterior().equals(oppositionAux.getCasillero())) {
+                    PrimeFaces.current().ajax().addCallbackParam("uplo", true);
+                    msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "ADJUNTE LA PROVIDENCIA FIRMADA");
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "EL TRÁMITE " + cambioCasillero.getTramite() + " NO PERTENECE AL CASILLERO " + cambioCasillero.getCasilleroAnterior());
+                }
+            } else if (esCambioPatente(cambioCasillero)) {
+                PatentForms patentAux = c.getPatentFormByApplicationNumber(cambioCasillero.getTramite());
+                if (patentAux.getId() != null && cambioCasillero.getCasilleroAnterior().equals(patentAux.getCasillero())) {
+                    PrimeFaces.current().ajax().addCallbackParam("uplo", true);
+                    msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "ADJUNTE LA PROVIDENCIA FIRMADA");
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "EL TRÁMITE " + cambioCasillero.getTramite() + " NO PERTENECE AL CASILLERO " + cambioCasillero.getCasilleroAnterior());
+                }
             } else {
-                msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "EL TRÁMITE " + cambioCasillero.getTramite() + " NO PERTENECE AL CASILLERO " + cambioCasillero.getCasilleroAnterior());
+                HallmarkForm hfaux = c.getHallmarkForm(cambioCasillero.getTramite());
+                System.out.println("antes: " + cambioCasillero.getCasilleroAnterior() + " - " + hfaux.getCasillero());
+                if (cambioCasillero.getCasilleroAnterior().equals(hfaux.getCasillero())) {
+                    PrimeFaces.current().ajax().addCallbackParam("uplo", true);
+                    msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "ADJUNTE LA PROVIDENCIA FIRMADA");
+                } else {
+                    msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "EL TRÁMITE " + cambioCasillero.getTramite() + " NO PERTENECE AL CASILLERO " + cambioCasillero.getCasilleroAnterior());
+                }
             }
         } else {
             msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "ERROR AL CARGAR LA PROVIDENCIA");
@@ -93,18 +119,41 @@ public class CambioCasilleroBean implements Serializable {
     public void guardarDocumento(ActionEvent ae) throws IOException {
         FacesMessage msg = null;
         if (cambioCasillero != null && cambioCasillero.getId() != null) {
+            if (!puedeAdjuntarProvidencia(cambioCasillero)) {
+                msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "SOLO EL USUARIO QUE GENERÓ LA PROVIDENCIA PUEDE ADJUNTAR EL DOCUMENTO FIRMADO");
+                FacesContext.getCurrentInstance().addMessage(null, msg);
+                return;
+            }
             if (file != null) {
                 if (file.getFileName().toLowerCase().trim().contains("signed")) {
                     Controlador c = new Controlador();
                     String pdfName = cambioCasillero.getTramite() + "_" + cambioCasillero.getProvidencia() + "_cambio_casillero-signed.pdf";
                     pdfName = pdfName.trim().replace(" ", "");
-                    HallmarkForm hf = c.getHallmarkForm(cambioCasillero.getTramite());
-                    String rutamarca = ParametrosBD.ftpPath+"hallmark_forms/" + hf.getId() + "/" + pdfName;
-                    if (uploadDocumentoToExpedient(rutamarca, file, cambioCasillero)) {
+                    String rutaExpediente = null;
+                    HallmarkForm hf = null;
+                    PatentForms patent = null;
+                    OppositionForms opposition = null;
+                    if (esCambioOposicion(cambioCasillero)) {
+                        opposition = getOppositionForm(c, cambioCasillero);
+                        if (opposition.getId() != null) {
+                            rutaExpediente = ParametrosBD.ftpPath + "opposition_forms/" + opposition.getId() + "/" + pdfName;
+                        }
+                    } else if (esCambioPatente(cambioCasillero)) {
+                        patent = c.getPatentFormByApplicationNumber(cambioCasillero.getTramite());
+                        if (patent.getId() != null) {
+                            rutaExpediente = ParametrosBD.ftpPath + "patent_forms/" + patent.getId() + "/" + pdfName;
+                        }
+                    } else {
+                        hf = c.getHallmarkForm(cambioCasillero.getTramite());
+                        if (hf.getId() != null) {
+                            rutaExpediente = ParametrosBD.ftpPath + "hallmark_forms/" + hf.getId() + "/" + pdfName;
+                        }
+                    }
+                    if (rutaExpediente != null && uploadDocumentoToExpedient(rutaExpediente, file, cambioCasillero)) {
                         Codekru cod = new Codekru();
 
                         String rutacas = ParametrosBD.ftpLockerPath + cambioCasillero.getCasilleroAnterior() + "/";
-                        String comando = "cp " + rutamarca + " " + rutacas + " && echo 'copiado'";
+                        String comando = "cp " + rutaExpediente + " " + rutacas + " && echo 'copiado'";
 
                         if (cod.exeComando(comando)) {
 
@@ -132,7 +181,7 @@ public class CambioCasilleroBean implements Serializable {
                                     lon.setStatus("SENT");
                                     if (c.saveLockerNotifications(lon)) {
                                         rutacas = ParametrosBD.ftpLockerPath + cambioCasillero.getNuevoCasillero() + "/";
-                                        comando = "cp " + rutamarca + " " + rutacas + " && echo 'copiado'";
+                                        comando = "cp " + rutaExpediente + " " + rutacas + " && echo 'copiado'";
                                         if (cod.exeComando(comando)) {
                                             lon = new LockerNotifications();
                                             lon.setId(0);
@@ -143,26 +192,50 @@ public class CambioCasilleroBean implements Serializable {
                                             lon.setStatus("SENT");
                                             if (c.saveLockerNotifications(lon)) {
                                                 Owner ownnew = c.getOwnerByLockerId(Integer.parseInt(cambioCasillero.getNuevoCasillero()));
-                                                hf.setOwnerId(ownnew.getId());
-                                                if (c.updateOwnerHallmark(hf)) {
-                                                    PpdiSolicitudSignoDistintivo signo = c.getPpdiSolicitudSignoDistintivoByTramite(hf.getApplicationNumber());
-                                                    if (signo.getCodigoSolicitudSigno() != null) {
-                                                        signo.setCasilleroIepi(cambioCasillero.getNuevoCasillero());
-                                                        if (!c.updatePpdiSolicitudSignoDistintivo(signo)) {
-                                                            System.out.println("Error al actualizar el casillero en ppdi_solicitud_signo: " + signo.getNumeroTramite());
+                                                boolean actualizoOwner;
+                                                if (esCambioOposicion(cambioCasillero)) {
+                                                    opposition.setOwnerId(ownnew.getId());
+                                                    actualizoOwner = c.updateOwnerOpposition(opposition);
+                                                } else if (esCambioPatente(cambioCasillero)) {
+                                                    patent.setOwnerId(ownnew.getId());
+                                                    actualizoOwner = c.updateOwnerPatent(patent);
+                                                } else {
+                                                    hf.setOwnerId(ownnew.getId());
+                                                    actualizoOwner = c.updateOwnerHallmark(hf);
+                                                }
+                                                if (actualizoOwner) {
+                                                    if (esCambioPatente(cambioCasillero)) {
+                                                        PpdiSolicitudPatente solicitudPatente = c.getPpdiSolicitudPatenteByTramite(patent.getApplicationNumber());
+                                                        if (solicitudPatente.getCodigoSolicitudPatente() != null) {
+                                                            solicitudPatente.setCasilleroIepi(cambioCasillero.getNuevoCasillero());
+                                                            if (!c.updatePpdiSolicitudPatente(solicitudPatente)) {
+                                                                System.out.println("Error al actualizar el casillero en ppdi_solicitud_patente: " + solicitudPatente.getNumeroTramite());
+                                                            }
+                                                        }
+                                                    } else {
+                                                        PpdiSolicitudSignoDistintivo signo = c.getPpdiSolicitudSignoDistintivoByTramite(hf.getApplicationNumber());
+                                                        if (signo.getCodigoSolicitudSigno() != null) {
+                                                            signo.setCasilleroIepi(cambioCasillero.getNuevoCasillero());
+                                                            if (!c.updatePpdiSolicitudSignoDistintivo(signo)) {
+                                                                System.out.println("Error al actualizar el casillero en ppdi_solicitud_signo: " + signo.getNumeroTramite());
+                                                            }
                                                         }
                                                     }
                                                     cambioCasillero.setDocumento(pdfName);
                                                     cambioCasillero.setEstado("REALIZADO");
                                                     cambioCasillero.setFechaNotificacion(new Date());
-                                                    cambioCasillero.setUsuario(login.getNombre());
                                                     if (c.updateCambioCasillero(cambioCasillero)) {
                                                         load();
                                                         PrimeFaces.current().ajax().addCallbackParam("provid", true);
                                                         msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "DOCUMENTO DE PROVIDENCIA " + cambioCasillero.getProvidencia() + " ADJUNTADO Y NOTIFICADO CORRECTAMENTE");
                                                     }
                                                 } else {
-                                                    System.out.println("Se notificó correctamente, pero no se actualizó el casillero en el trámite formularios: " + hf.getApplicationNumber());
+                                                    String applicationNumber = esCambioOposicion(cambioCasillero)
+                                                            ? opposition.getApplicationNumber()
+                                                            : esCambioPatente(cambioCasillero)
+                                                            ? patent.getApplicationNumber()
+                                                            : hf.getApplicationNumber();
+                                                    System.out.println("Se notificó correctamente, pero no se actualizó el casillero en el trámite formularios: " + applicationNumber);
                                                     msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "AVISO", "SE NOTIFICÓ CORRECTAMENTE, PERO NO SE ACTUALIZÓ EL CASILLERO EN EL TRÁMITE FORMULARIOS");
                                                 }
                                             } else {
@@ -216,11 +289,25 @@ public class CambioCasilleroBean implements Serializable {
             if (caux.getDocumento() != null && !caux.getDocumento().trim().isEmpty()) {
                 Controlador c = new Controlador();
 
-                HallmarkForm hallmark = c.getHallmarkForm(caux.getTramite());
-                if (hallmark.getId() != null) {
+                String rutaux = null;
+                if (esCambioOposicion(caux)) {
+                    OppositionForms opposition = getOppositionForm(c, caux);
+                    if (opposition.getId() != null) {
+                        rutaux = ParametrosBD.urlPath + "opposition_forms/" + opposition.getId() + "/" + caux.getDocumento();
+                    }
+                } else if (esCambioPatente(caux)) {
+                    PatentForms patent = c.getPatentFormByApplicationNumber(caux.getTramite());
+                    if (patent.getId() != null) {
+                        rutaux = ParametrosBD.urlPath + "patent_forms/" + patent.getId() + "/" + caux.getDocumento();
+                    }
+                } else {
+                    HallmarkForm hallmark = c.getHallmarkForm(caux.getTramite());
+                    if (hallmark.getId() != null) {
+                        rutaux = ParametrosBD.urlPath + "hallmark_forms/" + hallmark.getId() + "/" + caux.getDocumento();
+                    }
+                }
 
-                    String rutaux = ParametrosBD.urlPath+"hallmark_forms/" + hallmark.getId() + "/" + caux.getDocumento();
-
+                if (rutaux != null) {
                     System.out.println("rutaprovidencia: " + rutaux);
                     PrimeFaces.current().ajax().addCallbackParam("viewdoc", true);
                     PrimeFaces.current().ajax().addCallbackParam("view", rutaux);
@@ -235,6 +322,48 @@ public class CambioCasilleroBean implements Serializable {
             msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ERROR", "NO SE CARGÓ CORRECTAMENTE EL REGISTRO SELECCIONADO");
         }
         FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public boolean puedeAdjuntarProvidencia(CambioCasillero cambio) {
+        return cambio != null
+                && login != null
+                && login.getNombre() != null
+                && cambio.getUsuario() != null
+                && login.getNombre().equalsIgnoreCase(cambio.getUsuario());
+    }
+
+    private boolean esCambioPatente(CambioCasillero cambio) {
+        return cambio != null && "PATENTES".equalsIgnoreCase(cambio.getFuente());
+    }
+
+    private boolean esCambioOposicion(CambioCasillero cambio) {
+        return cambio != null && "OPOSICION".equalsIgnoreCase(cambio.getFuente());
+    }
+
+    private OppositionForms getOppositionForm(Controlador c, CambioCasillero cambio) {
+        List<OppositionForms> oppositions = c.getOppositionFormsByApplicationNumber(cambio.getTramite());
+        if (oppositions == null || oppositions.isEmpty()) {
+            return new OppositionForms();
+        }
+        for (OppositionForms opposition : oppositions) {
+            if (opposition != null && cambio.getCasilleroAnterior() != null && cambio.getCasilleroAnterior().equals(opposition.getCasillero())) {
+                return opposition;
+            }
+        }
+        return oppositions.get(0);
+    }
+
+    public int getTotalPendientes() {
+        int total = 0;
+        if (cambiosCasillero == null) {
+            return total;
+        }
+        for (CambioCasillero cambio : cambiosCasillero) {
+            if (cambio != null && "PENDIENTE".equalsIgnoreCase(cambio.getEstado())) {
+                total++;
+            }
+        }
+        return total;
     }
 
     /**

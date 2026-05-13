@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.text.Normalizer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -71,7 +72,7 @@ public class Report implements Serializable {
 
     public String getConfig(String tipo, List<ConfiguracionCC> config) {
         for (ConfiguracionCC conf : config) {
-            if (conf.getTipo().equals(tipo)) {
+            if (sameConfigType(conf.getTipo(), tipo)) {
                 if (tipo.equals("ACCIÓN DE PERSONAL") || tipo.equals("RESOLUCIÓN")) {
                     return conf.getNombre() + ", de " + Operaciones.formatDateToLarge(conf.getFecha());
                 } else {
@@ -82,19 +83,60 @@ public class Report implements Serializable {
         return "";
     }
 
+    private boolean sameConfigType(String left, String right) {
+        return normalizeKey(left).equals(normalizeKey(right));
+    }
+
+    private String normalizeKey(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .trim()
+                .toUpperCase();
+        return normalized.replaceAll("\\s+", " ");
+    }
+
+    private String getConfigByFuente(String fuente, List<ConfiguracionCC> config, String tipoSignos, String tipoPatentes, String tipoOposicion, String tipoDefault) {
+        String fuenteNormalizada = normalizeKey(fuente);
+        String tipoObjetivo = tipoSignos;
+        if (fuenteNormalizada.contains("PATENTE")) {
+            tipoObjetivo = tipoPatentes;
+        } else if (fuenteNormalizada.contains("OPOSICION")) {
+            tipoObjetivo = tipoOposicion;
+        }
+        String value = getConfig(tipoObjetivo, config);
+        if (value == null || value.trim().isEmpty()) {
+            return getConfig(tipoDefault, config);
+        }
+        return value;
+    }
+
     public FileInputStream viewCambioCasillero(String path, InputStream rutaJrxml, CambioCasillero cambio, String rutapdf,
             List<ConfiguracionCC> config, Usuario usuario) { //, Delegado secretaria
         try {
             FileInputStream entrada;
             JasperReport reportePrincipal = JasperCompileManager.compileReport(rutaJrxml);
 
-            Map parametro = new HashMap();
-            //parametro.put("title", "INSCRIPCIÓN LICENCIA DE USO No. " + licencia.getLicenciaNo() + " - SENADI");
+            Map<String, Object> parametro = new HashMap<>();
+            
+            if (normalizeKey(cambio.getFuente()).contains("SIGNO")) {
+                parametro.put("titulo", "DIRECCIÓN TÉCNICA DE SIGNOS DISNTINTIVOS");
+                parametro.put("fuente", "SIGNO DISTINTIVO");
+            } else if (normalizeKey(cambio.getFuente()).contains("OPOSICION")) {
+                parametro.put("titulo", "DIRECCIÓN TÉCNICA DE OPOSICIONES");
+                parametro.put("fuente", "OPOSICIÓN");
+            } else {
+                parametro.put("titulo", "DIRECCIÓN TÉCNICA DE PATENTES");
+                parametro.put("fuente", "PATENTE");
+            }
+            
             parametro.put("resol", getConfig("ACCIÓN DE PERSONAL", config));
             parametro.put("resolnot", getConfig("RESOLUCIÓN", config));
 
-            parametro.put("subrogante", getConfig("DELEGADO", config));
-            parametro.put("subrogantedel", getConfig("DELEGACIÓN", config));
+            parametro.put("subrogante", getConfigByFuente(cambio.getFuente(), config, "DELEGADO SIGNOS", "DELEGADO PATENTES", "DELEGADO OPOSICION", "DELEGADO"));
+            parametro.put("subrogantedel", getConfigByFuente(cambio.getFuente(), config, "DELEGACIÓN SIGNOS", "DELEGACIÓN PATENTES", "DELEGACIÓN OPOSICION", "DELEGACIÓN"));
 
             parametro.put("secretaria", usuario.getNombre());
             parametro.put("denosecre", usuario.getCargo());
@@ -106,8 +148,6 @@ public class Report implements Serializable {
             if (jasperPrint.getPages().isEmpty()) {
                 return null;
             }
-
-            DefaultJasperReportsContext context = DefaultJasperReportsContext.getInstance();
 
             try (OutputStream out = new FileOutputStream(rutapdf + ".pdf")) {
                 JRPdfExporter exporter = new JRPdfExporter();

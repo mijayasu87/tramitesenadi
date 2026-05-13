@@ -7,7 +7,6 @@ package senadi.com.ditramites.dao.procesos;
 import java.util.List;
 import javax.persistence.Query;
 import senadi.com.ditramites.model.postgres.PpdiSolicitudPatente;
-import senadi.com.ditramites.model.postgres.PpdiSolicitudSignoDistintivo;
 
 /**
  *
@@ -24,39 +23,43 @@ public class PpdiSolicitudPatenteDAO extends DAOAbstract<PpdiSolicitudPatente> {
         try {
             Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p");
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-            return query.getResultList();
+            @SuppressWarnings("unchecked")
+            List<PpdiSolicitudPatente> solicitudes = query.getResultList();
+            return solicitudes;
         } finally {
             this.getEntityManager().close();
         }
 
     }
 
-    public PpdiSolicitudSignoDistintivo getPpdiSolicitudPatenteByTramite(String tramite) {
+    public PpdiSolicitudPatente getPpdiSolicitudPatenteByTramite(String tramite) {
         try {
             Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p where p.numeroTramite = :tramite");
             query.setParameter("tramite", tramite);
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-            List<PpdiSolicitudSignoDistintivo> signos = query.getResultList();
-            if (signos.isEmpty()) {
-                return new PpdiSolicitudSignoDistintivo();
+            @SuppressWarnings("unchecked")
+            List<PpdiSolicitudPatente> solicitudes = query.getResultList();
+            if (solicitudes.isEmpty()) {
+                return new PpdiSolicitudPatente();
             } else {
-                return signos.get(0);
+                return solicitudes.get(0);
             }
         } finally {
             this.getEntityManager().close();
         }
     }        
     
-    public PpdiSolicitudSignoDistintivo getPpdiSolicitudPatenteByCodigoSolicitud(Integer codigoSolicitud) {
+    public PpdiSolicitudPatente getPpdiSolicitudPatenteByCodigoSolicitud(Integer codigoSolicitud) {
         try {
             Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p where p.codigoSolicitudPatente = :codigo");
             query.setParameter("codigo", codigoSolicitud);
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-            List<PpdiSolicitudSignoDistintivo> signos = query.getResultList();
-            if (signos.isEmpty()) {
-                return new PpdiSolicitudSignoDistintivo();
+            @SuppressWarnings("unchecked")
+            List<PpdiSolicitudPatente> solicitudes = query.getResultList();
+            if (solicitudes.isEmpty()) {
+                return new PpdiSolicitudPatente();
             } else {
-                return signos.get(0);
+                return solicitudes.get(0);
             }
         } finally {
             this.getEntityManager().close();

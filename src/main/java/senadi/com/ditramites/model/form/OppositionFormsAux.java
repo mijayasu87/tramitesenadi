@@ -25,10 +25,14 @@ public class OppositionFormsAux {
     private String ftp;
     private String sitio;
 
+    private boolean jobReviewsExists;
+    private List<Documento> jobReviewDocs;
+
     public OppositionFormsAux() {
         documentos = new ArrayList<>();
         ftp = ParametrosBD.ftpPath + "opposition_forms/";
         sitio = ParametrosBD.urlPath + "opposition_forms/";
+        jobReviewDocs = new ArrayList<>();
     }
 
     /**
@@ -99,5 +103,21 @@ public class OppositionFormsAux {
      */
     public void setDocumentos(List<Documento> documentos) {
         this.documentos = documentos;
+    }
+
+    public boolean isJobReviewsExists() {
+        return jobReviewsExists;
+    }
+
+    public void setJobReviewsExists(boolean jobReviewsExists) {
+        this.jobReviewsExists = jobReviewsExists;
+    }
+
+    public List<Documento> getJobReviewDocs() {
+        return jobReviewDocs;
+    }
+
+    public void setJobReviewDocs(List<Documento> jobReviewDocs) {
+        this.jobReviewDocs = jobReviewDocs;
     }
 }

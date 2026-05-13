@@ -5,6 +5,9 @@
 package senadi.com.ditramites.model;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import senadi.com.ditramites.model.mod.ModificationScope;
 import senadi.com.ditramites.util.ParametrosBD;
 
 /**
@@ -30,10 +33,12 @@ public class BreederForms {
 
     private Integer idVegetableForms;
 
+    private List<ModificationScope> alcances;
+
     public BreederForms() {
-//        sitio = "https://registro.propiedadintelectual.gob.ec/solicitudes/media/files/breeder_forms/";
         sitio = ParametrosBD.urlPath+"breeder_forms/";
         ftp = ParametrosBD.ftpPath+"breeder_forms/";
+        alcances = new ArrayList<>();
     }
 
     /**
@@ -230,6 +235,14 @@ public class BreederForms {
      */
     public void setIdVegetableForms(Integer idVegetableForms) {
         this.idVegetableForms = idVegetableForms;
+    }
+
+    public List<ModificationScope> getAlcances() {
+        return alcances;
+    }
+
+    public void setAlcances(List<ModificationScope> alcances) {
+        this.alcances = alcances;
     }
 
     public String getEstado() {

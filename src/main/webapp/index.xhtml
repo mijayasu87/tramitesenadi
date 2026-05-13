@@ -34,7 +34,7 @@ and open the template in the editor.
         <!-- My own style css -->
         <link href="#{resource['assets/css/style.css']}" rel="stylesheet" />
     </h:head>
-    <h:body>
+    <h:body >
         <!-- Start Page Loading -->
         <div id="loader-wrapper">
             <div id="loader"></div>        
@@ -69,7 +69,13 @@ and open the template in the editor.
                 <a class="itemm" href="users.xhtml" title="Cambio Casillero" 
                    style="display: #{loginBean.grupo eq 'SC_CambioCasillero' and loginBean.usuarioCambioCasillero.tipo eq 'ADMINISTRADOR'?'block':'none'}">USUARIOS</a>
                 <a class="itemm" href="cambiocasillero.xhtml" title="Cambio Casillero" 
-                   style="display: #{loginBean.grupo eq 'SC_CambioCasillero'?'block':'none'}">CAMBIOS CASILLERO</a>
+                   style="display: #{loginBean.grupo eq 'SC_CambioCasillero'?'block':'none'}">
+                    CAMBIOS CASILLERO
+                    <h:panelGroup layout="inline" styleClass="menu-notification-wrap" rendered="#{cambioCasilleroBean.totalPendientes gt 0}">
+                        <i class="material-icons menu-notification-icon">notifications</i>
+                        <span class="menu-notification-badge">#{cambioCasilleroBean.totalPendientes}</span>
+                    </h:panelGroup>
+                </a>
                 <a class="activo" href="#" title="Trámites" >TRAMITES</a>
             </div>
 
@@ -82,295 +88,348 @@ and open the template in the editor.
                 <p:selectBooleanCheckbox value="#{tramiteBean.searchIPAS}" title="BUSCAR EN IPAS" rendered="#{loginBean.grupoPatentes}"
                                          style="margin-left: 5px;font-size: 14px; " id="buscipas"/>
                 <p:commandButton value="BUSCAR" class="btn_peque" actionListener="#{tramiteBean.buscarTramite}" 
-                                 update="mensajes panelContenedor alcancespanel tutelagepanel oposicionespanel nolineapanel derechospanel notificacionpanel" process="@parent" />
+                                 update="mensajes panelContenedor panelInfoWrapper alcancespanel tutelagepanel oposicionespanel nolineapanel derechospanel notificacionpanel" process="@parent" />
                 <p:commandButton value="LIMPIAR" class="btn_peque" actionListener="#{tramiteBean.limpiarPaneles}"
-                                 update="mensajes buscipas panelContenedor alcancespanel tutelagepanel tramite oposicionespanel nolineapanel derechospanel notificacionpanel" process="@parent" />                
-                <p:selectBooleanCheckbox value="#{tramiteBean.depurar}" title="DEPURAR DUPLICADOS" rendered="#{loginBean.depurarDuplicado}"
+                                 update="mensajes buscipas panelContenedor panelInfoWrapper alcancespanel tutelagepanel tramite oposicionespanel nolineapanel derechospanel notificacionpanel" process="@parent" />
+                <p:commandButton value="DEPURAR MASIVO" class="btn_peque" rendered="#{loginBean.depurarDuplicado}"
+                                 update="dlgDepurarDuplicadosMasivo" process="@this"
+                                 oncomplete="PF('dlgDepurarDuplicadosMasivo').show();" />
+                <p:selectBooleanCheckbox id="depurarDuplicadosChk" value="#{tramiteBean.depurar}" title="DEPURAR DUPLICADOS" rendered="false"
                                          style="margin-left: 5px;font-size: 14px; " >
                     <p:ajax event="change" listener="#{tramiteBean.enableOptions}" update="dlgDepurarDuplicados"
                             oncomplete="PF('dlgDepurarDuplicados').show()"/>
                 </p:selectBooleanCheckbox>
+                <br/>
+                <p:panelGrid columns="1" style="width: 70%; text-align: center; margin: 0 auto; margin-top: 5px !important" id="panelContenedor" >
+                    <!--<p:outputLabel value="{tramiteBean.tituloTramiteText}" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
+                                   rendered="{tramiteBean.resultadopanel}"/> -->
+                    <p:panel header="#{tramiteBean.tituloTramiteText}" styleClass="panel-tog-card" rendered="#{tramiteBean.conmarca}" toggleable="true">
+                        <p:panelGrid columns="2" id="marcaspanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conmarca}"
+                                     columnClasses="fivety-seven-percent,forty-two-percent" >
 
-                <p:panelGrid columns="1" style="width: 70%; text-align: center; margin: 0 auto" id="panelContenedor" >
-                    <p:outputLabel value="#{tramiteBean.tituloTramiteText}" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
-                                   rendered="#{tramiteBean.resultadopanel}"/>
-                    <p:panelGrid columns="2" id="marcaspanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conmarca}"
-                                 columnClasses="fivety-seven-percent,forty-two-percent" >
+                            <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                                <p:outputLabel value="Trámite:" for="tram" class="bordesuperior"/>
+                                <p:inputText id="tram" value="#{tramiteBean.hallmarkForm.applicationNumber}" readonly="true" class="maxsize"/>
 
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
-                            <p:outputLabel value="Trámite:" for="tram" class="bordesuperior"/>
-                            <p:inputText id="tram" value="#{tramiteBean.hallmarkForm.applicationNumber}" readonly="true" class="maxsize"/>
+                                <p:outputLabel value="Casillero:" for="casil" class="bordesuperior"/>
+                                <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
+                                    <p:inputText id="casil" value="#{tramiteBean.hallmarkForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior"/>
+                                    <p:commandButton value="ver" actionListener="#{tramiteBean.prepararCasilleroHallmark}"
+                                                     oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
+                                                     class="btn_peque maxsize"  update="mensajes dlgCasillero frmCasillero"/>
+                                </p:panelGrid>
 
-                            <p:outputLabel value="Casillero:" for="casil" class="bordesuperior"/>
-                            <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                <p:inputText id="casil" value="#{tramiteBean.hallmarkForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior"/>
-                                <p:commandButton value="ver" actionListener="#{tramiteBean.prepararCasilleroHallmark}"
-                                                 oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
-                                                 class="btn_peque maxsize"  update="mensajes dlgCasillero frmCasillero"/>
+                                <p:outputLabel value="Tipo Signo:" for="tmar" class="bordesuperior"/>
+                                <p:inputText id="tmar" value="#{tramiteBean.hallmarkForm.tipoSigno}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Naturaleza Signo:" for="nats" class="bordesuperior"/>
+                                <p:inputText id="nats" value="#{tramiteBean.hallmarkForm.naturalezaSigno}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Denominación:" for="dnomi" class="bordesuperior"/>
+                                <p:inputTextarea id="dnomi" value="#{tramiteBean.hallmarkForm.denomination}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Fecha Presentación: " for="fprem" class="bordesuperior"/>
+                                <p:inputText id="fprem" value="#{tramiteBean.hallmarkForm.applicationDate}" readonly="true" class="maxsize">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:inputText>
+
+                                <p:outputLabel value="Poder: " for="poders" class="bordesuperior" rendered="#{tramiteBean.hallmarkForm.powerOfAttorney != null}"/>
+                                <p:commandLink id="poders" value="#{tramiteBean.hallmarkForm.powerOfAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left" 
+                                               actionListener="#{tramiteBean.prepareHallmarkPowerAttorney}"
+                                               oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
+                                               update="allform:dlgPowerOfAttorney mensajes"  process="@this"
+                                               rendered="#{tramiteBean.hallmarkForm.powerOfAttorney != null}"/>
+
+                                <p:outputLabel value="Clase Niza:" for="clani" class="bordesuperior"/>
+                                <p:inputText id="clani" value="#{tramiteBean.hallmarkForm.nizaClassId}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Gaceta:" for="gacet" class="bordesuperior"/>
+                                <p:inputText id="gacet" value="#{tramiteBean.hallmarkForm.gaceta}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Título:" for="titm" class="bordesuperior"/>
+                                <p:inputText id="titm" value="#{tramiteBean.hallmarkForm.titulo}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Fecha Título:" for="titf" class="bordesuperior"/>
+                                <p:inputText id="titf" value="#{tramiteBean.hallmarkForm.fechaTitulo}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Fecha Vencimiento:" for="titvf" class="bordesuperior"/>
+                                <p:inputText id="titvf" value="#{tramiteBean.hallmarkForm.fechaVencimiento}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Estado:" for="estm" class="bordesuperior"/>
+                                <p:inputText id="estm" value="#{tramiteBean.hallmarkForm.estado}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Expediente:" for="expm" class="bordesuperior"/>
+                                <p:inputText id="expm" value="#{tramiteBean.hallmarkForm.expedient}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value=""/>
+                                <p:commandLink value="Ver productos" actionListener="#{tramiteBean.prepararVerProductos}" process="@parent"
+                                               oncomplete="if(args.verprods){PF('dlgProductos').show();}" update="allform:dlgProductos mensajes"
+                                               style="color: blue; font-size: 16px; font-weight: bold" 
+                                               title="Ver productos seleccionados del trámite #{tramiteBean.hallmarkForm.applicationNumber}"/>
+
                             </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%" class="noBorders" id="exped">
+                                <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
+                                <p:panelGrid columns="1" id="denSignos">
+                                    <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
+                                        <p:panel>
+                                            <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;"
+                                                           onclick="otherpage('#{tramiteBean.hallmarkForm.sitio}#{tramiteBean.hallmarkForm.id}/#{expediente.archivo}')"/>
+                                            <p:commandLink value="Reemplazar logo" class="link_remove"
+                                                           actionListener="#{tramiteBean.iniciarReemplazoLogo(expediente)}"
+                                                           process="@this" update="dlgLogoUpload" 
+                                                           onstart="return confirm('¿Seguro de reemplazar el logo actual?');"
+                                                           oncomplete="PF('dlgLogoUpload').show();"
+                                                           rendered="#{expediente.tipo eq 'Logo'}" 
+                                                           style="float: right; font-weight: bold;" />
+                                            <p:commandLink class="link_remove" style="float: right"
+                                                           process="@this" title="Eliminar documento"
+                                                           actionListener="#{tramiteBean.eliminarDocumento(expediente)}"
+                                                           update="marcaspanel mensajes"
+                                                           rendered="#{expediente.uploaded}"
+                                                           onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
+                                                <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                            </p:commandLink>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
+                                <p:fileUpload listener="#{tramiteBean.uploadDocumentoHallmark}"
+                                              accept=".pdf"
+                                              auto="true"
+                                              label="SUBIR DOCUMENTO"
+                                              update="denSignos mensajes"
+                                              style="margin: 10px 0; width: 100%;">
+                                </p:fileUpload>
 
-                            <p:outputLabel value="Tipo Signo:" for="tmar" class="bordesuperior"/>
-                            <p:inputText id="tmar" value="#{tramiteBean.hallmarkForm.tipoSigno}" readonly="true" class="maxsize"/>
+                                <p:panelGrid columns="1" style="width: 100%; margin-top: 8px;" class="noBorders" id="hallmarkJobReviewsPanel">
+                                    <p:commandButton value="REVISIONES DE OFICIO" rendered="#{not tramiteBean.hallmarkForm.jobReviewsExists}"
+                                                     actionListener="#{tramiteBean.crearJobReviewsHallmark}"
+                                                     onstart="return confirm('¿Desea crear REVISIONES DE OFICIO?');"
+                                                     update="marcaspanel mensajes" process="@this"
+                                                     style="font-size: 12px;"/>
+                                    <h:panelGroup rendered="#{tramiteBean.hallmarkForm.jobReviewsExists}">
+                                        <p:outputLabel value="REVISIONES DE OFICIO" style="font-size: 14px; background: #e3e3e3; display: block;"/>
+                                        <c:forEach items="#{tramiteBean.hallmarkForm.jobReviewDocs}" var="rev">
+                                            <p:panel styleClass="alcance-card" style="margin-top: 4px;">
+                                                <p:commandLink value="#{rev.tipo}" style="color: #0089ec;"
+                                                               onclick="otherpage('#{tramiteBean.hallmarkForm.sitio}#{tramiteBean.hallmarkForm.id}/job_reviews/#{rev.archivo}')"/>
+                                                <p:commandLink class="link_remove" style="float: right"
+                                                               process="@this" title="Eliminar revisión"
+                                                               actionListener="#{tramiteBean.eliminarJobReviewHallmark(rev)}"
+                                                               update="marcaspanel mensajes"
+                                                               rendered="#{rev.uploaded}"
+                                                               onstart="return confirm('¿Confirma que desea eliminar esta revisión: #{rev.archivo}?');">
+                                                    <i class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                                </p:commandLink>
+                                            </p:panel>
+                                        </c:forEach>
+                                        <p:fileUpload listener="#{tramiteBean.uploadJobReviewHallmark}"
+                                                      accept=".pdf" auto="true"
+                                                      label="SUBIR REVISIÓN"
+                                                      update="hallmarkJobReviewsPanel mensajes"
+                                                      style="margin: 8px 0; width: 100%;"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
 
-                            <p:outputLabel value="Naturaleza Signo:" for="nats" class="bordesuperior"/>
-                            <p:inputText id="nats" value="#{tramiteBean.hallmarkForm.naturalezaSigno}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Denominación:" for="dnomi" class="bordesuperior"/>
-                            <p:inputTextarea id="dnomi" value="#{tramiteBean.hallmarkForm.denomination}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Fecha Presentación: " for="fprem" class="bordesuperior"/>
-                            <p:inputText id="fprem" value="#{tramiteBean.hallmarkForm.applicationDate}" readonly="true" class="maxsize">
-                                <f:convertDateTime pattern="yyyy-MM-dd"/>
-                            </p:inputText>
-
-                            <p:outputLabel value="Poder: " for="poders" class="bordesuperior" rendered="#{tramiteBean.hallmarkForm.powerOfAttorney != null}"/>
-                            <p:commandLink id="poders" value="#{tramiteBean.hallmarkForm.powerOfAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left" 
-                                           actionListener="#{tramiteBean.prepareHallmarkPowerAttorney}"
-                                           oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
-                                           update="allform:dlgPowerOfAttorney mensajes"  process="@this"
-                                           rendered="#{tramiteBean.hallmarkForm.powerOfAttorney != null}"/>
-
-                            <p:outputLabel value="Clase Niza:" for="clani" class="bordesuperior"/>
-                            <p:inputText id="clani" value="#{tramiteBean.hallmarkForm.nizaClassId}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Gaceta:" for="gacet" class="bordesuperior"/>
-                            <p:inputText id="gacet" value="#{tramiteBean.hallmarkForm.gaceta}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Título:" for="titm" class="bordesuperior"/>
-                            <p:inputText id="titm" value="#{tramiteBean.hallmarkForm.titulo}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Fecha Título:" for="titf" class="bordesuperior"/>
-                            <p:inputText id="titf" value="#{tramiteBean.hallmarkForm.fechaTitulo}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Fecha Vencimiento:" for="titvf" class="bordesuperior"/>
-                            <p:inputText id="titvf" value="#{tramiteBean.hallmarkForm.fechaVencimiento}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Estado:" for="estm" class="bordesuperior"/>
-                            <p:inputText id="estm" value="#{tramiteBean.hallmarkForm.estado}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Expediente:" for="expm" class="bordesuperior"/>
-                            <p:inputText id="expm" value="#{tramiteBean.hallmarkForm.expedient}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value=""/>
-                            <p:commandLink value="Ver productos" actionListener="#{tramiteBean.prepararVerProductos}" process="@parent"
-                                           oncomplete="if(args.verprods){PF('dlgProductos').show();}" update="allform:dlgProductos mensajes"
-                                           style="color: blue; font-size: 16px; font-weight: bold" 
-                                           title="Ver productos seleccionados del trámite #{tramiteBean.hallmarkForm.applicationNumber}"/>
-
+                                <p:dialog id="dlgLogoUpload" widgetVar="dlgLogoUpload" modal="true" header="Reemplazar logo" closable="true" resizable="false">
+                                    <h:panelGrid columns="1" style="width:100%">
+                                        <p:outputLabel value="Logo actual: #{tramiteBean.selectedLogoDocument.archivo}" rendered="#{not empty tramiteBean.selectedLogoDocument}"/>
+                                        <p:fileUpload id="logoFileUpload"
+                                                      listener="#{tramiteBean.uploadLogoHallmark}"
+                                                      accept=".jpg,.jpeg"
+                                                      mode="advanced"
+                                                      auto="true"
+                                                      label="Seleccionar JPG"
+                                                      update="marcaspanel mensajes"
+                                                      sizeLimit="5242880"/>
+                                        <p:commandButton value="Cerrar" onclick="PF('dlgLogoUpload').hide();" type="button"/>
+                                    </h:panelGrid>
+                                </p:dialog>
+                            </p:panelGrid>                                                
                         </p:panelGrid>
-                        <p:panelGrid columns="1" style="width: 100%" class="noBorders" id="exped">
-                            <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
-                            <p:panelGrid columns="1" id="denSignos">
+                    </p:panel>
+
+                    <p:panel header="#{tramiteBean.tituloTramiteText}" styleClass="panel-tog-card" rendered="#{tramiteBean.conpatente}" toggleable="true">                    
+                        <p:panelGrid columns="2" id="patentepanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conpatente}" 
+                                     columnClasses="fivety-seven-percent,forty-two-percent">
+
+                            <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                                <p:outputLabel value="Trámite:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.patentForm.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+
+                                <p:outputLabel value="Casillero:" class="bordesuperior"/>
+                                <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
+                                    <p:inputText id="casilp" value="#{tramiteBean.patentForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                    <p:commandButton value="ver" actionListener="#{tramiteBean.prepararCasilleroPantent}"
+                                                     oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
+                                                     class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
+                                </p:panelGrid>
+
+                                <p:outputLabel value="Fecha Presentación" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.patentForm.applicationDate}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Tipo Patente:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.patentForm.tipo}" readonly="true" class="maxsize estiloLigth"/>
+
+                                <p:outputLabel value="Título:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.patentForm.title}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Clasificación Internacional:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.patentForm.internationalClassification}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Resumen: " class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.patentForm.summary}" readonly="true" class="maxsize" />
+
+                                <p:outputLabel value="Poder: " for="poderpatent" class="bordesuperior" rendered="#{tramiteBean.patentForm.powerOfAttorney != null}"/>
+                                <p:commandLink id="poderpatent" value="#{tramiteBean.patentForm.powerOfAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left" 
+                                               actionListener="#{tramiteBean.preparePatentPowerAttorney}"
+                                               oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
+                                               update="allform:dlgPowerOfAttorney mensajes"
+                                               process="@this"
+                                               rendered="#{tramiteBean.patentForm.powerOfAttorney != null}"/>
+
+                                <p:outputLabel value="Estado:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.patentForm.status}" readonly="true" class="maxsize"/>                           
+
+                                <p:outputLabel value="Expediente:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.patentForm.expedient}" readonly="true" class="maxsize"/>
+
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
+                                <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
+                                <p:panelGrid columns="1" id="patDocument">
+                                    <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
+                                        <p:panel >
+                                            <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;"
+                                                           onclick="otherpage('#{tramiteBean.patentForm.sitio}#{tramiteBean.patentForm.id}/#{expediente.archivo}')"/>
+                                            <p:commandLink class="link_remove" style="float: right"
+                                                           process="@this" title="Eliminar documento"
+                                                           actionListener="#{tramiteBean.eliminarDocumento(expediente)}"
+                                                           update="patentepanel mensajes"
+                                                           rendered="#{expediente.uploaded}"
+                                                           onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
+                                                <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                            </p:commandLink>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
+                                <p:fileUpload listener="#{tramiteBean.uploadDocumentoPatent}"
+                                              accept=".pdf"
+                                              auto="true"
+                                              label="SUBIR DOCUMENTO"
+                                              update="patDocument mensajes"                                              
+                                              style="margin: 10px 0; width: 100%;">                            
+                                </p:fileUpload>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:panel>
+
+                    <p:panel header="#{tramiteBean.tituloTramiteText}" styleClass="panel-tog-card" rendered="#{tramiteBean.conbreeder}" toggleable="true">
+                        <p:panelGrid columns="2" id="breederpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conbreeder}" 
+                                     columnClasses="fivety-seven-percent,forty-two-percent">
+
+                            <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                                <p:outputLabel value="Trámite:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.breederForm.applicationNumber}" readonly="true" class="maxsize"/>                            
+
+                                <p:outputLabel value="Fecha Presentación" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.breederForm.applicationDate}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Taxón Botánico:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.breederForm.proposedName}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Nombre Común:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.breederForm.commercialName}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Grupo:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.breederForm.group}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Estado:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.breederForm.estado}" readonly="true" class="maxsize"/>
+
+
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
+                                <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
                                 <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
                                     <p:panel>
                                         <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;"
-                                                       onclick="otherpage('#{tramiteBean.hallmarkForm.sitio}#{tramiteBean.hallmarkForm.id}/#{expediente.archivo}')"/>
-                                        <p:commandLink value="Reemplazar logo" class="link_remove"
-                                                       actionListener="#{tramiteBean.iniciarReemplazoLogo(expediente)}"
-                                                       process="@this" update="dlgLogoUpload" 
-                                                       onstart="return confirm('¿Seguro de reemplazar el logo actual?');"
-                                                       oncomplete="PF('dlgLogoUpload').show();"
-                                                       rendered="#{expediente.tipo eq 'Logo'}" 
-                                                       style="float: right; font-weight: bold;" />
-                                        <p:commandLink class="link_remove" style="float: right"
-                                                       process="@this" title="Eliminar documento"
-                                                       actionListener="#{tramiteBean.eliminarDocumento(expediente)}"
-                                                       update="marcaspanel mensajes"
-                                                       rendered="#{expediente.uploaded}"
-                                                       onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
-                                            <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
-                                        </p:commandLink>
+                                                       onclick="otherpage('#{tramiteBean.breederForm.sitio}#{tramiteBean.breederForm.idVegetableForms}/#{expediente.archivo}')"/>
                                     </p:panel>
                                 </c:forEach>
+                                <p:panelGrid columns="1" style="width: 100%; margin-top: 8px;" class="noBorders"
+                                             rendered="#{not empty tramiteBean.breederForm.alcances}">
+                                    <p:outputLabel value="ALCANCES OBTENCIÓN" style="font-size: 14px; background: #e3e3e3;"/>
+                                    <c:forEach items="#{tramiteBean.breederForm.alcances}" var="alcance">
+                                        <p:panel header="Alcance N° #{alcance.scopeNumber}" toggleable="true" styleClass="panel-tog-card" style="margin-top: 4px;">
+                                            <p:commandLink value="Alcance" style="color: #0089ec; display: block;"
+                                                           rendered="#{not empty alcance.pathScope}"
+                                                           onclick="otherpage('#{tramiteBean.breederForm.sitio}#{tramiteBean.breederForm.idVegetableForms}/#{alcance.pathScope}')"/>
+                                            <p:commandLink value="Formulario Alcance" style="color: #0089ec; display: block;"
+                                                           onclick="otherpage('#{tramiteBean.breederForm.sitio}#{tramiteBean.breederForm.idVegetableForms}/#{alcance.fileAlcancePath}')"/>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
                             </p:panelGrid>
-                            <p:fileUpload listener="#{tramiteBean.uploadDocumentoHallmark}"
-                                          accept=".pdf"
-                                          auto="true"
-                                          label="SUBIR DOCUMENTO"
-                                          update="denSignos mensajes"                                              
-                                          style="margin: 10px 0; width: 100%;">                            
-                            </p:fileUpload>
+                        </p:panelGrid>
+                    </p:panel>
 
-                            <p:dialog id="dlgLogoUpload" widgetVar="dlgLogoUpload" modal="true" header="Reemplazar logo" closable="true" resizable="false">
-                                <h:panelGrid columns="1" style="width:100%">
-                                    <p:outputLabel value="Logo actual: #{tramiteBean.selectedLogoDocument.archivo}" rendered="#{not empty tramiteBean.selectedLogoDocument}"/>
-                                    <p:fileUpload id="logoFileUpload"
-                                                  listener="#{tramiteBean.uploadLogoHallmark}"
-                                                  accept=".jpg,.jpeg"
-                                                  mode="advanced"
-                                                  auto="true"
-                                                  label="Seleccionar JPG"
-                                                  update="marcaspanel mensajes"
-                                                  sizeLimit="5242880"/>
-                                    <p:commandButton value="Cerrar" onclick="PF('dlgLogoUpload').hide();" type="button"/>
-                                </h:panelGrid>
-                            </p:dialog>
-                        </p:panelGrid>                                                
-                    </p:panelGrid>                                        
+                    <p:panel header="#{tramiteBean.tituloTramiteText}" styleClass="panel-tog-card" rendered="#{tramiteBean.condenomination}" toggleable="true">
+                        <p:panelGrid columns="2" id="denominationpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.condenomination}"
+                                     columnClasses="fivety-seven-percent,forty-two-percent">
 
-                    <p:panelGrid columns="2" id="patentepanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conpatente}" 
-                                 columnClasses="fivety-seven-percent,forty-two-percent">
+                            <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
+                                <p:outputLabel value="Trámite:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.denominationForms.applicationNumber}" readonly="true" class="maxsize"/>                            
 
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
-                            <p:outputLabel value="Trámite:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.patentForm.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                                <p:outputLabel value="Fecha Presentación:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.denominationForms.applicationDate}" readonly="true" class="maxsize"/>
 
-                            <p:outputLabel value="Casillero:" class="bordesuperior"/>
-                            <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                <p:inputText id="casilp" value="#{tramiteBean.patentForm.casillero}" readonly="true" class="maxsize light-blue"/>
-                                <p:commandButton value="ver" actionListener="#{tramiteBean.prepararCasilleroPantent}"
-                                                 oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
-                                                 class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
+                                <p:outputLabel value="Denominación:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.denominationForms.denomination}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Parte del proceso:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.denominationForms.partOfProcess}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Lugar de inspección:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.denominationForms.inspectionPlace}" readonly="true" class="maxsize"/>
+
+                                <p:outputLabel value="Estado:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.denominationForms.estado}" readonly="true" class="maxsize"/>
+
                             </p:panelGrid>
-
-                            <p:outputLabel value="Fecha Presentación" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.patentForm.applicationDate}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Tipo Patente:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.patentForm.tipo}" readonly="true" class="maxsize estiloLigth"/>
-
-                            <p:outputLabel value="Título:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.patentForm.title}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Clasificación Internacional:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.patentForm.internationalClassification}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Resumen: " class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.patentForm.summary}" readonly="true" class="maxsize" />
-
-                            <p:outputLabel value="Poder: " for="poderpatent" class="bordesuperior" rendered="#{tramiteBean.patentForm.powerOfAttorney != null}"/>
-                            <p:commandLink id="poderpatent" value="#{tramiteBean.patentForm.powerOfAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left" 
-                                           actionListener="#{tramiteBean.preparePatentPowerAttorney}"
-                                           oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
-                                           update="allform:dlgPowerOfAttorney mensajes"
-                                           process="@this"
-                                           rendered="#{tramiteBean.patentForm.powerOfAttorney != null}"/>
-
-                            <p:outputLabel value="Estado:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.patentForm.status}" readonly="true" class="maxsize"/>                           
-
-                            <p:outputLabel value="Expediente:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.patentForm.expedient}" readonly="true" class="maxsize"/>
-
+                            <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
+                                <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
+                                <p:panelGrid columns="1" id="denDocumentos">
+                                    <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
+                                        <p:panel >
+                                            <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;" immediate="true"
+                                                           onclick="otherpage('#{tramiteBean.denominationForms.sitio}#{tramiteBean.denominationForms.id}/#{expediente.archivo}')"/>
+                                            <p:commandLink class="link_remove" style="float: right"
+                                                           process="@this" title="Eliminar documento"
+                                                           actionListener="#{tramiteBean.eliminarDocumento(expediente)}"
+                                                           update="denDocumentos mensajes"
+                                                           rendered="#{expediente.uploaded}"
+                                                           onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
+                                                <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                            </p:commandLink>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
+                                <p:fileUpload listener="#{tramiteBean.uploadDocumentoDenomination}"
+                                              accept=".pdf"
+                                              auto="true"
+                                              label="SUBIR DOCUMENTO"
+                                              update="denDocumentos mensajes"                                              
+                                              style="margin: 10px 0; width: 100%;">                            
+                                </p:fileUpload>
+                            </p:panelGrid>                        
                         </p:panelGrid>
-                        <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
-                            <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
-                            <p:panelGrid columns="1" id="patDocument">
-                                <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
-                                    <p:panel >
-                                        <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;"
-                                                       onclick="otherpage('#{tramiteBean.patentForm.sitio}#{tramiteBean.patentForm.id}/#{expediente.archivo}')"/>
-                                        <p:commandLink class="link_remove" style="float: right"
-                                                       process="@this" title="Eliminar documento"
-                                                       actionListener="#{tramiteBean.eliminarDocumento(expediente)}"
-                                                       update="patentepanel mensajes"
-                                                       rendered="#{expediente.uploaded}"
-                                                       onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
-                                            <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
-                                        </p:commandLink>
-                                    </p:panel>
-                                </c:forEach>
-                            </p:panelGrid>
-                            <p:fileUpload listener="#{tramiteBean.uploadDocumentoPatent}"
-                                          accept=".pdf"
-                                          auto="true"
-                                          label="SUBIR DOCUMENTO"
-                                          update="patDocument mensajes"                                              
-                                          style="margin: 10px 0; width: 100%;">                            
-                            </p:fileUpload>
-                        </p:panelGrid>
-                    </p:panelGrid>
+                    </p:panel>
 
-                    <p:panelGrid columns="2" id="breederpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.conbreeder}" 
-                                 columnClasses="fivety-seven-percent,forty-two-percent">
-
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
-                            <p:outputLabel value="Trámite:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.breederForm.applicationNumber}" readonly="true" class="maxsize"/>                            
-
-                            <p:outputLabel value="Fecha Presentación" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.breederForm.applicationDate}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Taxón Botánico:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.breederForm.proposedName}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Nombre Común:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.breederForm.commercialName}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Grupo:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.breederForm.group}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Estado:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.breederForm.estado}" readonly="true" class="maxsize"/>
-
-
-                        </p:panelGrid>
-                        <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
-                            <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
-                            <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
-                                <p:panel>
-                                    <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;"
-                                                   onclick="otherpage('#{tramiteBean.breederForm.sitio}#{tramiteBean.breederForm.idVegetableForms}/#{expediente.archivo}')"/>
-                                </p:panel>
-                            </c:forEach>
-                        </p:panelGrid>
-                    </p:panelGrid>
-
-                    <p:panelGrid columns="2" id="denominationpanel" class="noBorders" style="width: 95%" rendered="#{tramiteBean.condenomination}" 
-                                 columnClasses="fivety-seven-percent,forty-two-percent">
-
-                        <p:panelGrid columns="2" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
-                            <p:outputLabel value="Trámite:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.denominationForms.applicationNumber}" readonly="true" class="maxsize"/>                            
-
-                            <p:outputLabel value="Fecha Presentación:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.denominationForms.applicationDate}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Denominación:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.denominationForms.denomination}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Parte del proceso:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.denominationForms.partOfProcess}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Lugar de inspección:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.denominationForms.inspectionPlace}" readonly="true" class="maxsize"/>
-
-                            <p:outputLabel value="Estado:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.denominationForms.estado}" readonly="true" class="maxsize"/>
-
-                        </p:panelGrid>
-                        <p:panelGrid columns="1" style="width: 100%" class="noBorders" >
-                            <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
-                            <p:panelGrid columns="1" id="denDocumentos">
-                                <c:forEach items="#{tramiteBean.documentos}" var="expediente" id="eachdata" >
-                                    <p:panel >
-                                        <p:commandLink value="#{expediente.tipo}" style="color: #0089ec;" immediate="true"
-                                                       onclick="otherpage('#{tramiteBean.denominationForms.sitio}#{tramiteBean.denominationForms.id}/#{expediente.archivo}')"/>
-                                        <p:commandLink class="link_remove" style="float: right"
-                                                       process="@this" title="Eliminar documento"
-                                                       actionListener="#{tramiteBean.eliminarDocumento(expediente)}"
-                                                       update="denDocumentos mensajes"
-                                                       rendered="#{expediente.uploaded}"
-                                                       onstart="return confirm('¿Confirma que desea eliminar este documento: #{expediente.archivo}?');" >
-                                            <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
-                                        </p:commandLink>
-                                    </p:panel>
-                                </c:forEach>
-                            </p:panelGrid>
-                            <p:fileUpload listener="#{tramiteBean.uploadDocumentoDenomination}"
-                                          accept=".pdf"
-                                          auto="true"
-                                          label="SUBIR DOCUMENTO"
-                                          update="denDocumentos mensajes"                                              
-                                          style="margin: 10px 0; width: 100%;">                            
-                            </p:fileUpload>
-                        </p:panelGrid>                        
-                    </p:panelGrid>
-
-                    <p:panel id="renewalpanel" rendered="#{tramiteBean.conmodificacion}">
-                        <p:outputLabel value="MODIFICACIONES AL REGISTRO" rendered="#{!tramiteBean.hijas}"
-                                       style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" />
-                        <br/>
+                    <p:panel id="renewalpanel" rendered="#{tramiteBean.conmodificacion}" styleClass="panel-tog-card" toggleable="true" header="MODIFICACIONES AL REGISTRO">
+                        <!--<p:outputLabel value="MODIFICACIONES AL REGISTRO" rendered="{!tramiteBean.hijas}"
+                                       style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" />-->                        
                         <c:forEach items="#{tramiteBean.modificaciones}" var="modificacion" id="eachdata" varStatus="i" class="maxsize">
 
                             <p:panelGrid columns="1" 
@@ -409,7 +468,11 @@ and open the template in the editor.
                                     <p:outputLabel value="Estado:" rendered="#{!(modificacion.estado eq null)}" class="bordesuperior"/>
                                     <p:inputText value="#{modificacion.estado}" readonly="true" class="maxsize" rendered="#{!(modificacion.estado eq null)}"/>
                                 </p:panelGrid>                                
-
+                                <p:commandButton id="depurarDuplicadosCh" value="DEPURAR DUPLICADOS" title="DEPURAR DUPLICADOS" 
+                                                 rendered="#{loginBean.depurarDuplicado}" actionListener="#{tramiteBean.enableOptionsDep}" 
+                                                 style="margin-left: 5px;font-size: 14px; " oncomplete="PF('dlgDepurarDuplicados').show()"
+                                                 update="dlgDepurarDuplicados allform:frmDepurarDuplicados" process="@form">
+                                </p:commandButton>
                                 <p:panelGrid columns="1" style="width: 100%" class="noBorders" id="modDocumentos#{modificacion.id}">
                                     <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
                                     <c:forEach items="#{modificacion.documentos}" var="documento" id="eachdata" >
@@ -427,6 +490,19 @@ and open the template in the editor.
                                         </p:panel>
                                     </c:forEach>
                                 </p:panelGrid>
+                                <p:panelGrid columns="1" style="width: 100%; margin-top: 8px;" class="noBorders"
+                                             rendered="#{not empty modificacion.alcances}">
+
+                                    <c:forEach items="#{modificacion.alcances}" var="alcance">
+                                        <p:panel header="Alcance N° #{alcance.scopeNumber}" toggleable="true" styleClass="panel-tog-card-light" style="margin-top: 4px;">
+                                            <p:commandLink value="Alcance" style="color: #0089ec; display: block;"
+                                                           rendered="#{not empty alcance.pathScope}"
+                                                           onclick="otherpage('#{modificacion.sitio}#{modificacion.id}/#{alcance.pathScope}')"/>
+                                            <p:commandLink value="Formulario Alcance" style="color: #0089ec; display: block;"
+                                                           onclick="otherpage('#{modificacion.sitio}#{modificacion.id}/#{alcance.fileAlcancePath}')"/>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
                                 <p:fileUpload listener="#{tramiteBean.uploadDocumentoModificacion}"
                                               accept=".pdf"
                                               auto="true"
@@ -439,102 +515,201 @@ and open the template in the editor.
                         </c:forEach>
                     </p:panel>
 
-                    <p:panelGrid id="tutelagepanel" rendered="#{tramiteBean.contutela}" columns="1" 
-                                 style="width: 70%; text-align: center; margin: 0 auto; border: 1px solid #e3e3e3;" >
-                        <p:outputLabel value="TUTELAS" rendered="#{tramiteBean.hijas}" 
-                                       style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" />
-                        <br/>
-                        <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.contutela}" style="width: 100%" 
-                                     columnClasses="forty-two-percent,fivety-seven-percent">
-                            <p:outputLabel value="Trámite Tutela: " class="maxsize bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.tutelageForm.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                            <p:outputLabel value="Casillero:" class="bordesuperior"/>
-                            <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                <p:inputText id="casiltut" value="#{tramiteBean.tutelageForm.casillero}" readonly="true" class="maxsize light-blue"/>
-                                <p:commandButton value="ver" actionListener="#{tramiteBean.prepararTutela}"
-                                                 oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
-                                                 class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
-                            </p:panelGrid>
-                            <p:outputLabel value="Fecha Presentación: " class="maxsize bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.tutelageForm.applicationDate}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Tema:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.tutelageForm.subject}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Descripción:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.tutelageForm.respondentDescription}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Estado:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.tutelaAux.tutelageForm.status}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Expediente:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.tutelageForm.expedient}" readonly="true" class="maxsize"/>
-                        </p:panelGrid>                                
+                    <p:panel rendered="#{tramiteBean.contutela}" styleClass="panel-tog-card" toggleable="true" header="#{tramiteBean.tituloTramiteText}">
+                        <p:panelGrid id="tutelagepanel" rendered="#{tramiteBean.contutela}" columns="1" 
+                                     style="width: 70%; text-align: center; margin: 0 auto;">
+                            <p:outputLabel value="TUTELAS" rendered="#{tramiteBean.hijas}" 
+                                           style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" />
+                            <br/>
+                            <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.contutela}" style="width: 100%" 
+                                         columnClasses="forty-two-percent,fivety-seven-percent">
+                                <p:outputLabel value="Trámite Tutela: " class="maxsize bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.tutelageForm.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                                <p:outputLabel value="Casillero:" class="bordesuperior"/>
+                                <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
+                                    <p:inputText id="casiltut" value="#{tramiteBean.tutelageForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                    <p:commandButton value="ver" actionListener="#{tramiteBean.prepararTutela}"
+                                                     oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
+                                                     class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
+                                </p:panelGrid>
+                                <p:outputLabel value="Fecha Presentación: " class="maxsize bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.tutelageForm.applicationDate}" readonly="true" class="maxsize"/>
+                                <p:outputLabel value="Tema:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.tutelageForm.subject}" readonly="true" class="maxsize"/>                                    
+                                <p:outputLabel value="Descripción:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.tutelageForm.respondentDescription}" readonly="true" class="maxsize"/>                                    
+                                <p:outputLabel value="Estado:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.tutelaAux.tutelageForm.status}" readonly="true" class="maxsize"/>
+                                <p:outputLabel value="Expediente:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.tutelageForm.expedient}" readonly="true" class="maxsize"/>
+                            </p:panelGrid>                                
 
-                        <c:forEach items="#{tramiteBean.tutelaAux.documentos}" var="documento" id="eachdata" >
-                            <p:panel style="width: 100%">
-                                <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
-                                               onclick="otherpage('#{tramiteBean.tutelaAux.sitio}#{tramiteBean.tutelageForm.id}/#{documento.archivo}')"/>
-                            </p:panel>
-                        </c:forEach>                        
-                    </p:panelGrid>
-
-                    <p:panelGrid id="derechospanel" rendered="#{tramiteBean.conderechos}" columns="1" 
-                                 style="width: 70%; text-align: center; margin: 0 auto; border: 1px solid #e3e3e3;" >
-
-                        <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conderechos}" style="width: 100%"
-                                     columnClasses="forty-two-percent,fivety-seven-percent">
-                            <p:outputLabel value="Trámite Derecho de autor: " class="maxsize bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.playForm.applicationNumber}" readonly="true" class="maxsize" />
-                            <p:outputLabel value="Casillero:" class="bordesuperior"/>
-                            <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                <p:inputText id="casild" value="#{tramiteBean.playForm.casillero}" readonly="true" class="maxsize light-blue"/>
-                                <p:commandButton value="ver" actionListener="#{tramiteBean.prepararDerechos}"
-                                                 oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
-                                                 class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
-                            </p:panelGrid>
-                            <p:outputLabel value="Tipo de trámite: " class="maxsize bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.playForm.tipo}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                            <p:outputLabel value="Fecha Presentación: " class="maxsize bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.playForm.applicationDate}" readonly="true" class="maxsize"/>
-                            <p:outputLabel value="Poder: " class="bordesuperior" rendered="#{tramiteBean.playForm.powerAttorney != null}"/>
-                            <p:commandLink value="#{tramiteBean.playForm.powerAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left"
-                                           actionListener="#{tramiteBean.preparePlayPowerAttorney}"
-                                           oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
-                                           update="allform:dlgPowerOfAttorney mensajes"
-                                           process="@this"
-                                           rendered="#{tramiteBean.playForm.powerAttorney != null}"/>
-                            <p:outputLabel value="Título: " class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.playForm.title}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Descripción:" class="bordesuperior"/>
-                            <p:inputTextarea value="#{tramiteBean.playForm.description}" readonly="true" class="maxsize"/>                                    
-                            <p:outputLabel value="Estado:" class="bordesuperior"/>
-                            <p:inputText value="#{tramiteBean.playForm.status}" readonly="true" class="maxsize"/>
-                        </p:panelGrid>                                
-
-                        <p:panelGrid columns="1" style="width: 100%" class="noBorders" id="playDocumentos">
-                            <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
-                            <c:forEach items="#{tramiteBean.playFormAux.documentos}" var="documento" id="eachdata" >
+                            <c:forEach items="#{tramiteBean.tutelaAux.documentos}" var="documento" id="eachdata" >
                                 <p:panel style="width: 100%">
                                     <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
-                                                   onclick="otherpage('#{tramiteBean.playFormAux.sitio}#{tramiteBean.playForm.id}/#{documento.archivo}')"/>
-                                    <p:commandLink class="link_remove" style="float: right"
-                                                   process="@this" title="Eliminar documento"
-                                                   actionListener="#{tramiteBean.eliminarDocumentoPlayForm(documento)}"
-                                                   update="playDocumentos mensajes"
-                                                   rendered="#{documento.uploaded}"
-                                                   onstart="return confirm('¿Confirma que desea eliminar este documento: #{documento.archivo}?');" >
-                                        <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
-                                    </p:commandLink>
+                                                   onclick="otherpage('#{tramiteBean.tutelaAux.sitio}#{tramiteBean.tutelageForm.id}/#{documento.archivo}')"/>
                                 </p:panel>
-                            </c:forEach>
+                            </c:forEach>                        
                         </p:panelGrid>
-                        <p:fileUpload listener="#{tramiteBean.uploadDocumentoPlayForm}"
-                                      accept=".pdf"
-                                      auto="true"
-                                      label="SUBIR DOCUMENTO"
-                                      update="playDocumentos mensajes"
-                                      style="margin: 10px 0; width: 100%;"/>
-                    </p:panelGrid>
-                    
-                    <p:panel id="cpispanel" rendered="#{tramiteBean.concpi}">
-                        <p:outputLabel value="CPI" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" rendered="#{tramiteBean.conpatente or tramiteBean.conmarca  or tramiteBean.contutela}"/>
+                    </p:panel>
+
+                    <p:panel rendered="#{tramiteBean.conderechos}" styleClass="panel-tog-card" toggleable="true" header="#{tramiteBean.tituloTramiteText}">                    
+                        <p:panelGrid id="derechospanel" rendered="#{tramiteBean.conderechos}" columns="1" 
+                                     style="width: 70%; text-align: center; margin: 0 auto; border: 1px solid #e3e3e3;" >
+
+                            <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conderechos}" style="width: 100%"
+                                         columnClasses="forty-two-percent,fivety-seven-percent">
+                                <p:outputLabel value="Trámite Derecho de autor: " class="maxsize bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.playForm.applicationNumber}" readonly="true" class="maxsize" />
+                                <p:outputLabel value="Casillero:" class="bordesuperior"/>
+                                <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
+                                    <p:inputText id="casild" value="#{tramiteBean.playForm.casillero}" readonly="true" class="maxsize light-blue"/>
+                                    <p:commandButton value="ver" actionListener="#{tramiteBean.prepararDerechos}"
+                                                     oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
+                                                     class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
+                                </p:panelGrid>
+                                <p:outputLabel value="Tipo de trámite: " class="maxsize bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.playForm.tipo}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                                <p:outputLabel value="Fecha Presentación: " class="maxsize bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.playForm.applicationDate}" readonly="true" class="maxsize"/>
+                                <p:outputLabel value="Poder: " class="bordesuperior" rendered="#{tramiteBean.playForm.powerAttorney != null}"/>
+                                <p:commandLink value="#{tramiteBean.playForm.powerAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left"
+                                               actionListener="#{tramiteBean.preparePlayPowerAttorney}"
+                                               oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
+                                               update="allform:dlgPowerOfAttorney mensajes"
+                                               process="@this"
+                                               rendered="#{tramiteBean.playForm.powerAttorney != null}"/>
+                                <p:outputLabel value="Título: " class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.playForm.title}" readonly="true" class="maxsize"/>                                    
+                                <p:outputLabel value="Descripción:" class="bordesuperior"/>
+                                <p:inputTextarea value="#{tramiteBean.playForm.description}" readonly="true" class="maxsize"/>                                    
+                                <p:outputLabel value="Estado:" class="bordesuperior"/>
+                                <p:inputText value="#{tramiteBean.playForm.status}" readonly="true" class="maxsize"/>
+                            </p:panelGrid>                                
+
+                            <p:panelGrid columns="1" style="width: 100%" class="noBorders" id="playDocumentos">
+                                <p:outputLabel value="EXPEDIENTE" style="font-size: 14px"/>
+                                <c:forEach items="#{tramiteBean.playFormAux.documentos}" var="documento" id="eachdata" >
+                                    <p:panel style="width: 100%">
+                                        <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
+                                                       onclick="otherpage('#{tramiteBean.playFormAux.sitio}#{tramiteBean.playForm.id}/#{documento.archivo}')"/>
+                                        <p:commandLink class="link_remove" style="float: right"
+                                                       process="@this" title="Eliminar documento"
+                                                       actionListener="#{tramiteBean.eliminarDocumentoPlayForm(documento)}"
+                                                       update="playDocumentos mensajes"
+                                                       rendered="#{documento.uploaded}"
+                                                       onstart="return confirm('¿Confirma que desea eliminar este documento: #{documento.archivo}?');" >
+                                            <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                        </p:commandLink>
+                                    </p:panel>
+                                </c:forEach>
+                            </p:panelGrid>
+                            <p:fileUpload listener="#{tramiteBean.uploadDocumentoPlayForm}"
+                                          accept=".pdf"
+                                          auto="true"
+                                          label="SUBIR DOCUMENTO"
+                                          update="playDocumentos mensajes"
+                                          style="margin: 10px 0; width: 100%;"/>
+                        </p:panelGrid>
+                    </p:panel>
+
+                    <p:panel id="oposicionespanel" rendered="#{tramiteBean.conoposicion}" header="OPOSICIONES" toggleable="true" styleClass="panel-tog-card">
+                        <!--<p:outputLabel value="OPOSICIONES" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
+                                       rendered="{!tramiteBean.hijas}"/>-->                        
+                        <c:forEach items="#{tramiteBean.oposiciones}" var="oposicion" id="eachdata" varStatus="i" >
+
+                            <p:panelGrid columns="1" style="display: inline-block; width: 32%; vertical-align: top; margin-left: 5px; border: 1px solid #e3e3e3; ">
+                                <p:outputLabel value="#{oposicion.numOposicion}" style="font-size: 14px"/>
+                                <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conoposicion}" 
+                                             columnClasses="forty-two-percent,fivety-seven-percent">
+                                    <p:outputLabel value="Trámite Oposición: " class="bordesuperior"/>
+                                    <p:inputText value="#{oposicion.oppositionForm.applicationNumber}" readonly="true" class="maxsize"/>
+                                    <p:outputLabel value="Casillero:" class="bordesuperior"/>
+                                    <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
+                                        <p:inputText id="casilop" value="#{oposicion.oppositionForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior"/>
+                                        <p:commandButton value="ver" actionListener="#{tramiteBean.prepararOposicion(oposicion)}"
+                                                         oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
+                                                         class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
+                                    </p:panelGrid>
+                                    <p:outputLabel value="Fecha Oposición: " class="bordesuperior"/>
+                                    <p:inputText value="#{oposicion.oppositionForm.applicationDate}" readonly="true" class="maxsize"/>                                    
+                                    <p:outputLabel value="Trámite Afectado: " class="bordesuperior"/>
+                                    <p:inputText value="#{oposicion.oppositionForm.searchedApplicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
+                                    <p:outputLabel value="Poder: " class="bordesuperior" rendered="#{oposicion.oppositionForm.powerAttorney != null}"/>
+                                    <p:commandLink value="#{oposicion.oppositionForm.powerAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left"
+                                                   actionListener="#{tramiteBean.prepareOppositionPowerAttorney(oposicion)}"
+                                                   oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
+                                                   update="allform:dlgPowerOfAttorney mensajes"
+                                                   process="@this"
+                                                   rendered="#{oposicion.oppositionForm.powerAttorney != null}"/>
+                                    <p:outputLabel value="Expediente: " class="bordesuperior"/>
+                                    <p:inputText value="#{oposicion.oppositionForm.expedient}" readonly="true" class="maxsize"/>
+                                    <p:outputLabel value="Estado: " class="bordesuperior"/>
+                                    <p:inputText value="#{oposicion.oppositionForm.status}" readonly="true" class="maxsize"/>
+                                </p:panelGrid>                                
+
+                                <p:panelGrid id="opoDocumentos#{oposicion.oppositionForm.id}" columns="1">
+                                    <c:forEach items="#{oposicion.documentos}" var="documento" id="eachdata" >
+                                        <p:panel>
+                                            <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
+                                                           onclick="otherpage('#{oposicion.sitio}#{oposicion.oppositionForm.id}/#{documento.archivo}')"/>
+                                            <p:commandLink class="link_remove" style="float: right"
+                                                           process="@this" title="Eliminar documento"
+                                                           actionListener="#{tramiteBean.eliminarDocumentoOposicion(documento, oposicion)}"
+                                                           update="opoDocumentos#{oposicion.oppositionForm.id} mensajes"
+                                                           rendered="#{documento.uploaded}"
+                                                           onstart="return confirm('¿Confirma que desea eliminar este documento: #{documento.archivo}?');" >
+                                                <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                            </p:commandLink>
+                                        </p:panel>
+                                    </c:forEach>
+                                </p:panelGrid>
+                                <p:fileUpload listener="#{tramiteBean.uploadDocumentoOposicion}"
+                                              accept=".pdf"
+                                              auto="true"
+                                              label="SUBIR DOCUMENTO"
+                                              update="opoDocumentos#{oposicion.oppositionForm.id} mensajes"
+                                              style="margin: 10px 0; width: 100%;">
+                                    <f:attribute name="oposicion" value="#{oposicion}"/>
+                                </p:fileUpload>
+
+                                <p:panelGrid columns="1" style="width: 100%; margin-top: 8px;" class="noBorders" id="opoJobReviews#{oposicion.oppositionForm.id}">
+                                    <p:commandButton value="REVISIONES DE OFICIO" rendered="#{not oposicion.jobReviewsExists}"
+                                                     actionListener="#{tramiteBean.crearJobReviewsOposicion(oposicion)}"
+                                                     onstart="return confirm('¿Desea crear REVISIONES DE OFICIO?');"
+                                                     update="oposicionespanel mensajes" process="@this"
+                                                     style="font-size: 12px;"/>
+                                    <h:panelGroup rendered="#{oposicion.jobReviewsExists}">
+                                        <p:outputLabel value="REVISIONES DE OFICIO" style="font-size: 14px; background: #e3e3e3; display: block;"/>
+                                        <c:forEach items="#{oposicion.jobReviewDocs}" var="rev">
+                                            <p:panel styleClass="alcance-card" style="margin-top: 4px;">
+                                                <p:commandLink value="#{rev.tipo}" style="color: #0089ec;"
+                                                               onclick="otherpage('#{oposicion.sitio}#{oposicion.oppositionForm.id}/job_reviews/#{rev.archivo}')"/>
+                                                <p:commandLink class="link_remove" style="float: right"
+                                                               process="@this" title="Eliminar revisión"
+                                                               actionListener="#{tramiteBean.eliminarJobReviewOposicion(rev, oposicion)}"
+                                                               update="oposicionespanel mensajes"
+                                                               rendered="#{rev.uploaded}"
+                                                               onstart="return confirm('¿Confirma que desea eliminar esta revisión: #{rev.archivo}?');">
+                                                    <i class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                                </p:commandLink>
+                                            </p:panel>
+                                        </c:forEach>
+                                        <p:fileUpload listener="#{tramiteBean.uploadJobReviewOposicion}"
+                                                      accept=".pdf" auto="true"
+                                                      label="SUBIR REVISIÓN"
+                                                      update="opoJobReviews#{oposicion.oppositionForm.id} mensajes"
+                                                      style="margin: 8px 0; width: 100%;">
+                                            <f:attribute name="oposicion" value="#{oposicion}"/>
+                                        </p:fileUpload>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </c:forEach>
+                    </p:panel>
+
+                    <p:panel id="cpispanel" rendered="#{tramiteBean.concpi}" header="CPI" toggleable="true" styleClass="panel-tog-card">
+                        <!--<p:outputLabel value="CPI" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" rendered="{tramiteBean.conpatente or tramiteBean.conmarca  or tramiteBean.contutela}"/>-->
 
                         <div style="width: 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 16px;">
                             <c:forEach items="#{tramiteBean.cpis}" var="cpi" varStatus="status">                                
@@ -613,10 +788,9 @@ and open the template in the editor.
                         </div>
                     </p:panel>
 
-                    <p:panel id="alcancespanel" rendered="#{tramiteBean.conalcance}">
-                        <p:outputLabel value="ALCANCES" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
-                                       rendered="#{!tramiteBean.hijas}"/>
-                        <br/>
+                    <p:panel id="alcancespanel" rendered="#{tramiteBean.conalcance}" toggleable="true" styleClass="panel-tog-card" header="ALCANCES">
+                        <!--<p:outputLabel value="ALCANCES" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
+                                       rendered="{!tramiteBean.hijas}"/>-->                        
                         <c:forEach items="#{tramiteBean.alcances}" var="alcance" id="eachdata" varStatus="i" >
 
                             <p:panelGrid columns="1" style="display: inline-block; vertical-align: top; width: 32%; margin-left: 5px;border: 1px solid #e3e3e3;">
@@ -653,12 +827,8 @@ and open the template in the editor.
                         </c:forEach>
                     </p:panel>
 
-                    <p:panel id="notificacionpanel" rendered="#{tramiteBean.connotificacion}">
-                        <p:outputLabel value="NOTIFICACIONES" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
-                                       rendered="#{!tramiteBean.hijas}"/>
-                        <br/>
+                    <p:panel id="notificacionpanel" rendered="#{tramiteBean.connotificacion}" toggleable="true" header="NOTIFICACIONES" styleClass="panel-tog-card">
                         <c:forEach items="#{tramiteBean.notificaciones}" var="notificacion" id="eachdata" varStatus="i" >
-
                             <p:panelGrid columns="1" style="display: inline-block; vertical-align: top; width: 32%; padding: 10px; border: 1px solid #e3e3e3; margin-right: 2px;">
                                 <p:outputLabel value="#{notificacion.numNotification}" style="font-size: 14px" />
                                 <p:panelGrid columns="2" rendered="#{tramiteBean.connotificacion}" style="width: 100%;" columnClasses="forty-two-percent,fivety-seven-percent">
@@ -695,76 +865,11 @@ and open the template in the editor.
                                 </c:forEach> 
                             </p:panelGrid>
                         </c:forEach>
-                    </p:panel>
+                    </p:panel>                   
 
-                    <p:panel id="oposicionespanel" rendered="#{tramiteBean.conoposicion}">
-                        <p:outputLabel value="OPOSICIONES" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
-                                       rendered="#{!tramiteBean.hijas}"/>
-                        <br/>
-                        <c:forEach items="#{tramiteBean.oposiciones}" var="oposicion" id="eachdata" varStatus="i" >
-
-                            <p:panelGrid columns="1" style="display: inline-block; width: 32%; vertical-align: top; margin-left: 5px; border: 1px solid #e3e3e3; ">
-                                <p:outputLabel value="#{oposicion.numOposicion}" style="font-size: 14px"/>
-                                <p:panelGrid columns="2" class="noBorders" rendered="#{tramiteBean.conoposicion}" 
-                                             columnClasses="forty-two-percent,fivety-seven-percent">
-                                    <p:outputLabel value="Trámite Oposición: " class="bordesuperior"/>
-                                    <p:inputText value="#{oposicion.oppositionForm.applicationNumber}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Casillero:" class="bordesuperior"/>
-                                    <p:panelGrid columns="2" columnClasses="eigthy-percent, twenty-percent">
-                                        <p:inputText id="casilop" value="#{oposicion.oppositionForm.casillero}" readonly="true" class="maxsize light-blue bordesuperior"/>
-                                        <p:commandButton value="ver" actionListener="#{tramiteBean.prepararOposicion(oposicion)}"
-                                                         oncomplete="if(args.doit){PF('dlgCasillero').show();}" process="@this" 
-                                                         class="btn_peque maxsize"  update="mensajes dlgCasillero"/>
-                                    </p:panelGrid>
-                                    <p:outputLabel value="Fecha Oposición: " class="bordesuperior"/>
-                                    <p:inputText value="#{oposicion.oppositionForm.applicationDate}" readonly="true" class="maxsize"/>                                    
-                                    <p:outputLabel value="Trámite Afectado: " class="bordesuperior"/>
-                                    <p:inputText value="#{oposicion.oppositionForm.searchedApplicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
-                                    <p:outputLabel value="Poder: " class="bordesuperior" rendered="#{oposicion.oppositionForm.powerAttorney != null}"/>
-                                    <p:commandLink value="#{oposicion.oppositionForm.powerAttorney}" style="color: #0089ec; margin: 10px 0 0 10px; float: left"
-                                                   actionListener="#{tramiteBean.prepareOppositionPowerAttorney(oposicion)}"
-                                                   oncomplete="if(args.powerexists){PF('dlgPowerOfAttorney').show();}"
-                                                   update="allform:dlgPowerOfAttorney mensajes"
-                                                   process="@this"
-                                                   rendered="#{oposicion.oppositionForm.powerAttorney != null}"/>
-                                    <p:outputLabel value="Expediente: " class="bordesuperior"/>
-                                    <p:inputText value="#{oposicion.oppositionForm.expedient}" readonly="true" class="maxsize"/>
-                                    <p:outputLabel value="Estado: " class="bordesuperior"/>
-                                    <p:inputText value="#{oposicion.oppositionForm.status}" readonly="true" class="maxsize"/>
-                                </p:panelGrid>                                
-
-                                <p:panelGrid id="opoDocumentos#{oposicion.oppositionForm.id}" columns="1">
-                                    <c:forEach items="#{oposicion.documentos}" var="documento" id="eachdata" >
-                                        <p:panel>
-                                            <p:commandLink value="#{documento.tipo}" style="color: #0089ec;"
-                                                           onclick="otherpage('#{oposicion.sitio}#{oposicion.oppositionForm.id}/#{documento.archivo}')"/>
-                                            <p:commandLink class="link_remove" style="float: right"
-                                                           process="@this" title="Eliminar documento"
-                                                           actionListener="#{tramiteBean.eliminarDocumentoOposicion(documento, oposicion)}"
-                                                           update="opoDocumentos#{oposicion.oppositionForm.id} mensajes"
-                                                           rendered="#{documento.uploaded}"
-                                                           onstart="return confirm('¿Confirma que desea eliminar este documento: #{documento.archivo}?');" >
-                                                <i id="delete_action" class="material-icons md-12" style="font-size: 20px;">delete</i>
-                                            </p:commandLink>
-                                        </p:panel>
-                                    </c:forEach>
-                                </p:panelGrid>
-                                <p:fileUpload listener="#{tramiteBean.uploadDocumentoOposicion}"
-                                              accept=".pdf"
-                                              auto="true"
-                                              label="SUBIR DOCUMENTO"
-                                              update="opoDocumentos#{oposicion.oppositionForm.id} mensajes"                                              
-                                              style="margin: 10px 0; width: 100%;">
-                                    <f:attribute name="oposicion" value="#{oposicion}"/>
-                                </p:fileUpload>
-                            </p:panelGrid>
-                        </c:forEach>
-                    </p:panel>
-
-                    <p:panel id="nolineapanel" rendered="#{tramiteBean.connolinea}">
-                        <p:outputLabel value="TRÁMITES NO EN LÍNEA" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
-                                       rendered="#{!tramiteBean.hijas}"/>
-                        <br/>
+                    <p:panel id="nolineapanel" rendered="#{tramiteBean.connolinea}" toggleable="true" header="TRÁMITES NO EN LÍNEA" styleClass="panel-tog-card">
+                        <!--<p:outputLabel value="TRÁMITES NO EN LÍNEA" style="font-size: 20px !important; margin-top: 5px; background: #e3e3e3; width: 100%" 
+                                       rendered="{!tramiteBean.hijas}"/>-->                        
                         <c:forEach items="#{tramiteBean.nolineas}" var="nolinea" id="eachdata" varStatus="i" >
                             <p:panelGrid columns="1" style="display: inline-block; width: 32%; vertical-align: top; margin-left: 5px; border: 1px solid #e3e3e3;">
                                 <p:outputLabel value="#{nolinea.numNoLinea}" style="font-size: 14px" />
@@ -800,7 +905,46 @@ and open the template in the editor.
                         </c:forEach>
                     </p:panel>
 
-                </p:panelGrid>                                
+                </p:panelGrid>
+
+                <p:outputPanel id="panelInfoWrapper" layout="block">
+                    <p:panel id="panel_informativo" rendered="#{not tramiteBean.resultadopanel}" styleClass="panel-info"
+                             style="width: 62%; margin: 10px auto; text-align: left; line-height: 1.6; border: 1px solid #d7dde5; ">
+                        <f:facet name="header">
+                            <h:outputText value="Bienvenido al Sistema de Trámites del SENADI" style="font-weight: bold; font-size: 16px;" />
+                        </f:facet>
+                        <h:panelGroup layout="block" style="padding: 10px 18px 18px 18px; color: #263238;">
+                            <h:outputText value="Esta plataforma centraliza la consulta y gestión de expedientes institucionales del SENADI." style="display: block; margin-bottom: 12px; font-size: 14px;" />
+
+                            <h:outputText value="Desde aquí puede revisar información asociada a:" style="display: block; margin-bottom: 8px; font-weight: bold;" />
+                            <h:outputText escape="false" value="
+                                          &lt;ul style='margin: 0 0 14px 18px; padding: 0;'&gt;
+                                          &lt;li&gt;Signos distintivos&lt;/li&gt;
+                                          &lt;li&gt;Patentes&lt;/li&gt;
+                                          &lt;li&gt;Derechos de autor&lt;/li&gt;
+                                          &lt;li&gt;Tutelas administrativas&lt;/li&gt;
+                                          &lt;li&gt;Oposiciones&lt;/li&gt;
+                                          &lt;li&gt;Alcances&lt;/li&gt;
+                                          &lt;li&gt;Trámites no en línea&lt;/li&gt;
+                                          &lt;li&gt;Resoluciones del OCDI&lt;/li&gt;
+                                          &lt;/ul&gt;" />
+
+                            <h:outputText value="Funciones principales:" style="display: block; margin-bottom: 8px; font-weight: bold;" />
+                            <h:outputText escape="false" value="
+                                          &lt;ul style='margin: 0 0 14px 18px; padding: 0;'&gt;
+                                          &lt;li&gt;Buscar expedientes y visualizar su información relacionada&lt;/li&gt;
+                                          &lt;li&gt;Consultar poderes vinculados a los trámites&lt;/li&gt;
+                                          &lt;li&gt;Gestionar cambios de casillero de Signos Distintivos y Patentes&lt;/li&gt;
+                                          &lt;li&gt;Administrar documentos digitales con trazabilidad&lt;/li&gt;
+                                          &lt;li&gt;Actualizar logotipos de Signos Distintivos&lt;/li&gt;
+                                          &lt;li&gt;Consultar títulos de Signos Distintivos&lt;/li&gt;
+                                          &lt;li&gt;Subir documentos a los expedientes&lt;/li&gt;
+                                          &lt;/ul&gt;" />
+
+                            <h:outputText value="Realice una búsqueda por número de trámite para comenzar." style="display: block; color: #1565c0; font-weight: bold;" />
+                        </h:panelGroup>
+                    </p:panel>
+                </p:outputPanel>
             </div>
 
             <p:dialog id="dlgProductos" modal="true" resizable="true"
@@ -817,21 +961,53 @@ and open the template in the editor.
             </p:dialog>
 
             <p:dialog id="dlgDepurarDuplicados" modal="true" resizable="true"
-                      header="DEPURAR DUPLICADOS" fitViewport="true"
-                      widgetVar="dlgDepurarDuplicados" style="font-size: 11px;" showEffect="explode" 
+                      header="DEPURAR DUPLICADOS" fitViewport="true" closable="false"
+                      widgetVar="dlgDepurarDuplicados" appendTo="@(body)" style="font-size: 11px;" showEffect="explode" 
                       hideEffect="explode" >
-                <p:ajax event="close" update="dlgDepurarDuplicados allform" resetValues="true" listener="#{tramiteBean.disableDepurar}" />
-                <h:form id="frmDepurarDuplicados" >
-                    <p:outputLabel id="labcas" value="CASILLERO: " style="font-size: 14px; color: black; margin-left: 5px;" for="tramcas" 
+                <h:form id="frmDepurarDuplicados">
+                    <!--<p:panelGrid columns="3">-->
+                    <p:outputLabel id="labcas" value="CASILLERO: " style="font-size: 14px; color: black;" for="tramcas" 
                                    rendered="#{tramiteBean.depurar}"/>
-                    <p:inputText id="tramcas" value="#{tramiteBean.casilleroText}" style="font-size: 14px; width: 210px;" 
+                    <p:inputText id="tramcas" value="#{tramiteBean.casilleroText}" style="font-size: 14px;" 
                                  placeholder="Ejemplo: 1234" rendered="#{tramiteBean.depurar}" />
                     <p:commandButton widgetVar="portram" id="portram" value="POR TRAMITE" class="btn_peque" actionListener="#{tramiteBean.depurarNotificacionesPorTramiteAndCasillero}"
-                                     process="@form" update="mensajes"  title="DEPURAR POR TRÁMITE" rendered="#{tramiteBean.depurar}">
+                                     process="@form" update="mensajes frmDepurarDuplicados allform:panelContenedor allform:panelInfoWrapper allform:alcancespanel allform:tutelagepanel allform:oposicionespanel allform:nolineapanel allform:derechospanel allform:notificacionpanel"
+                                     oncomplete="if(args &amp;&amp; args.closeDepurarDialog){PF('dlgDepurarDuplicados').hide();}else{PF('dlgDepurarDuplicados').show();}"
+                                     title="DEPURAR POR TRÁMITE" rendered="#{tramiteBean.depurar}">
                         <p:confirm header="CONFIRMAR" message="ESTÁ SEGURO DE DEPURAR LAS NOTIFICACIONES DEL TRÁMITE?"/>
                     </p:commandButton>
                     <p:commandButton widgetVar="porcas" id="porcas" value="POR CASILLERO" class="btn_peque" actionListener="#{tramiteBean.depurarNotificacionesPorCasillero}"
-                                     process="@parent" update="mensajes" disabled="true" title="DEPURAR POR CASILLERO"/>
+                                     process="@this tramcas" update=":mensajes" disabled="true" title="DEPURAR POR CASILLERO" rendered="false"/>
+                    <br/><br/>
+
+                    <!--</p:panelGrid>-->
+                    <p:commandButton value="CERRAR" class="btn_cerrar" actionListener="#{tramiteBean.disableDepurar}"
+                                     process="@this" update=":allform:depurarDuplicadosChk :allform:dlgDepurarDuplicados :mensajes"
+                                     oncomplete="PF('dlgDepurarDuplicados').hide();" style="float:right;"/>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog id="dlgDepurarDuplicadosMasivo" modal="true" resizable="true" width="40%"
+                      header="DEPURAR DUPLICADOS MASIVO" fitViewport="true" closable="false"
+                      widgetVar="dlgDepurarDuplicadosMasivo" appendTo="@(body)" style="font-size: 11px;" showEffect="explode" 
+                      hideEffect="explode" >
+                <h:form id="frmDepurarDuplicadosMasivo">
+                    <p:panelGrid columns="1">
+                        <p:outputLabel id="labcas" value="Trámites (separados por coma):" style="font-size: 14px; color: black;" for="tramcas" />
+                        <p:inputTextarea id="tramcas" value="#{tramiteBean.tramitesDepurarText}" style="font-size: 14px; width: 100%" 
+                                         placeholder="Ejemplo: SENADI-2026-1, SENADI-2026-2"  />
+                        <p:commandButton widgetVar="portram" id="portram" value="DEPURAR" class="btn_peque" actionListener="#{tramiteBean.depurarNotificacionesModificaciones}"
+                                         process="@form" update="mensajes"
+                                         oncomplete="if(args &amp;&amp; args.closeDepurarDialog){PF('dlgDepurarDuplicadosMasivo').hide();}else{PF('dlgDepurarDuplicadosMasivo').show();}"
+                                         title="DEPURAR MODIFICACIONES" >
+                            <p:confirm header="CONFIRMAR" message="ESTÁ SEGURO DE DEPURAR LAS NOTIFICACIONES DE LOS TRÁMITES INGRESADOS?"/>
+                        </p:commandButton>                        
+                        <br/><br/>
+
+                    </p:panelGrid>
+                    <p:commandButton value="CERRAR" class="btn_cerrar" actionListener="#{tramiteBean.disableDepurar}"
+                                     process="@this" update=":allform:dlgDepurarDuplicadosMasivo :mensajes"
+                                     oncomplete="PF('dlgDepurarDuplicadosMasivo').hide();" style="float:right;"/>
                 </h:form>
             </p:dialog>
 
@@ -839,7 +1015,7 @@ and open the template in the editor.
                       header="#{tramiteBean.dialogCasillero}" fitViewport="true"
                       widgetVar="dlgCasillero" style="font-size: 11px;" showEffect="explode" 
                       hideEffect="explode" >
-                <p:ajax event="close" update="dlgCasillero" resetValues="true" />                
+                <p:ajax event="close" listener="#{tramiteBean.cerrarDialogoCasillero}" update="dlgCasillero" resetValues="true" />                
                 <h:form id="frmCasillero" >
                     <p:panelGrid columns="4" columnClasses="twelve-percent,thirty-five-percent,twelve-percent,thirty-five-percent">
                         <p:outputLabel value="Nombre:" style="float:right;" class="bordesuperior"/>
@@ -858,7 +1034,9 @@ and open the template in the editor.
                         <p:inputText value="#{tramiteBean.owner.lawFirm}" class="maxsize" readonly="true" rendered="#{tramiteBean.owner.lawFirm eq null?false:true}"/>
                     </p:panelGrid>
                     <br/>
-                    <p:commandButton value="CERRAR" class="btn_cerrar" onclick="PF('dlgCasillero').hide();" style="float: right" rendered="#{!tramiteBean.cambioCasillero}"/>
+                    <p:commandButton value="CERRAR" class="btn_cerrar" actionListener="#{tramiteBean.cerrarDialogoCasillero}"
+                                     process="@this" update="frmCasillero mensajes" oncomplete="PF('dlgCasillero').hide();"
+                                     style="float: right" rendered="#{!tramiteBean.cambioCasillero}"/>
                     <p:selectBooleanCheckbox value="#{tramiteBean.cambioCasillero}" itemLabel="Cambio de Casillero" style="float: right"
                                              rendered="#{loginBean.grupo eq 'SC_CambioCasillero' and tramiteBean.cambiocas ?true:false}">
                         <p:ajax update="mensajes frmCasillero" listener="#{tramiteBean.prepararCambio}" rendered="#{!loginBean.lectura}"/>
@@ -933,7 +1111,9 @@ and open the template in the editor.
                             </p:commandLink>
                         </p:panelGrid>
                         <br/>
-                        <p:commandButton value="CERRAR" class="btn_cerrar" onclick="PF('dlgCasillero').hide();" style="float: right" rendered="#{tramiteBean.cambioCasillero}"/>
+                        <p:commandButton value="CERRAR" class="btn_cerrar" actionListener="#{tramiteBean.cerrarDialogoCasillero}"
+                                         process="@this" update="frmCasillero mensajes" oncomplete="PF('dlgCasillero').hide();"
+                                         style="float: right" rendered="#{tramiteBean.cambioCasillero}"/>
                         <p:outputLabel id="notap" value="#{tramiteBean.notaprovidencia}" style="color: blue !important; text-decoration: underline"/>
                         <br/><br/>
                     </p:panel>
@@ -1013,7 +1193,7 @@ and open the template in the editor.
                         <p:inputText value="#{tramiteBean.powerOfAttorneyData.applicationNumber}" readonly="true" class="maxsize" style="background: #aed581 !important;"/>
 
                         <p:outputLabel value="Dirección" class="bordesuperior"/>
-                        <p:inputText value="#{tramiteBean.powerOfAttorneyData.issueAddress}" readonly="true" class="maxsize"/>
+                        <p:inputTextarea value="#{tramiteBean.powerOfAttorneyData.issueAddress}" readonly="true" class="maxsize"/>
 
                         <p:outputLabel value="Fecha:" class="bordesuperior"/>
                         <p:inputText value="#{tramiteBean.powerOfAttorneyData.issueDate}" readonly="true" class="maxsize"/>

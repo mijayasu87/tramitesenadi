@@ -13,8 +13,12 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -28,9 +32,9 @@ public class FTPFiles {
 //    private static final String PASSWORD = "B7GJuaxu3Y";
 
     //prueba
-    public static String REMOTE_HOST = "10.0.26.130";
-    public static String USERNAME = "root";
-    public static String PASSWORD = "temporal123";
+//    public static String REMOTE_HOST = "10.0.26.130";
+//    public static String USERNAME = "root";
+//    public static String PASSWORD = "temporal123";
     
     private static final int REMOTE_PORT = 22;
     private static final int SESSION_TIMEOUT = 10000;
@@ -45,14 +49,14 @@ public class FTPFiles {
             JSch jsch = new JSch();
             jsch.setKnownHosts("/home/mjyanangomez/.ssh/known_hosts");
 
-            jschSession = jsch.getSession(USERNAME, REMOTE_HOST, REMOTE_PORT);
+            jschSession = jsch.getSession(ParametrosBD.USERNAMEFTP, ParametrosBD.REMOTE_HOSTFTP, REMOTE_PORT);
 
             // authenticate using private key
             // jsch.addIdentity("/home/mkyong/.ssh/id_rsa");
             jschSession.setConfig("StrictHostKeyChecking", "no");
 
             // authenticate using password
-            jschSession.setPassword(PASSWORD);
+            jschSession.setPassword(ParametrosBD.PASSWORDFTP);
 
             // 10 seconds session timeout
             jschSession.connect(SESSION_TIMEOUT);
@@ -165,8 +169,31 @@ public class FTPFiles {
     }
 
     /**
+     * Verifica si un directorio existe en el servidor remoto.
+     */
+    public boolean directoryExists(String remotePath) {
+        FTPConnectionPool.ChannelSftpWrapper wrapper = null;
+        try {
+            FTPConnectionPool pool = FTPConnectionPool.getInstance();
+            wrapper = pool.getConnection();
+            ChannelSftp channelSftp = wrapper.getChannelSftp();
+            channelSftp.stat(remotePath);
+            return true;
+        } catch (SftpException e) {
+            return false;
+        } catch (JSchException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (wrapper != null) {
+                FTPConnectionPool.getInstance().releaseConnection(wrapper);
+            }
+        }
+    }
+
+    /**
      * Crea un directorio en el servidor remoto si no existe
-     * 
+     *
      * @param remotePath Ruta del directorio a crear
      * @return true si se creó o ya existe, false en caso de error
      */
@@ -214,14 +241,14 @@ public class FTPFiles {
             JSch jsch = new JSch();
             jsch.setKnownHosts("/home/micharesp/.ssh/known_hosts");
 
-            jschSession = jsch.getSession(USERNAME, REMOTE_HOST, REMOTE_PORT);
+            jschSession = jsch.getSession(ParametrosBD.USERNAMEFTP, ParametrosBD.REMOTE_HOSTFTP, REMOTE_PORT);
 
             // authenticate using private key
             // jsch.addIdentity("/home/mkyong/.ssh/id_rsa");
             jschSession.setConfig("StrictHostKeyChecking", "no");
 
             // authenticate using password
-            jschSession.setPassword(PASSWORD);
+            jschSession.setPassword(ParametrosBD.PASSWORDFTP);
 
             // 10 seconds session timeout
             jschSession.connect(SESSION_TIMEOUT);
@@ -263,8 +290,8 @@ public class FTPFiles {
     public boolean exeComando(String comando) {
         try {
             JSch jsch = new JSch();
-            Session session = jsch.getSession(USERNAME, REMOTE_HOST, REMOTE_PORT);
-            session.setPassword(PASSWORD);
+            Session session = jsch.getSession(ParametrosBD.USERNAMEFTP, ParametrosBD.REMOTE_HOSTFTP, REMOTE_PORT);
+            session.setPassword(ParametrosBD.PASSWORDFTP);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect(SESSION_TIMEOUT);
             Channel channel = session.openChannel("exec");
@@ -340,7 +367,7 @@ public class FTPFiles {
                     }
 
                 } else {
-//                    System.out.println("---> name: "+name);
+                    //System.out.println("----------> name: "+name);
                     lista.add(name);
                 }
             }
@@ -355,75 +382,36 @@ public class FTPFiles {
             }
         }
 
-        return lista;
+        return filtrarPreviews(lista);
     }
 
-//    public List<String> listarDirectorio(String ruta) {
-//        String SFTPWORKINGDIR = ruta;
-//        Session session = null;
-//        Channel channel = null;
-//        ChannelSftp channelSftp = null;
-//
-//        try {
-//            JSch jsch = new JSch();
-//            session = jsch.getSession(USERNAME, REMOTE_HOST, REMOTE_PORT);
-//            session.setPassword(PASSWORD);
-//            java.util.Properties config = new java.util.Properties();
-//            config.put("StrictHostKeyChecking", "no");
-//            session.setConfig(config);
-//            session.connect();
-//            channel = session.openChannel("sftp");
-//            channel.connect();
-//            channelSftp = (ChannelSftp) channel;
-//            channelSftp.cd(SFTPWORKINGDIR);
-
-////            System.out.println(SFTPWORKINGDIR);
-//            Vector filelist = channelSftp.ls(SFTPWORKINGDIR);
-//            List<String> lista = new ArrayList<>();
-//            for (int i = 0; i < filelist.size(); i++) {
-////                System.out.println("entrooooooo "+(i+1));
-//                String[] aux = filelist.get(i).toString().trim().split(" ");
-//                List<String> archivo = new ArrayList<>();
-//                for (int j = 0; j < aux.length; j++) {
-//                    if (!aux[j].trim().isEmpty()) {
-//                        archivo.add(aux[j].trim());
-//                        System.out.println("---> "+aux[j].trim());
-//                    }
-//                }
-//
-//                int limite = 9;
-//                String name = "";
-//                if (archivo.size() > limite) {
-//                    int espacios = archivo.size() - limite;
-//                    for (int j = 0; j < espacios + 1; j++) {
-//                        name += archivo.get(j + limite - 1) + " ";
-//                    }
-//                } else {
-//                    name = archivo.get(limite - 1);
-//                }
-//
-//                if (name.trim().charAt(0) != '.') {
-//                    name = name.trim();
-//                    if (name.equals("anexos")) {
-//                        List<String> anexos = listarDirectorio(ruta + "/anexos");
-//                        for (int j = 0; j < anexos.size(); j++) {
-//                            lista.add("anexos/" + anexos.get(j));
-//                        }
-//                    } else {
-//                        lista.add(name);
-//                    }
-//
-////                    System.out.println("---------------> " + name.trim());
-//                }
-//
-//            }
-//            channelSftp.exit();
-//            channelSftp.disconnect();
-//            session.disconnect();
-//            return lista;
-//        } catch (JSchException | SftpException ex) {
-//            return new ArrayList<>();
-//        }
-//    }
+    // Oculta archivos de vista previa: los _ALC_PREV_<id> y, si existen, los
+    // pdf_scope_renewalfrm_<id> / pdf_scope_breederfrm_<id> emparejados por ID.
+    private List<String> filtrarPreviews(List<String> lista) {
+        Pattern alcPrev = Pattern.compile("_ALC_PREV_(\\d+)");
+        Set<String> idsPreview = new HashSet<>();
+        for (String name : lista) {
+            Matcher m = alcPrev.matcher(name);
+            if (m.find()) {
+                idsPreview.add(m.group(1));
+            }
+        }
+        if (idsPreview.isEmpty()) {
+            return lista;
+        }
+        Pattern scope = Pattern.compile("pdf_scope_(?:renewalfrm|breederfrm)_(\\d+)\\.");
+        List<String> filtrada = new ArrayList<>(lista.size());
+        for (String name : lista) {
+            if (alcPrev.matcher(name).find()) {
+                continue;
+            }
+            Matcher m = scope.matcher(name);
+            if (m.find() && idsPreview.contains(m.group(1))) {
+                continue;
+            }
+            filtrada.add(name);
+        }
+        return filtrada;
+    }
 
 }

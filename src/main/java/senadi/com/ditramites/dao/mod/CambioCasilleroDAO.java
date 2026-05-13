@@ -7,7 +7,6 @@ package senadi.com.ditramites.dao.mod;
 import java.util.List;
 import javax.persistence.Query;
 import senadi.com.ditramites.model.mod.CambioCasillero;
-import senadi.com.ditramites.util.Operaciones;
 
 /**
  *
@@ -24,7 +23,9 @@ public class CambioCasilleroDAO extends DAOAbstractMod<CambioCasillero> {
         try {
             Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c");
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-            return query.getResultList();
+            @SuppressWarnings("unchecked")
+            List<CambioCasillero> cambios = query.getResultList();
+            return cambios;
         } finally {
             this.getEntityManager().close();
         }
@@ -33,10 +34,12 @@ public class CambioCasilleroDAO extends DAOAbstractMod<CambioCasillero> {
 
     public List<CambioCasillero> getCambioCasilleroByEstado(String estado) {
         try {
-            Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c where c.estado = :estado and c.fuente = 'SIGNOS DISTINTIVOS'");
+            Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c where c.estado = :estado and c.fuente in ('SIGNOS DISTINTIVOS','PATENTES','OPOSICION')");
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
             query.setParameter("estado", estado);
-            return query.getResultList();
+            @SuppressWarnings("unchecked")
+            List<CambioCasillero> cambios = query.getResultList();
+            return cambios;
         } finally {
             this.getEntityManager().close();
         }
@@ -46,17 +49,32 @@ public class CambioCasilleroDAO extends DAOAbstractMod<CambioCasillero> {
         try {
             Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c where c.fuente = 'SIGNOS DISTINTIVOS' order by c.providencia desc");
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
-            return query.getResultList();
+            @SuppressWarnings("unchecked")
+            List<CambioCasillero> cambios = query.getResultList();
+            return cambios;
         } finally {
             this.getEntityManager().close();
         }
 
     }
 
+    public List<CambioCasillero> getCambiosCasillero() {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c where c.fuente in ('SIGNOS DISTINTIVOS','PATENTES','OPOSICION') order by c.providencia desc");
+            query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            @SuppressWarnings("unchecked")
+            List<CambioCasillero> cambios = query.getResultList();
+            return cambios;
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+
     public String nextProvidencia() {
         try {
-            Query query = this.getEntityManager().createQuery("Select r from CambioCasillero r where r.id = (Select MAX(r1.id) from CambioCasillero r1 WHERE r1.fuente = 'SIGNOS DISTINTIVOS')");
+            Query query = this.getEntityManager().createQuery("Select r from CambioCasillero r where r.id = (Select MAX(r1.id) from CambioCasillero r1 where r1.fuente in ('SIGNOS DISTINTIVOS','PATENTES','OPOSICION'))");
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
+            @SuppressWarnings("unchecked")
             List<CambioCasillero> cambios = query.getResultList();
             if (cambios.isEmpty()) {
                 return "001";
@@ -78,9 +96,11 @@ public class CambioCasilleroDAO extends DAOAbstractMod<CambioCasillero> {
 
     public CambioCasillero getCambioCasilleroWhenNotId(CambioCasillero cambio) {
         try {
-            String fechaPro = Operaciones.formatDate(cambio.getFechaProvidencia());
-            Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c where  c.tramite = '" + cambio.getTramite() + "' "
-                    + "and c.fechaProvidencia = '" + fechaPro + "' and c.providencia = '" + cambio.getProvidencia() + "' and c.fuente = 'SIGNOS DISTINTIVOS'");
+            Query query = this.getEntityManager().createQuery("Select c from CambioCasillero c where c.tramite = :tramite and c.fechaProvidencia = :fechaProvidencia and c.providencia = :providencia and c.fuente = :fuente");
+            query.setParameter("tramite", cambio.getTramite());
+            query.setParameter("fechaProvidencia", cambio.getFechaProvidencia(), javax.persistence.TemporalType.DATE);
+            query.setParameter("providencia", cambio.getProvidencia());
+            query.setParameter("fuente", cambio.getFuente());
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
             return (CambioCasillero) query.getSingleResult();
         } finally {

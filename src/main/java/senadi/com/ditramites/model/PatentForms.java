@@ -29,6 +29,7 @@ public class PatentForms {
     private String powerOfAttorney;
     
     private String casillero;
+    private String discountFile;
 
     private String sitio;
     private String ftp;
@@ -288,5 +289,19 @@ public class PatentForms {
      */
     public void setImage(String image) {
         this.image = image;
+    }
+
+    /**
+     * @return the discountFile
+     */
+    public String getDiscountFile() {
+        return discountFile;
+    }
+
+    /**
+     * @param discountFile the discountFile to set
+     */
+    public void setDiscountFile(String discountFile) {
+        this.discountFile = discountFile;
     }
 }

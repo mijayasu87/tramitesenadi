@@ -22,6 +22,7 @@ public class TutelageForms implements Serializable{
     private String status;
     private String respondentDescription;
     private String casillero;
+    private String discountFile;
 
     /**
      * @return the id
@@ -175,5 +176,19 @@ public class TutelageForms implements Serializable{
      */
     public void setCasillero(String casillero) {
         this.casillero = casillero;
+    }
+
+    /**
+     * @return the discountFile
+     */
+    public String getDiscountFile() {
+        return discountFile;
+    }
+
+    /**
+     * @param discountFile the discountFile to set
+     */
+    public void setDiscountFile(String discountFile) {
+        this.discountFile = discountFile;
     }
 }

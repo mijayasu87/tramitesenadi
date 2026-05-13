@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="1635ad54-7921-4abf-a4f9-241a9d5a5499">
 	<property name="ireport.zoom" value="1.9487171000000019"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="134"/>
+	<property name="ireport.y" value="192"/>
 	<parameter name="SUBREPORT_DIR" class="java.lang.String"/>
 	<parameter name="idCambioCasillero" class="java.lang.Integer"/>
 	<parameter name="subrogantedel" class="java.lang.String"/>
@@ -11,6 +11,8 @@
 	<parameter name="resolnot" class="java.lang.String"/>
 	<parameter name="secretaria" class="java.lang.String"/>
 	<parameter name="denosecre" class="java.lang.String"/>
+	<parameter name="titulo" class="java.lang.String"/>
+	<parameter name="fuente" class="java.lang.String"/>
 	<queryString>
 		<![CDATA[select * from cambio_casillero where id = $P{idCambioCasillero}]]>
 	</queryString>
@@ -60,9 +62,9 @@
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<variable name="parrafo1" class="java.lang.String">
-		<variableExpression><![CDATA["Dentro del trámite de REGISTRO DEL SIGNO DISTINTIVO <style pdfFontName='Times-Bold'>1) </style> Agréguese el escrito presentado por "+
+		<variableExpression><![CDATA["Dentro del trámite de REGISTRO DE "+$P{fuente}+" <style pdfFontName='Times-Bold'>1) </style> Agréguese el escrito presentado por "+
 $F{titular_casillero_nuevo}.replace("&","&amp;")+", el "+new SimpleDateFormat("dd 'de' MMMMM 'de' yyyy",new Locale("es", "ES")).format($F{fecha_providencia})+
-", correspondiente al signo distintivo "+$F{denominacion}.replace("&","&amp;")+", signado con el número "+$F{tramite}+", se dispone lo "+
+", correspondiente a"+($P{fuente}.equals("PATENTE")?" la Patente":"l Signo Distintivo")+" "+$F{denominacion}.replace("&","&amp;")+", signado con el número "+$F{tramite}+", se dispone lo "+
 "siguiente: <style pdfFontName='Times-Bold'>2) </style> Notifíquese a "+$F{titular_casillero_anterior}.replace("&","&amp;")+" que ha sido sustituido/a en "+
 "el patrocinio del trámite antes mencionado. <style pdfFontName='Times-Bold'>3) </style> Futuras notificaciones se enviarán al casillero virtual "+
 "<style pdfFontName='Times-Bold'>"+$F{nuevo_casillero}+"</style>."+
@@ -96,13 +98,13 @@ $F{nuevo_casillero}+"</style>, lo que certifico, en virtud de la delegación de 
 	</background>
 	<title>
 		<band height="110" splitType="Stretch">
-			<staticText>
-				<reportElement x="0" y="80" width="555" height="20" uuid="21735a4c-6424-42f8-aa61-d7e951adea88"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
+			<textField>
+				<reportElement x="0" y="83" width="555" height="20" uuid="686d35c0-3042-474f-b2b6-4e542200a9ed"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="styled">
 					<font fontName="Times New Roman" size="12" isBold="true" pdfFontName="Times-Bold"/>
 				</textElement>
-				<text><![CDATA[DIRECCIÓN TÉCNICA DE SIGNOS DISTINTIVOS]]></text>
-			</staticText>
+				<textFieldExpression><![CDATA[$P{titulo}]]></textFieldExpression>
+			</textField>
 		</band>
 	</title>
 	<columnHeader>
@@ -171,7 +173,7 @@ $F{nuevo_casillero}+"</style>, lo que certifico, en virtud de la delegación de 
 				<textFieldExpression><![CDATA[$P{secretaria}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="73" y="18" width="406" height="39" uuid="87fb8039-e1ad-41ac-a409-aa80506a6d46"/>
+				<reportElement x="75" y="18" width="406" height="39" uuid="87fb8039-e1ad-41ac-a409-aa80506a6d46"/>
 				<textElement textAlignment="Center">
 					<font fontName="Times New Roman" size="12" isBold="true" pdfFontName="Times-Bold"/>
 				</textElement>

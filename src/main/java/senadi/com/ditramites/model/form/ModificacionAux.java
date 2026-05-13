@@ -7,6 +7,7 @@ package senadi.com.ditramites.model.form;
 import java.util.ArrayList;
 import java.util.List;
 import senadi.com.ditramites.model.Documento;
+import senadi.com.ditramites.model.mod.ModificationScope;
 import senadi.com.ditramites.util.ParametrosBD;
 
 /**
@@ -31,12 +32,14 @@ public class ModificacionAux {
     private String powerOfAttorney;
 //    private List<String> documentos;
     private List<Documento> documentos;
+    private List<ModificationScope> alcances;
 
     private String ftp;
     private String sitio;
 
     public ModificacionAux() {
         documentos = new ArrayList<>();
+        alcances = new ArrayList<>();
         ftp = ParametrosBD.ftpPath + "renewal_forms/";
         sitio = ParametrosBD.urlPath + "renewal_forms/";
     }
@@ -277,6 +280,14 @@ public class ModificacionAux {
      */
     public void setDocumentos(List<Documento> documentos) {
         this.documentos = documentos;
+    }
+
+    public List<ModificationScope> getAlcances() {
+        return alcances;
+    }
+
+    public void setAlcances(List<ModificationScope> alcances) {
+        this.alcances = alcances;
     }
 
 }
