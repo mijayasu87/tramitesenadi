@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,8 @@ import senadi.com.ditramites.model.VoucherForm;
 import senadi.com.ditramites.model.form.ModificacionAux;
 import senadi.com.ditramites.model.form.NolineaAux;
 import senadi.com.ditramites.model.form.NotificationsAux;
+import senadi.com.ditramites.model.form.ResultadoDenominacionAux;
+import senadi.com.ditramites.model.postgres.PpdiSolicitudPatente;
 import senadi.com.ditramites.model.form.OppositionFormsAux;
 import senadi.com.ditramites.model.form.PlayFormsAux;
 import senadi.com.ditramites.model.form.ScopeFormsAux;
@@ -112,6 +115,9 @@ public class TramiteBean implements Serializable {
 
     private List<NotificationsAux> notificaciones;
 
+    private List<ResultadoDenominacionAux> resultadosDenominacion = new ArrayList<>();
+    private List<ResultadoDenominacionAux> signosFiltrados;
+
     private boolean conmarca;
     private boolean conalcance;
     private boolean conmodificacion;
@@ -175,10 +181,11 @@ public class TramiteBean implements Serializable {
 
     public void buscarTramite(ActionEvent ae) throws JsonProcessingException {
         FacesMessage msg = null;
-        System.out.println("--------- usuario: " + login.getNombre() + " ------- tramite: " + tramiteText + " -------------");
+        System.out.println("--------- usuario: " + login.getNombre() + " ------- tramite: " + tramiteText + " ------------- prueba");
         if (tramiteText.trim().isEmpty() && tramiteText.trim().length() < 4) {
             msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "INGRESE UN NÚMERO DE TRÁMITE CORRECTO");
         } else {
+            String inputOriginal = tramiteText.trim();
             limpiarDatos(false);
             tramiteText = tramiteText.trim().replace(" ", "").toUpperCase();
 
@@ -377,7 +384,142 @@ public class TramiteBean implements Serializable {
                     resultadopanel = true;
                     msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN", "SE ENCONTRÓ EL TRÁMITE CPI");
                 } else {
-                    msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL TRÁMITE " + tramiteText);
+                    resultadosDenominacion = new ArrayList<>();
+                    if (inputOriginal.length() < 3) {
+                        msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "INFORMACIÓN",
+                                "PARA BUSCAR POR DENOMINACIÓN INGRESE AL MENOS 3 CARACTERES");
+                    } else {
+                        List<PpdiSolicitudSignoDistintivo> sigs = c.ppdiSolicitudSignoDistintivoByDenominacion(inputOriginal);
+                        List<PpdiSolicitudPatente> pats = c.ppdiSolicitudPatenteByDenominacion(inputOriginal);
+                        List<ResultadoDenominacionAux> resultados = new ArrayList<>();
+                        if (sigs != null) {
+                            for (PpdiSolicitudSignoDistintivo s : sigs) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_MARCAS,
+                                        s.getDenominacionSigno(),
+                                        s.getNumeroTramite() != null ? s.getNumeroTramite().trim() : null,
+                                        s.getFechaPresentacion()));
+                            }
+                        }
+                        if (pats != null) {
+                            for (PpdiSolicitudPatente p : pats) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_PATENTES,
+                                        p.getTitulo(),
+                                        p.getNumeroTramite() != null ? p.getNumeroTramite().trim() : null,
+                                        p.getFechaPresentacion()));
+                            }
+                        }
+                        List<Transferencia> transferencias = c.getTransferenciasByDenominacion(inputOriginal);
+                        if (transferencias != null) {
+                            for (Transferencia t : transferencias) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_TRANSFERENCIA,
+                                        t.getDenominacion(),
+                                        t.getSolicitud() != null ? t.getSolicitud().trim() : null,
+                                        t.getFechaPresentacion()));
+                            }
+                        }
+                        List<CambioNombre> cambiosNombre = c.getCambioNombreByDenominacion(inputOriginal);
+                        if (cambiosNombre != null) {
+                            for (CambioNombre cn : cambiosNombre) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_CAMBIO_NOMBRE,
+                                        cn.getDenominacion(),
+                                        cn.getSolicitud() != null ? cn.getSolicitud().trim() : null,
+                                        cn.getFechaPresentacion()));
+                            }
+                        }
+                        List<CambioDomicilio> cambiosDomicilio = c.getCambioDomicilioByDenominacion(inputOriginal);
+                        if (cambiosDomicilio != null) {
+                            for (CambioDomicilio cd : cambiosDomicilio) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_CAMBIO_DOMICILIO,
+                                        cd.getDenominacion(),
+                                        cd.getSolicitud() != null ? cd.getSolicitud().trim() : null,
+                                        cd.getFechaPresentacion()));
+                            }
+                        }
+                        List<PrendaComercial> prendas = c.getPrendaComercialByDenominacion(inputOriginal);
+                        if (prendas != null) {
+                            for (PrendaComercial pc : prendas) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_PRENDA,
+                                        pc.getDenominacion(),
+                                        pc.getSolicitud() != null ? pc.getSolicitud().trim() : null,
+                                        pc.getFechaPresentacion()));
+                            }
+                        }
+                        List<LicenciaUso> licencias = c.getLicenciaUsoByDenominacion(inputOriginal);
+                        if (licencias != null) {
+                            for (LicenciaUso lu : licencias) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_LICENCIA,
+                                        lu.getDenominacion(),
+                                        lu.getSolicitud() != null ? lu.getSolicitud().trim() : null,
+                                        lu.getFechaPresentacion()));
+                            }
+                        }
+                        List<SubLicenciaUso> subLicencias = c.getSubLicenciaUsoByDenominacion(inputOriginal);
+                        if (subLicencias != null) {
+                            for (SubLicenciaUso slu : subLicencias) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_SUB_LICENCIA,
+                                        slu.getDenominacion(),
+                                        slu.getSolicitud() != null ? slu.getSolicitud().trim() : null,
+                                        slu.getFechaPresentacion()));
+                            }
+                        }
+                        List<Renovacion> renovaciones = c.getRenovacionByDenominacion(inputOriginal);
+                        if (renovaciones != null) {
+                            for (Renovacion r : renovaciones) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_RENOVACION,
+                                        r.getDenominacion(),
+                                        r.getSolicitudSenadi() != null ? r.getSolicitudSenadi().trim() : null,
+                                        r.getFechaPresentacion()));
+                            }
+                        }
+                        List<BreederForms> breeders = c.getBreederFormByDenominacion(inputOriginal);
+                        if (breeders != null) {
+                            for (BreederForms b : breeders) {
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_OBTENCION_VEGETAL,
+                                        b.getProposedName(),
+                                        b.getApplicationNumber() != null ? b.getApplicationNumber().trim() : null,
+                                        b.getApplicationDate()));
+                            }
+                        }
+                        List<PlayForm> plays = c.getPlayFormsByDenomination(inputOriginal);
+                        if (plays != null) {
+                            java.text.SimpleDateFormat sdfPlay = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            for (PlayForm pl : plays) {
+                                Date fechaPlay = null;
+                                if (pl.getApplicationDate() != null && !pl.getApplicationDate().trim().isEmpty()) {
+                                    try {
+                                        fechaPlay = sdfPlay.parse(pl.getApplicationDate());
+                                    } catch (java.text.ParseException ignored) {
+                                    }
+                                }
+                                resultados.add(new ResultadoDenominacionAux(
+                                        ResultadoDenominacionAux.TIPO_DERECHO_AUTOR,
+                                        pl.getTitle(),
+                                        pl.getApplicationNumber() != null ? pl.getApplicationNumber().trim() : null,
+                                        fechaPlay));
+                            }
+                        }
+                        resultados.sort(Comparator.comparing(ResultadoDenominacionAux::getFechaPresentacion,
+                                Comparator.nullsLast(Comparator.reverseOrder())));
+                        if (!resultados.isEmpty()) {
+                            signosFiltrados = null;
+                            resultadosDenominacion = resultados;
+                            PrimeFaces.current().executeScript("PF('tablaResultadosDenominacion').clearFilters();PF('dlgResultadosDenominacion').show();");
+                            msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "INFORMACIÓN",
+                                    "SE ENCONTRARON " + resultados.size() + " RESULTADO(S) POR DENOMINACIÓN");
+                        } else {
+                            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO SE ENCONTRÓ EL TRÁMITE " + tramiteText);
+                        }
+                    }
                 }
             }
             System.out.println("Fin lectura trámite: " + Operaciones.getCurrentTimeStamp());
@@ -535,6 +677,15 @@ public class TramiteBean implements Serializable {
                 }
                 documentos.add(doc);
             }
+
+            cargarJobReviews(patentForm.getFtp() + patentForm.getId(),
+                    patentForm.getApplicationNumber(), "PatentformJobReview",
+                    new JobReviewTarget() {
+                @Override public void apply(boolean exists, List<Documento> docs) {
+                    patentForm.setJobReviewsExists(exists);
+                    patentForm.setJobReviewDocs(docs);
+                }
+            });
 
             conpatente = true;
         } else {
@@ -859,14 +1010,14 @@ public class TramiteBean implements Serializable {
             if (docsplay == null) {
                 docsplay = new ArrayList<>();
             }
-            Map<String, String> nombresDocumentos = c.getPlayNombreArchivos(playFormAux.getPlayForm().getId(), docsplay);
+//            Map<String, String> nombresDocumentos = c.getPlayNombreArchivos(playFormAux.getPlayForm().getId(), docsplay);
             Map<String, FileAnnexesApplication> archivosSubidos = c.getFileAnnexesApplicationMap(playFormAux.getPlayForm().getApplicationNumber().trim(), "Playform");
 
             List<Documento> docs = new ArrayList<>();
             for (int j = 0; j < docsplay.size(); j++) {
                 Documento doc = new Documento();
                 doc.setArchivo(docsplay.get(j));
-                String nombre = nombresDocumentos.getOrDefault(doc.getArchivo(), "");
+                String nombre = "";//nombresDocumentos.getOrDefault(doc.getArchivo(), "");
                 if (!nombre.isEmpty()) {
                     doc.setTipo(nombre);
                 } else {
@@ -2326,6 +2477,8 @@ public class TramiteBean implements Serializable {
             oposiciones = new ArrayList<>();
             nolineas = new ArrayList<>();
             notificaciones = new ArrayList<>();
+            resultadosDenominacion = new ArrayList<>();
+            signosFiltrados = null;
 
             // Limpiar objetos principales
             hallmarkForm = null;
@@ -4556,6 +4709,225 @@ public class TramiteBean implements Serializable {
         cargarMarcasAVisualizarByTramite(hallmarkForm.getApplicationNumber());
     }
 
+    public void seleccionarTramiteDenominacion(String tipo, String numeroTramite) throws JsonProcessingException {
+        if (numeroTramite == null || numeroTramite.trim().isEmpty()) {
+            return;
+        }
+        tramiteText = numeroTramite.trim();
+
+        Controlador c = new Controlador();
+        String normalizado = tramiteText.replace(" ", "").toUpperCase();
+
+        if (ResultadoDenominacionAux.TIPO_PATENTES.equals(tipo)) {
+            PatentForms probe = c.getPatentFormByApplicationNumber(normalizado);
+            if (probe != null && probe.getId() != null) {
+                buscarTramite(null);
+            } else {
+                cargarPatenteLegacyByTramite(tramiteText);
+            }
+            return;
+        }
+
+        if (ResultadoDenominacionAux.TIPO_MARCAS.equals(tipo)) {
+            HallmarkForm probe = c.getHallmarkForm(normalizado);
+            if (probe != null && probe.getId() != null) {
+                buscarTramite(null);
+            } else {
+                cargarSignoLegacyByTramite(tramiteText);
+            }
+            return;
+        }
+
+        // Modificaciones al registro (transferencia, cambio nombre/domicilio, prenda,
+        // licencia, sub-licencia, renovación): se cargan por el flujo normal de buscarTramite.
+        buscarTramite(null);
+    }
+
+    private void cargarSignoLegacyByTramite(String numeroTramite) {
+        Controlador c = new Controlador();
+        PpdiSolicitudSignoDistintivo signo = c.getPpdiSolicitudSignoDistintivoByTramite(numeroTramite);
+
+        if (signo == null || signo.getCodigoSolicitudSigno() == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                            "NO SE ENCONTRÓ EL TRÁMITE " + numeroTramite));
+            return;
+        }
+
+        limpiarDatos(false);
+        ppdiSolicitudSignoDistintivo = signo;
+
+        HallmarkForm hf = new HallmarkForm();
+        hf.setApplicationNumber(numeroTramite);
+        hf.setDenomination(signo.getDenominacionSigno());
+        if (signo.getFechaPresentacion() != null) {
+            hf.setApplicationDate(new java.sql.Timestamp(signo.getFechaPresentacion().getTime()));
+        }
+        hf.setExpedient(signo.getNumeroExpediente() != null && !signo.getNumeroExpediente().trim().isEmpty()
+                ? signo.getNumeroExpediente().trim() : " -- ");
+        hf.setEstado(signo.getEstado() != null && !signo.getEstado().trim().isEmpty()
+                ? signo.getEstado() : " -- ");
+        hf.setGaceta(signo.getGaceta() != null && !signo.getGaceta().trim().isEmpty()
+                ? signo.getGaceta().trim() : " -- ");
+        hf.setCasillero(signo.getCasilleroIepi() != null ? signo.getCasilleroIepi() : " -- ");
+        hf.setNizaClassId(signo.getClasificacion_niza());
+        hf.setTipoSigno(" -- ");
+        hf.setNaturalezaSigno(" -- ");
+
+        PpdiTituloSignoDistintivo titsigno = c.getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(signo.getCodigoSolicitudSigno());
+        if (titsigno != null && titsigno.getCodigoTituloSignoDistintivo() != null) {
+            hf.setTitulo(titsigno.getNumeroTitulo());
+            hf.setFechaTitulo(titsigno.getFechaEmisionDocumento() != null
+                    ? Operaciones.formatDate(titsigno.getFechaEmisionDocumento()) : " -- ");
+            hf.setFechaVencimiento(titsigno.getFechaVencimientoTitulo() != null
+                    ? Operaciones.formatDate(titsigno.getFechaVencimientoTitulo()) : " -- ");
+        } else {
+            hf.setTitulo(" -- ");
+            hf.setFechaTitulo(" -- ");
+            hf.setFechaVencimiento(" -- ");
+        }
+
+        hallmarkForm = hf;
+        documentosExpediente = new ArrayList<>();
+        documentos = new ArrayList<>();
+        tituloTramiteText = "SIGNO DISTINTIVO (SIN RESPALDO DIGITAL)";
+        conmarca = true;
+        resultadopanel = true;
+
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_WARN, "INFORMACIÓN",
+                        "SE ENCONTRÓ EL SIGNO " + numeroTramite + " SIN RESPALDO DIGITAL"));
+    }
+
+    private void cargarPatenteLegacyByTramite(String numeroTramite) {
+        Controlador c = new Controlador();
+        PpdiSolicitudPatente solic = c.getPpdiSolicitudPatenteByTramite(numeroTramite);
+
+        if (solic == null || solic.getCodigoSolicitudPatente() == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR",
+                            "NO SE ENCONTRÓ EL TRÁMITE " + numeroTramite));
+            return;
+        }
+
+        limpiarDatos(false);
+
+        PatentForms pf = new PatentForms();
+        pf.setApplicationNumber(numeroTramite);
+        pf.setTitle(solic.getTitulo());
+        if (solic.getFechaPresentacion() != null) {
+            pf.setApplicationDate(Operaciones.formatDate(solic.getFechaPresentacion()));
+        }
+        pf.setExpedient(solic.getNumeroExpediente() != null && !solic.getNumeroExpediente().trim().isEmpty()
+                ? solic.getNumeroExpediente().trim() : " -- ");
+        pf.setCasillero(solic.getCasilleroIepi() != null ? solic.getCasilleroIepi() : " -- ");
+        pf.setStatus(" -- ");
+        pf.setTipo(" -- ");
+        pf.setInternationalClassification(" -- ");
+        pf.setSummary(" -- ");
+
+        patentForm = pf;
+        documentosExpediente = new ArrayList<>();
+        documentos = new ArrayList<>();
+        tituloTramiteText = "PATENTE (SIN RESPALDO DIGITAL)";
+        conpatente = true;
+        resultadopanel = true;
+
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_WARN, "INFORMACIÓN",
+                        "SE ENCONTRÓ LA PATENTE " + numeroTramite + " SIN RESPALDO DIGITAL"));
+    }
+
+    public List<ResultadoDenominacionAux> getResultadosDenominacion() {
+        return resultadosDenominacion;
+    }
+
+    public void setResultadosDenominacion(List<ResultadoDenominacionAux> resultadosDenominacion) {
+        this.resultadosDenominacion = resultadosDenominacion;
+    }
+
+    public void crearJobReviewsPatent() {
+        if (patentForm == null || patentForm.getId() == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UNA PATENTE CARGADA"));
+            return;
+        }
+        String reviewsPath = patentForm.getFtp() + patentForm.getId() + "/job_reviews";
+        FTPFiles ftpFiles = new FTPFiles();
+        if (ftpFiles.createDirectoryIfNotExists(reviewsPath)) {
+            patentForm.setJobReviewsExists(true);
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "REVISIONES DE OFICIO habilitadas"));
+            cargarPatentFormAVisualizarByTramite(patentForm.getApplicationNumber());
+        } else {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo crear la carpeta job_reviews"));
+        }
+    }
+
+    public void uploadJobReviewPatent(FileUploadEvent event) {
+        FacesMessage msg;
+        try {
+            if (patentForm == null || patentForm.getId() == null) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "NO HAY UNA PATENTE CARGADA"));
+                return;
+            }
+            String fileName = event.getFile().getFileName();
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "SOLO SE PERMITEN ARCHIVOS PDF"));
+                return;
+            }
+            String fileNameFormato = formatearNombreArchivo(fileName);
+            String reviewsDir = patentForm.getFtp() + patentForm.getId() + "/job_reviews";
+            String remotePath = reviewsDir + "/" + fileNameFormato;
+            FTPFiles ftpFiles = new FTPFiles();
+            ftpFiles.createDirectoryIfNotExists(reviewsDir);
+            if (ftpFiles.uploadFileOptimized(event.getFile().getInputStream(), remotePath)) {
+                Controlador c = new Controlador();
+                FileAnnexesApplication fap = new FileAnnexesApplication();
+                fap.setFileName(fileNameFormato);
+                fap.setFileDescription("UPLOADED BY EMPLOYEE - JOB REVIEW");
+                fap.setUserUpload(login.getNombre());
+                fap.setUploadDate(Operaciones.getCurrentTimestamp());
+                fap.setFileStatus("UPLOADED");
+                fap.setApplicationType("PatentformJobReview");
+                fap.setApplicationNumber(patentForm.getApplicationNumber());
+                c.saveFileAnnexeApplication(fap);
+                msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Revisión '" + fileNameFormato + "' subida");
+                cargarPatentFormAVisualizarByTramite(patentForm.getApplicationNumber());
+            } else {
+                msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "Hubo un problema al subir el archivo");
+            }
+        } catch (Exception e) {
+            System.err.println("[JOB REVIEW UPLOAD ERROR] " + e.getMessage());
+            e.printStackTrace();
+            msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "Excepción al subir archivo: " + e.getMessage());
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public void eliminarJobReviewPatent(Documento documento) {
+        if (documento == null || patentForm == null || patentForm.getId() == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "Datos incompletos"));
+            return;
+        }
+        String fileName = documento.getArchivo();
+        String remotePath = patentForm.getFtp() + patentForm.getId() + "/job_reviews/" + fileName;
+        FTPFiles ftpFiles = new FTPFiles();
+        boolean ftpDeleted = ftpFiles.deleteFile(remotePath);
+        Controlador c = new Controlador();
+        c.softDeleteFileAnnexeApplication(patentForm.getApplicationNumber().trim(), fileName,
+                "PatentformJobReview", login.getNombre(), Operaciones.getCurrentTimestamp());
+        FacesMessage msg = ftpDeleted
+                ? new FacesMessage(FacesMessage.SEVERITY_INFO, "ÉXITO", "Revisión '" + fileName + "' eliminada")
+                : new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar en el FTP");
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+        cargarPatentFormAVisualizarByTramite(patentForm.getApplicationNumber());
+    }
+
     public void eliminarJobReviewOposicion(Documento documento, OppositionFormsAux opo) {
         if (documento == null || opo == null || opo.getOppositionForm() == null || opo.getOppositionForm().getId() == null) {
             FacesContext.getCurrentInstance().addMessage(null,
@@ -4574,5 +4946,19 @@ public class TramiteBean implements Serializable {
                 : new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERROR", "No se pudo eliminar en el FTP");
         FacesContext.getCurrentInstance().addMessage(null, msg);
         cargarOposicionesAVisualizarByTramite(opo.getOppositionForm().getApplicationNumber(), false);
+    }
+
+    /**
+     * @return the signosFiltrados
+     */
+    public List<ResultadoDenominacionAux> getSignosFiltrados() {
+        return signosFiltrados;
+    }
+
+    /**
+     * @param signosFiltrados the signosFiltrados to set
+     */
+    public void setSignosFiltrados(List<ResultadoDenominacionAux> signosFiltrados) {
+        this.signosFiltrados = signosFiltrados;
     }
 }

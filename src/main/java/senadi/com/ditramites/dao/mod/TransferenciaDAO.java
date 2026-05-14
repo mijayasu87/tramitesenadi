@@ -134,4 +134,65 @@ public class TransferenciaDAO extends DAOAbstractMod<Transferencia> {
             this.getEntityManager().close();
         }
     }
+
+    public List<Transferencia> getTransferenciasByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select t from Transferencia t where t.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion + "%");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+
+    public List<CambioNombre> getCambioNombreByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from CambioNombre c where c.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+    
+    public List<CambioDomicilio> getCambioDomicilioByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from CambioDomicilio c where c.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+    
+    public List<PrendaComercial> getPrendaComercialByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from PrendaComercial c where c.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+    
+    public List<LicenciaUso> getLicenciaUsoByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from LicenciaUso c where c.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+    
+    public List<SubLicenciaUso> getSublienciaUsoByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from SubLicenciaUso c where c.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }    
+
 }

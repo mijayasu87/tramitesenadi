@@ -45,4 +45,14 @@ public class RenovacionDAO extends DAOAbstractRen<Renovacion> {
             this.getEntityManager().close();
         }
     }
+    
+    public List<Renovacion> getRenovacionByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select c from Renovacion c where c.denominacion like :denominacion");
+            query.setParameter("denominacion", denominacion);
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
 }

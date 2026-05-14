@@ -82,13 +82,13 @@ and open the template in the editor.
             <br/>
             <div style="text-align: center !important; margin: 0 auto !important;">
 
-                <p:outputLabel value="NÚMERO DE TRÁMITE: "  style="font-size: 14px; color: black; margin-right: 5px !important;" for="tramite"/>
-                <p:tooltip value="Ingrese todo el número de trámite, es decir incluyendo la palabra SENADI o IEPI" for="tramite" style="font-size: 14px" position="bottom"/>
-                <p:inputText id="tramite" value="#{tramiteBean.tramiteText}" style="font-size: 14px; width: 250px;" placeholder="Ejemplo: SENADI-2024-99999" />                
+                <p:outputLabel value="NÚMERO DE TRÁMITE / DENOMINACIÓN: "  style="font-size: 14px; color: black; margin-right: 5px !important;" for="tramite"/>
+                <p:tooltip value="Ingrese la denominación que tenga más de 3 caracteres ó el número de trámite que incluya la palabra SENADI o IEPI" for="tramite" style="font-size: 14px" position="bottom"/>
+                <p:inputText id="tramite" value="#{tramiteBean.tramiteText}" style="font-size: 14px; width: 250px;" placeholder="Ej.: SENADI-2024-99999 ó Coca cola" />
                 <p:selectBooleanCheckbox value="#{tramiteBean.searchIPAS}" title="BUSCAR EN IPAS" rendered="#{loginBean.grupoPatentes}"
                                          style="margin-left: 5px;font-size: 14px; " id="buscipas"/>
-                <p:commandButton value="BUSCAR" class="btn_peque" actionListener="#{tramiteBean.buscarTramite}" 
-                                 update="mensajes panelContenedor panelInfoWrapper alcancespanel tutelagepanel oposicionespanel nolineapanel derechospanel notificacionpanel" process="@parent" />
+                <p:commandButton value="BUSCAR" class="btn_peque" actionListener="#{tramiteBean.buscarTramite}"
+                                 update="mensajes panelContenedor panelInfoWrapper alcancespanel tutelagepanel oposicionespanel nolineapanel derechospanel notificacionpanel :allform:frmResultadosDenominacion" process="@parent" />
                 <p:commandButton value="LIMPIAR" class="btn_peque" actionListener="#{tramiteBean.limpiarPaneles}"
                                  update="mensajes buscipas panelContenedor panelInfoWrapper alcancespanel tutelagepanel tramite oposicionespanel nolineapanel derechospanel notificacionpanel" process="@parent" />
                 <p:commandButton value="DEPURAR MASIVO" class="btn_peque" rendered="#{loginBean.depurarDuplicado}"
@@ -317,9 +317,39 @@ and open the template in the editor.
                                               accept=".pdf"
                                               auto="true"
                                               label="SUBIR DOCUMENTO"
-                                              update="patDocument mensajes"                                              
-                                              style="margin: 10px 0; width: 100%;">                            
+                                              update="patDocument mensajes"
+                                              style="margin: 10px 0; width: 100%;">
                                 </p:fileUpload>
+
+                                <p:panelGrid columns="1" style="width: 100%; margin-top: 8px;" class="noBorders" id="patentJobReviewsPanel">
+                                    <p:commandButton value="REVISIONES DE OFICIO" rendered="#{not tramiteBean.patentForm.jobReviewsExists}"
+                                                     actionListener="#{tramiteBean.crearJobReviewsPatent}"
+                                                     onstart="return confirm('¿Desea crear REVISIONES DE OFICIO?');"
+                                                     update="patentepanel mensajes" process="@this"
+                                                     style="font-size: 12px;"/>
+                                    <h:panelGroup rendered="#{tramiteBean.patentForm.jobReviewsExists}">
+                                        <p:outputLabel value="REVISIONES DE OFICIO" style="font-size: 14px; background: #e3e3e3; display: block;"/>
+                                        <c:forEach items="#{tramiteBean.patentForm.jobReviewDocs}" var="rev">
+                                            <p:panel styleClass="alcance-card" style="margin-top: 4px;">
+                                                <p:commandLink value="#{rev.tipo}" style="color: #0089ec;"
+                                                               onclick="otherpage('#{tramiteBean.patentForm.sitio}#{tramiteBean.patentForm.id}/job_reviews/#{rev.archivo}')"/>
+                                                <p:commandLink class="link_remove" style="float: right"
+                                                               process="@this" title="Eliminar revisión"
+                                                               actionListener="#{tramiteBean.eliminarJobReviewPatent(rev)}"
+                                                               update="patentepanel mensajes"
+                                                               rendered="#{rev.uploaded}"
+                                                               onstart="return confirm('¿Confirma que desea eliminar esta revisión: #{rev.archivo}?');">
+                                                    <i class="material-icons md-12" style="font-size: 20px;">delete</i>
+                                                </p:commandLink>
+                                            </p:panel>
+                                        </c:forEach>
+                                        <p:fileUpload listener="#{tramiteBean.uploadJobReviewPatent}"
+                                                      accept=".pdf" auto="true"
+                                                      label="SUBIR REVISIÓN"
+                                                      update="patentJobReviewsPanel mensajes"
+                                                      style="margin: 8px 0; width: 100%;"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
                             </p:panelGrid>
                         </p:panelGrid>
                     </p:panel>
@@ -932,6 +962,7 @@ and open the template in the editor.
                             <h:outputText value="Funciones principales:" style="display: block; margin-bottom: 8px; font-weight: bold;" />
                             <h:outputText escape="false" value="
                                           &lt;ul style='margin: 0 0 14px 18px; padding: 0;'&gt;
+                                          &lt;li&gt;Buscar por denominación marcas, patentes, derechos de autor, obtenciones vegetales, modificaciones&lt;/li&gt;
                                           &lt;li&gt;Buscar expedientes y visualizar su información relacionada&lt;/li&gt;
                                           &lt;li&gt;Consultar poderes vinculados a los trámites&lt;/li&gt;
                                           &lt;li&gt;Gestionar cambios de casillero de Signos Distintivos y Patentes&lt;/li&gt;
@@ -941,7 +972,8 @@ and open the template in the editor.
                                           &lt;li&gt;Subir documentos a los expedientes&lt;/li&gt;
                                           &lt;/ul&gt;" />
 
-                            <h:outputText value="Realice una búsqueda por número de trámite para comenzar." style="display: block; color: #1565c0; font-weight: bold;" />
+                            <h:outputText value="Realice una búsqueda ahora para comenzar." style="display: block; color: #1565c0; font-weight: bold;" />
+                            <h:outputText value="Nota: para buscar por denominación, mientras más caracteres se proporcionen mejor serán los resultados. " style="display: block; color: #1565c0; font-weight: bold;" />                            
                         </h:panelGroup>
                     </p:panel>
                 </p:outputPanel>
@@ -1312,6 +1344,46 @@ and open the template in the editor.
 
             <p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
                 <p:graphicImage name="/images/ajax-loader.gif" />
+            </p:dialog>
+
+            <p:dialog id="dlgResultadosDenominacion" widgetVar="dlgResultadosDenominacion"
+                      header="RESULTADOS POR DENOMINACIÓN" modal="true" resizable="false"
+                      style="font-size: 12px;" width="60%">
+                <h:form id="frmResultadosDenominacion">
+                    <p:dataTable id="tablaResultadosDenominacion"
+                                 value="#{tramiteBean.resultadosDenominacion}" var="r" emptyMessage="Sin resultados"
+                                 widgetVar="tablaResultadosDenominacion"
+                                 style="font-size: 12px;"
+                                 filteredValue="#{tramiteBean.signosFiltrados}"
+                                 paginator="true"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rows="15"
+                                 rowsPerPageTemplate="15,30,50,100, 200">
+                        <p:column headerText="Tipo" style="width: 150px;" filterBy="#{r.tipo}" filterMatchMode="contains">
+                            <h:outputText value="#{r.tipo}"/>
+                        </p:column>
+                        <p:column headerText="Denominación" filterBy="#{r.denominacion}" filterMatchMode="contains">
+                            <h:outputText value="#{r.denominacion}" />
+                        </p:column>
+                        <p:column headerText="N° Trámite" style="width: 160px;" filterBy="#{r.numeroTramite}" filterMatchMode="contains">
+                            <h:outputText value="#{r.numeroTramite}"/>
+                        </p:column>
+                        <p:column headerText="Fecha Presentación" style="width: 140px;" sortBy="#{r.fechaPresentacion}">
+                            <h:outputText value="#{r.fechaPresentacion}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Ver" style="width: 60px; text-align: center;">
+                            <p:commandLink title="Ver trámite"
+                                           actionListener="#{tramiteBean.seleccionarTramiteDenominacion(r.tipo, r.numeroTramite)}"
+                                           update=":mensajes :allform:panelContenedor :allform:panelInfoWrapper :allform:alcancespanel :allform:tutelagepanel :allform:oposicionespanel :allform:nolineapanel :allform:derechospanel :allform:notificacionpanel"
+                                           oncomplete="PF('dlgResultadosDenominacion').hide();"
+                                           process="@this">
+                                <i class="material-icons" style="font-size: 20px; color: #0089ec;">search</i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
             </p:dialog>
 
             <p:confirmDialog global="true" showEffect="explode" hideEffect="explode">

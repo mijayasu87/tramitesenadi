@@ -21,7 +21,7 @@ import javax.persistence.Temporal;
 public class PpdiSolicitudPatente implements Serializable {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "codigo_solicitud_patente")
     private Integer codigoSolicitudPatente;
     
     @Column(name = "codigo_tipo_derecho")

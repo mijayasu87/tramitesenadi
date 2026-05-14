@@ -138,13 +138,13 @@ public class Controlador {
         PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
         return pd.getPpdiTituloSignoDistintivoByCodigoSolicitudSigno(codigoSolitudSigno);
     }
-    
+
     public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByNumeroTitulo(String numeroTitulo) {
         PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
         return pd.getPpdiTituloSignoDistintivoByNumeroTitulo(numeroTitulo);
     }
-    
-    public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByCodigoSolicitud(Integer codigoSolicitud){
+
+    public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByCodigoSolicitud(Integer codigoSolicitud) {
         PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
         return pd.getPpdiSolicitudSignoDistintivoByCodigoSolicitud(codigoSolicitud);
     }
@@ -829,5 +829,60 @@ public class Controlador {
     public List<Cpis> getCpisByApplicationNumber(String applicationNumber) {
         DAOConsultasAdmin da = new DAOConsultasAdmin();
         return da.getCpis(applicationNumber);
+    }
+
+    public List<PpdiSolicitudSignoDistintivo> ppdiSolicitudSignoDistintivoByDenominacion(String denominacion) {
+        PpdiSolicitudSignoDAO pd = new PpdiSolicitudSignoDAO(null);
+        return pd.ppdiSolicitudSignoDistintivoByDenominacion(denominacion);
+    }
+
+    public List<PpdiSolicitudPatente> ppdiSolicitudPatenteByDenominacion(String denominacion) {
+        PpdiSolicitudPatenteDAO pd = new PpdiSolicitudPatenteDAO(null);
+        return pd.ppdiSolicitudPatenteByDenominacion(denominacion);
+    }
+
+    public List<Transferencia> getTransferenciasByDenominacion(String denominacion) {
+        TransferenciaDAO td = new TransferenciaDAO(null);
+        return td.getTransferenciasByDenominacion(denominacion);
+    }
+
+    public List<CambioNombre> getCambioNombreByDenominacion(String denominacion) {
+        TransferenciaDAO td = new TransferenciaDAO(null);
+        return td.getCambioNombreByDenominacion(denominacion);
+    }
+
+    public List<CambioDomicilio> getCambioDomicilioByDenominacion(String denominacion) {
+        TransferenciaDAO td = new TransferenciaDAO(null);
+        return td.getCambioDomicilioByDenominacion(denominacion);
+    }
+
+    public List<PrendaComercial> getPrendaComercialByDenominacion(String denominacion) {
+        TransferenciaDAO td = new TransferenciaDAO(null);
+        return td.getPrendaComercialByDenominacion(denominacion);
+    }
+
+    public List<LicenciaUso> getLicenciaUsoByDenominacion(String denominacion) {
+        TransferenciaDAO td = new TransferenciaDAO(null);
+        return td.getLicenciaUsoByDenominacion(denominacion);
+    }
+
+    public List<SubLicenciaUso> getSubLicenciaUsoByDenominacion(String denominacion) {
+        TransferenciaDAO td = new TransferenciaDAO(null);
+        return td.getSublienciaUsoByDenominacion(denominacion);
+    }
+
+    public List<Renovacion> getRenovacionByDenominacion(String denominacion) {
+        RenovacionDAO td = new RenovacionDAO(null);
+        return td.getRenovacionByDenominacion(denominacion);
+    }
+    
+    public List<BreederForms> getBreederFormByDenominacion(String denominacion){
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getBreederFormByDenominacion(denominacion);
+    }
+    
+    public List<PlayForm> getPlayFormsByDenomination(String denominacion){
+        DAOConsultasForm dc = new DAOConsultasForm();
+        return dc.getPlayFormsByDenomination(denominacion);
     }
 }

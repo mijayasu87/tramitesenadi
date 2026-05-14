@@ -33,7 +33,7 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
 
     public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByTramite(String tramite) {
         try {
-            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where p.numeroTramite = :tramite");
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where TRIM(p.numeroTramite) = TRIM(:tramite)");
             query.setParameter("tramite", tramite);
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
             List<PpdiSolicitudSignoDistintivo> signos = query.getResultList();
@@ -62,7 +62,7 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
             this.getEntityManager().close();
         }
     }
-    
+
     public PpdiTituloSignoDistintivo getPpdiTituloSignoDistintivoByNumeroTitulo(String numeroTitulo) {
         try {
             Query query = this.getEntityManager().createQuery("Select p from PpdiTituloSignoDistintivo p where p.numeroTitulo = :titulo");
@@ -78,7 +78,7 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
             this.getEntityManager().close();
         }
     }
-    
+
     public PpdiSolicitudSignoDistintivo getPpdiSolicitudSignoDistintivoByCodigoSolicitud(Integer codigoSolicitud) {
         try {
             Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where p.codigoSolicitudSigno = :codigo");
@@ -93,7 +93,15 @@ public class PpdiSolicitudSignoDAO extends DAOAbstract<PpdiSolicitudSignoDistint
         } finally {
             this.getEntityManager().close();
         }
-
     }
-    
+
+    public List<PpdiSolicitudSignoDistintivo> ppdiSolicitudSignoDistintivoByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudSignoDistintivo p where LOWER(p.denominacionSigno) like LOWER(:denominacion)");
+            query.setParameter("denominacion", denominacion + "%");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
 }

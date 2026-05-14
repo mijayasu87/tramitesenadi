@@ -4,6 +4,8 @@
  */
 package senadi.com.ditramites.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import senadi.com.ditramites.util.ParametrosBD;
 
 /**
@@ -34,9 +36,13 @@ public class PatentForms {
     private String sitio;
     private String ftp;
 
+    private boolean jobReviewsExists;
+    private List<Documento> jobReviewDocs;
+
     public PatentForms() {
         sitio = ParametrosBD.urlPath+"patent_forms/";
         ftp = ParametrosBD.ftpPath+"patent_forms/";
+        jobReviewDocs = new ArrayList<>();
     }
 
     /**
@@ -303,5 +309,21 @@ public class PatentForms {
      */
     public void setDiscountFile(String discountFile) {
         this.discountFile = discountFile;
+    }
+
+    public boolean isJobReviewsExists() {
+        return jobReviewsExists;
+    }
+
+    public void setJobReviewsExists(boolean jobReviewsExists) {
+        this.jobReviewsExists = jobReviewsExists;
+    }
+
+    public List<Documento> getJobReviewDocs() {
+        return jobReviewDocs;
+    }
+
+    public void setJobReviewDocs(List<Documento> jobReviewDocs) {
+        this.jobReviewDocs = jobReviewDocs;
     }
 }

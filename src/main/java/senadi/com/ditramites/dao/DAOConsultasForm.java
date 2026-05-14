@@ -90,6 +90,38 @@ public class DAOConsultasForm {
         }
     }
 
+    public List<BreederForms> getBreederFormByDenominacion(String denominacion) {
+        String query = "Select * from breeder_forms as bf where bf.status = 'DELIVERED' and bf.proposed_name like '" + denominacion + "%'";
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            List<BreederForms> breeders = new ArrayList<>();
+            while (rs.next()) {
+                BreederForms breeder = new BreederForms();
+                breeder.setId(rs.getInt("id"));
+                breeder.setApplicationDate(rs.getTimestamp("application_date"));
+                breeder.setApplicationNumber(rs.getString("application_number"));
+                breeder.setCommercialName(rs.getString("commercial_name"));
+                breeder.setCreateDate(rs.getTimestamp("create_date"));
+                String discount = rs.getString("discount_file");
+                breeder.setDiscountFile(discount != null ? discount : "");
+                breeder.setGroup(rs.getString("group"));
+                breeder.setOwnerId(rs.getInt("owner_id"));
+                breeder.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
+                breeder.setProposedName(rs.getString("proposed_name"));
+                breeder.setStatus(rs.getString("status"));
+                breeders.add(breeder);
+            }
+
+            con.close();
+            return breeders;
+        } catch (SQLException ex) {
+            System.err.println("Error en obtener breeder por denominacion: " + denominacion + ": " + ex);
+            return new ArrayList<>();
+        }
+    }
+
     public BreederForms getBreederForm(String applicationNumber) {
         String query = "Select * "
                 + "from breeder_forms as bf "
@@ -494,7 +526,7 @@ public class DAOConsultasForm {
             return new ArrayList<>();
         }
     }
-
+    
     public PlayForm getPlayFormByApplicationNumber(String applicationNumber) {
         String query = "Select * from play_forms as pf "
                 + "inner join forms as f on f.id = pf.play_type_id "
@@ -535,7 +567,52 @@ public class DAOConsultasForm {
             System.err.println("error al obtener playforms del tramite " + applicationNumber + ": " + ex);
             return new PlayForm();
         }
-    }        
+    }
+
+    public List<PlayForm> getPlayFormsByDenomination(String denomination) {
+        String query = "Select * from play_forms as pf "
+                + "inner join forms as f on f.id = pf.play_type_id "
+                + "INNER JOIN iepi_casilleros.owners as ow ON ow.id = pf.owner_id "
+                + "INNER JOIN iepi_casilleros.lockers as lo ON lo.owner_id = ow.id "
+                + "where pf.payment_receipt_id is not null and pf.title like '" + denomination + "%'";
+        try {
+            Connection con = ParametrosBD.doConnectionToFormularios();
+            PreparedStatement pst = con.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            List<PlayForm> playForms = new ArrayList<>();
+            while (rs.next()) {
+                PlayForm playForm = new PlayForm();
+                Timestamp taux = rs.getTimestamp("application_date");
+                if (taux != null) {
+                    playForm.setApplicationDate(Operaciones.formatTimesTamp(taux));
+                }
+                playForm.setApplicationNumber(rs.getString("application_number"));
+                playForm.setDescription(rs.getString("description"));
+                playForm.setId(rs.getInt("id"));
+                playForm.setOwnerId(rs.getInt("owner_id"));
+                playForm.setPaymentReceiptId(rs.getInt("payment_receipt_id"));
+                playForm.setPlayTypeId(rs.getInt("play_type_id"));
+                playForm.setPowerAttorney(rs.getString("power_attorney"));
+                playForm.setStatus(rs.getString("status"));
+                playForm.setSynopsis(rs.getString("synopsis"));
+                playForm.setTitle(rs.getString("title"));
+                playForm.setTitleOriginal(rs.getString("title_original"));
+                playForm.setTitleTranslated(rs.getString("title_translated"));
+                playForm.setTipo(rs.getString("name"));
+                playForm.setAlias(rs.getString("alias"));
+                playForm.setCasillero(rs.getInt("lo.id") + "");
+                String discount = rs.getString("discount_file");
+                playForm.setDiscountFile(discount != null ? discount : "");
+                
+                playForms.add(playForm);
+            }
+            con.close();
+            return playForms;
+        } catch (SQLException ex) {
+            System.err.println("error al obtener playforms denominacion " + denomination + ": " + ex);
+            return new ArrayList<>();
+        }
+    }
 
     public PatentForms getPatentFormByApplicationNumber(String applicationNumber) {
         String query = "Select * from patent_forms as pf "
@@ -959,33 +1036,33 @@ public class DAOConsultasForm {
         }
     }
 
-    private String getPlayNombreArchivoDesdeArchivo(Integer playFormId, String archivo) {
-        StringBuilder query = new StringBuilder("SELECT pa.name FROM ")
-                .append("play_annexes_data AS pad ")
-                .append("INNER JOIN play_annexes AS pa ON pa.id = pad.play_annex_id ")
-                .append("WHERE pad.file = ?");
-
-        if (playFormId != null) {
-            query.append(" AND pad.play_form_id = ?");
-        }
-
-        try (Connection con = ParametrosBD.doConnectionToFormularios(); PreparedStatement pst = con.prepareStatement(query.toString())) {
-            pst.setString(1, archivo);
-            if (playFormId != null) {
-                pst.setInt(2, playFormId);
-            }
-
-            ResultSet rs = pst.executeQuery();
-            String nombre = "";
-            while (rs.next()) {
-                nombre = rs.getString("name");
-            }
-            return nombre;
-        } catch (SQLException ex) {
-            System.err.println("error al obtener nombre play documento " + archivo + ": " + ex);
-            return "";
-        }
-    }
+//    private String getPlayNombreArchivoDesdeArchivo(Integer playFormId, String archivo) {
+//        StringBuilder query = new StringBuilder("SELECT pa.name FROM ")
+//                .append("play_annexes_data AS pad ")
+//                .append("INNER JOIN play_annexes AS pa ON pa.id = pad.play_annex_id ")
+//                .append("WHERE pad.file = ?");
+//
+//        if (playFormId != null) {
+//            query.append(" AND pad.play_form_id = ?");
+//        }
+//
+//        try (Connection con = ParametrosBD.doConnectionToFormularios(); PreparedStatement pst = con.prepareStatement(query.toString())) {
+//            pst.setString(1, archivo);
+//            if (playFormId != null) {
+//                pst.setInt(2, playFormId);
+//            }
+//
+//            ResultSet rs = pst.executeQuery();
+//            String nombre = "";
+//            while (rs.next()) {
+//                nombre = rs.getString("name");
+//            }
+//            return nombre;
+//        } catch (SQLException ex) {
+//            System.err.println("error al obtener nombre play documento " + archivo + ": " + ex);
+//            return "";
+//        }
+//    }
 
     private String normalizePlayFileName(String archivo) {
         if (archivo == null || archivo.isEmpty()) {

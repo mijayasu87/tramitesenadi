@@ -34,7 +34,7 @@ public class PpdiSolicitudPatenteDAO extends DAOAbstract<PpdiSolicitudPatente> {
 
     public PpdiSolicitudPatente getPpdiSolicitudPatenteByTramite(String tramite) {
         try {
-            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p where p.numeroTramite = :tramite");
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p where TRIM(p.numeroTramite) = TRIM(:tramite)");
             query.setParameter("tramite", tramite);
             query.setHint("javax.persistence.cache.storeMode", "REFRESH");
             @SuppressWarnings("unchecked")
@@ -47,8 +47,8 @@ public class PpdiSolicitudPatenteDAO extends DAOAbstract<PpdiSolicitudPatente> {
         } finally {
             this.getEntityManager().close();
         }
-    }        
-    
+    }
+
     public PpdiSolicitudPatente getPpdiSolicitudPatenteByCodigoSolicitud(Integer codigoSolicitud) {
         try {
             Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p where p.codigoSolicitudPatente = :codigo");
@@ -64,7 +64,16 @@ public class PpdiSolicitudPatenteDAO extends DAOAbstract<PpdiSolicitudPatente> {
         } finally {
             this.getEntityManager().close();
         }
-
     }
-    
+
+    public List<PpdiSolicitudPatente> ppdiSolicitudPatenteByDenominacion(String denominacion) {
+        try {
+            Query query = this.getEntityManager().createQuery("Select p from PpdiSolicitudPatente p where LOWER(p.titulo) like LOWER(:denominacion)");
+            query.setParameter("denominacion", denominacion + "%");
+            return query.getResultList();
+        } finally {
+            this.getEntityManager().close();
+        }
+    }
+
 }
